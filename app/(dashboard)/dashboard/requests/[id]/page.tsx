@@ -77,12 +77,19 @@ export default async function RequestDetailPage({
     <div className="min-h-screen bg-zinc-950 text-white">
       {/* Header */}
       <header className="border-b border-zinc-800 px-6 py-4">
-        <div className="max-w-5xl mx-auto flex items-center gap-3">
-          <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
-            ← Requests
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold">DesignQ</span>
+            <span className="text-zinc-700">·</span>
+            <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+              Requests
+            </Link>
+            <span className="text-zinc-700">/</span>
+            <span className="text-sm text-zinc-300 truncate max-w-xs">{request.title}</span>
+          </div>
+          <Link href="/dashboard/team" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+            Team
           </Link>
-          <span className="text-zinc-700">/</span>
-          <span className="text-sm text-zinc-300 truncate">{request.title}</span>
         </div>
       </header>
 
