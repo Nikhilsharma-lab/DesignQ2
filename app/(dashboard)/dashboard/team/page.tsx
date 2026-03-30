@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, invites } from "@/db/schema";
-import { eq, isNull } from "drizzle-orm";
+import { profiles, invites, requests, requestAiAnalysis, assignments } from "@/db/schema";
+import { eq, avg, count, inArray } from "drizzle-orm";
 import { logout } from "@/app/actions/auth";
 import { InviteForm } from "@/components/team/invite-form";
 
@@ -32,6 +32,48 @@ export default async function TeamPage() {
   if (!profile) redirect("/login");
 
   const members = await db.select().from(profiles).where(eq(profiles.orgId, profile.orgId));
+
+  // PM quality scores: avg quality score + request count per requester
+  const orgRequests = await db
+    .select({ id: requests.id, requesterId: requests.requesterId })
+    .from(requests)
+    .where(eq(requests.orgId, profile.orgId));
+
+  const orgReqIds = orgRequests.map((r) => r.id);
+
+  const qualityRows = orgReqIds.length
+    ? await db
+        .select({ requestId: requestAiAnalysis.requestId, score: requestAiAnalysis.qualityScore })
+        .from(requestAiAnalysis)
+        .where(inArray(requestAiAnalysis.requestId, orgReqIds))
+    : [];
+
+  // Build quality stats per requester
+  const qualityByRequester: Record<string, { total: number; count: number }> = {};
+  for (const row of qualityRows) {
+    const req = orgRequests.find((r) => r.id === row.requestId);
+    if (!req) continue;
+    if (!qualityByRequester[req.requesterId]) qualityByRequester[req.requesterId] = { total: 0, count: 0 };
+    qualityByRequester[req.requesterId].total += row.score;
+    qualityByRequester[req.requesterId].count += 1;
+  }
+
+  const pmStats: Record<string, { avgQuality: number; requestCount: number }> = {};
+  for (const [id, s] of Object.entries(qualityByRequester)) {
+    pmStats[id] = { avgQuality: Math.round(s.total / s.count), requestCount: s.count };
+  }
+
+  // Active assignment counts per designer
+  const workloadRows = orgReqIds.length
+    ? await db
+        .select({ assigneeId: assignments.assigneeId, count: count() })
+        .from(assignments)
+        .where(inArray(assignments.requestId, orgReqIds))
+        .groupBy(assignments.assigneeId)
+    : [];
+  const designerLoad: Record<string, number> = Object.fromEntries(
+    workloadRows.map((w) => [w.assigneeId, Number(w.count)])
+  );
 
   const pendingInvites = await db
     .select()
@@ -107,9 +149,30 @@ export default async function TeamPage() {
                     <p className="text-xs text-zinc-600">{m.email}</p>
                   </div>
                 </div>
-                <span className="text-xs text-zinc-500 bg-zinc-900 border border-zinc-800 rounded px-1.5 py-0.5 capitalize">
-                  {roleLabels[m.role] ?? m.role}
-                </span>
+                <div className="flex items-center gap-3">
+                  {/* PM quality score */}
+                  {pmStats[m.id] && (
+                    <div className="text-right">
+                      <p className={`text-xs font-mono ${
+                        pmStats[m.id].avgQuality >= 80 ? "text-green-400" :
+                        pmStats[m.id].avgQuality >= 50 ? "text-yellow-400" : "text-red-400"
+                      }`}>
+                        {pmStats[m.id].avgQuality}/100
+                      </p>
+                      <p className="text-[10px] text-zinc-600">{pmStats[m.id].requestCount} requests</p>
+                    </div>
+                  )}
+                  {/* Designer workload */}
+                  {(m.role === "designer" || m.role === "lead") && designerLoad[m.id] !== undefined && (
+                    <div className="text-right">
+                      <p className="text-xs text-zinc-400">{designerLoad[m.id]}</p>
+                      <p className="text-[10px] text-zinc-600">assigned</p>
+                    </div>
+                  )}
+                  <span className="text-xs text-zinc-500 bg-zinc-900 border border-zinc-800 rounded px-1.5 py-0.5 capitalize">
+                    {roleLabels[m.role] ?? m.role}
+                  </span>
+                </div>
               </div>
             ))}
           </div>

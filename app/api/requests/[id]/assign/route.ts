@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { profiles, requests, assignments } from "@/db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, count, inArray } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -34,7 +34,26 @@ export async function GET(
     .from(assignments)
     .where(eq(assignments.requestId, id));
 
-  return NextResponse.json({ members, assignments: current });
+  // Active assignment counts per member across org
+  const orgReqIds = await db
+    .select({ id: requests.id })
+    .from(requests)
+    .where(eq(requests.orgId, profile.orgId));
+  const reqIds = orgReqIds.map((r) => r.id).filter((rid) => rid !== id);
+
+  const workloadRows =
+    reqIds.length > 0
+      ? await db
+          .select({ assigneeId: assignments.assigneeId, count: count() })
+          .from(assignments)
+          .where(inArray(assignments.requestId, reqIds))
+          .groupBy(assignments.assigneeId)
+      : [];
+  const workloads = Object.fromEntries(
+    workloadRows.map((w) => [w.assigneeId, Number(w.count)])
+  );
+
+  return NextResponse.json({ members, assignments: current, workloads });
 }
 
 export async function POST(

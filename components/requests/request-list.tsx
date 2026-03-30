@@ -33,14 +33,30 @@ interface Props {
   myRequestIds?: Set<string>;
 }
 
+const DONE_STATUSES = new Set(["completed", "shipped"]);
+const TYPE_LABELS: Record<string, string> = {
+  feature: "Feature", bug: "Bug", research: "Research",
+  content: "Content", infra: "Infra", process: "Process", other: "Other",
+};
+
 export function RequestList({ requests, myRequestIds }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<"all" | "mine">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "done">("all");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
 
   const hasMine = myRequestIds && myRequestIds.size > 0;
-  const visible = filter === "mine" && myRequestIds
+
+  // Derive available types from current request list
+  const availableTypes = [...new Set(requests.map((r) => r.requestType).filter(Boolean))] as string[];
+
+  let visible = filter === "mine" && myRequestIds
     ? requests.filter((r) => myRequestIds.has(r.id))
     : requests;
+
+  if (statusFilter === "active") visible = visible.filter((r) => !DONE_STATUSES.has(r.status));
+  if (statusFilter === "done") visible = visible.filter((r) => DONE_STATUSES.has(r.status));
+  if (typeFilter !== "all") visible = visible.filter((r) => r.requestType === typeFilter);
 
   return (
     <>
@@ -75,6 +91,49 @@ export function RequestList({ requests, myRequestIds }: Props) {
         >
           + New request
         </button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-2 mb-4 flex-wrap">
+        {/* Status */}
+        <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
+          {(["all", "active", "done"] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
+              className={`text-xs px-2.5 py-1 rounded capitalize transition-colors ${
+                statusFilter === s ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {/* Type */}
+        {availableTypes.length > 0 && (
+          <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1 flex-wrap">
+            <button
+              onClick={() => setTypeFilter("all")}
+              className={`text-xs px-2.5 py-1 rounded transition-colors ${
+                typeFilter === "all" ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"
+              }`}
+            >
+              All types
+            </button>
+            {availableTypes.map((t) => (
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className={`text-xs px-2.5 py-1 rounded capitalize transition-colors ${
+                  typeFilter === t ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {TYPE_LABELS[t] ?? t}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {visible.length === 0 ? (

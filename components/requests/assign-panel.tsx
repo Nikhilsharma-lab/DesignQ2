@@ -16,6 +16,11 @@ interface Assignment {
   role: string;
 }
 
+interface Recommendation {
+  recommendedId: string | null;
+  reasoning: string;
+}
+
 const roleColors: Record<string, string> = {
   lead: "text-blue-400 bg-blue-500/10 border-blue-500/20",
   reviewer: "text-purple-400 bg-purple-500/10 border-purple-500/20",
@@ -32,6 +37,9 @@ export function AssignPanel({ requestId }: Props) {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [currentAssignments, setCurrentAssignments] = useState<Assignment[]>([]);
+  const [workloads, setWorkloads] = useState<Record<string, number>>({});
+  const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
+  const [loadingRec, setLoadingRec] = useState(false);
   const [loading, setLoading] = useState(true);
   const [assigning, setAssigning] = useState<string | null>(null);
   const [showPicker, setShowPicker] = useState(false);
@@ -43,11 +51,22 @@ export function AssignPanel({ requestId }: Props) {
       const data = await res.json();
       setMembers(data.members);
       setCurrentAssignments(data.assignments);
+      setWorkloads(data.workloads ?? {});
     }
     setLoading(false);
   }, [requestId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // Fetch AI recommendation when picker opens
+  useEffect(() => {
+    if (!showPicker || recommendation) return;
+    setLoadingRec(true);
+    fetch(`/api/requests/${requestId}/assign-recommend`)
+      .then((r) => r.json())
+      .then((data) => { setRecommendation(data); setLoadingRec(false); })
+      .catch(() => setLoadingRec(false));
+  }, [showPicker, requestId, recommendation]);
 
   async function assign(memberId: string) {
     setAssigning(memberId);
@@ -56,6 +75,7 @@ export function AssignPanel({ requestId }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ assigneeId: memberId, role: selectedRole }),
     });
+    setRecommendation(null); // reset so it refetches next open
     await load();
     setAssigning(null);
     setShowPicker(false);
@@ -78,9 +98,7 @@ export function AssignPanel({ requestId }: Props) {
   const assignedMembers = members.filter((m) => assignedIds.has(m.id));
   const unassignedMembers = members.filter((m) => !assignedIds.has(m.id));
 
-  if (loading) {
-    return <div className="text-xs text-zinc-600 py-2">Loading…</div>;
-  }
+  if (loading) return <div className="text-xs text-zinc-600 py-2">Loading…</div>;
 
   return (
     <div>
@@ -90,10 +108,7 @@ export function AssignPanel({ requestId }: Props) {
           {assignedMembers.map((m) => {
             const assignment = currentAssignments.find((a) => a.assigneeId === m.id);
             return (
-              <div
-                key={m.id}
-                className="flex items-center justify-between gap-2 group"
-              >
+              <div key={m.id} className="flex items-center justify-between gap-2 group">
                 <div className="flex items-center gap-2 min-w-0">
                   <Avatar name={m.fullName} />
                   <div className="min-w-0">
@@ -121,7 +136,7 @@ export function AssignPanel({ requestId }: Props) {
         <p className="text-sm text-zinc-600 mb-3">No one assigned yet</p>
       )}
 
-      {/* Assign button */}
+      {/* Assign button / picker */}
       {!showPicker ? (
         <button
           onClick={() => setShowPicker(true)}
@@ -131,6 +146,26 @@ export function AssignPanel({ requestId }: Props) {
         </button>
       ) : (
         <div className="border border-zinc-800 rounded-xl overflow-hidden">
+          {/* AI recommendation */}
+          {loadingRec ? (
+            <div className="px-3 py-2.5 border-b border-zinc-800 bg-zinc-900/40 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 border-2 border-zinc-700 border-t-indigo-400 rounded-full animate-spin" />
+              <span className="text-[10px] text-zinc-600">Getting AI recommendation…</span>
+            </div>
+          ) : recommendation?.recommendedId ? (
+            <div className="px-3 py-2.5 border-b border-zinc-800 bg-indigo-500/5">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[10px] text-indigo-400 font-medium uppercase tracking-wide">✦ AI pick</span>
+              </div>
+              <p className="text-xs text-zinc-300">
+                <span className="font-medium">
+                  {members.find((m) => m.id === recommendation.recommendedId)?.fullName ?? "—"}
+                </span>
+                {" "}— {recommendation.reasoning}
+              </p>
+            </div>
+          ) : null}
+
           {/* Role picker */}
           <div className="flex border-b border-zinc-800">
             {assignmentRoles.map((r) => (
@@ -138,9 +173,7 @@ export function AssignPanel({ requestId }: Props) {
                 key={r}
                 onClick={() => setSelectedRole(r)}
                 className={`flex-1 text-[10px] py-2 capitalize transition-colors ${
-                  selectedRole === r
-                    ? "bg-zinc-800 text-zinc-300"
-                    : "text-zinc-600 hover:text-zinc-400"
+                  selectedRole === r ? "bg-zinc-800 text-zinc-300" : "text-zinc-600 hover:text-zinc-400"
                 }`}
               >
                 {r}
@@ -148,28 +181,42 @@ export function AssignPanel({ requestId }: Props) {
             ))}
           </div>
 
-          {/* Member list */}
-          <div className="max-h-48 overflow-y-auto">
+          {/* Member list with workload */}
+          <div className="max-h-52 overflow-y-auto">
             {unassignedMembers.length === 0 ? (
               <p className="text-xs text-zinc-600 px-3 py-3 text-center">Everyone is assigned</p>
             ) : (
-              unassignedMembers.map((m) => (
-                <button
-                  key={m.id}
-                  onClick={() => assign(m.id)}
-                  disabled={assigning === m.id}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-zinc-800/60 transition-colors text-left"
-                >
-                  <Avatar name={m.fullName} />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-zinc-300 truncate">{m.fullName}</p>
-                    <p className="text-[10px] text-zinc-600 capitalize">{m.role}</p>
-                  </div>
-                  {assigning === m.id && (
-                    <span className="w-3 h-3 border-2 border-zinc-600 border-t-zinc-300 rounded-full animate-spin" />
-                  )}
-                </button>
-              ))
+              unassignedMembers.map((m) => {
+                const load_ = workloads[m.id] ?? 0;
+                const isRecommended = recommendation?.recommendedId === m.id;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => assign(m.id)}
+                    disabled={assigning === m.id}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2.5 hover:bg-zinc-800/60 transition-colors text-left ${
+                      isRecommended ? "bg-indigo-500/5" : ""
+                    }`}
+                  >
+                    <Avatar name={m.fullName} highlighted={isRecommended} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className="text-sm text-zinc-300 truncate">{m.fullName}</p>
+                        {isRecommended && (
+                          <span className="text-[9px] text-indigo-400 bg-indigo-500/10 px-1 py-0.5 rounded">AI pick</span>
+                        )}
+                      </div>
+                      <p className="text-[10px] text-zinc-600 capitalize">{m.role}</p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[10px] text-zinc-600">{load_} active</p>
+                      {assigning === m.id && (
+                        <span className="w-3 h-3 border-2 border-zinc-600 border-t-zinc-300 rounded-full animate-spin inline-block mt-0.5" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
 
@@ -187,16 +234,14 @@ export function AssignPanel({ requestId }: Props) {
   );
 }
 
-function Avatar({ name }: { name: string }) {
-  const initials = name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
+function Avatar({ name, highlighted }: { name: string; highlighted?: boolean }) {
+  const initials = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <div className="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[9px] text-zinc-400 font-medium shrink-0">
+    <div className={`w-6 h-6 rounded-full border flex items-center justify-center text-[9px] font-medium shrink-0 ${
+      highlighted
+        ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400"
+        : "bg-zinc-800 border-zinc-700 text-zinc-400"
+    }`}>
       {initials}
     </div>
   );
