@@ -102,6 +102,12 @@ export default async function TeamPage() {
             >
               Team
             </Link>
+            <Link
+              href="/dashboard/insights"
+              className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors"
+            >
+              Insights
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">
