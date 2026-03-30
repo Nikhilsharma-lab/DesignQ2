@@ -13,24 +13,39 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login");
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) redirect("/signup");
+  let profile, allRequests, myRequestIds;
 
-  const allRequests = await db
-    .select()
-    .from(requests)
-    .where(eq(requests.orgId, profile.orgId))
-    .orderBy(
-      sql`CASE priority WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 4 END`,
-      requests.createdAt
+  try {
+    const profiles_ = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    profile = profiles_[0];
+    if (!profile) redirect("/signup");
+
+    allRequests = await db
+      .select()
+      .from(requests)
+      .where(eq(requests.orgId, profile.orgId))
+      .orderBy(
+        sql`CASE priority WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 4 END`,
+        requests.createdAt
+      );
+
+    const myAssignments = await db
+      .select({ requestId: assignments.requestId })
+      .from(assignments)
+      .where(eq(assignments.assigneeId, user.id));
+
+    myRequestIds = new Set(myAssignments.map((a) => a.requestId));
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white flex items-center justify-center p-8">
+        <div className="max-w-lg w-full">
+          <p className="text-xs text-red-400 font-mono mb-2">DB connection error</p>
+          <pre className="text-xs text-zinc-400 bg-zinc-900 border border-zinc-800 rounded-lg p-4 overflow-auto whitespace-pre-wrap">{msg}</pre>
+        </div>
+      </div>
     );
-
-  const myAssignments = await db
-    .select({ requestId: assignments.requestId })
-    .from(assignments)
-    .where(eq(assignments.assigneeId, user.id));
-
-  const myRequestIds = new Set(myAssignments.map((a) => a.requestId));
+  }
 
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
