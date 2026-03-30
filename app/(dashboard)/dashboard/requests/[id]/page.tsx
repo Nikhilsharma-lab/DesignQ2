@@ -7,6 +7,7 @@ import { eq, inArray } from "drizzle-orm";
 import { AssignPanel } from "@/components/requests/assign-panel";
 import { StageControls } from "@/components/requests/stage-controls";
 import { CommentBox } from "@/components/requests/comment-box";
+import { ImpactPanel } from "@/components/requests/impact-panel";
 
 const priorityConfig: Record<string, { label: string; color: string; desc: string }> = {
   p0: { label: "P0", color: "bg-red-500/15 text-red-400 border-red-500/20", desc: "Critical — blocking" },
@@ -158,6 +159,15 @@ export default async function RequestDetailPage({
                 </a>
               </section>
             )}
+
+            <ImpactPanel
+              requestId={request.id}
+              impactMetric={request.impactMetric}
+              impactPrediction={request.impactPrediction}
+              impactActual={request.impactActual}
+              impactLoggedAt={request.impactLoggedAt}
+              stage={request.stage}
+            />
 
             {/* AI Triage */}
             {triage ? (

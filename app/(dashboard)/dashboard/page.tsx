@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { profiles, requests, assignments } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { RequestList } from "@/components/requests/request-list";
@@ -20,7 +20,10 @@ export default async function DashboardPage() {
     .select()
     .from(requests)
     .where(eq(requests.orgId, profile.orgId))
-    .orderBy(requests.createdAt);
+    .orderBy(
+      sql`CASE priority WHEN 'p0' THEN 0 WHEN 'p1' THEN 1 WHEN 'p2' THEN 2 WHEN 'p3' THEN 3 ELSE 4 END`,
+      requests.createdAt
+    );
 
   const myAssignments = await db
     .select({ requestId: assignments.requestId })

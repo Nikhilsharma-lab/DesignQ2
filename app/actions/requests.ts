@@ -80,6 +80,26 @@ export async function advanceStage(requestId: string) {
   return { success: true };
 }
 
+export async function logImpact(requestId: string, impactActual: string) {
+  if (!impactActual.trim()) return { error: "Actual impact cannot be empty" };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  await db
+    .update(requests)
+    .set({
+      impactActual: impactActual.trim(),
+      impactLoggedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(eq(requests.id, requestId));
+
+  revalidatePath(`/dashboard/requests/${requestId}`);
+  return { success: true };
+}
+
 export async function toggleBlocked(requestId: string, currentStatus: string) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();

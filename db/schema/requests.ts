@@ -64,6 +64,11 @@ export const requests = pgTable("requests", {
   complexity: integer("complexity"),          // 1-5, set by AI triage
   requestType: requestTypeEnum("request_type"), // set by AI triage
   figmaUrl: text("figma_url"),
+  // Impact loop — PM enters prediction at intake, logs actual after ship
+  impactMetric: text("impact_metric"),       // e.g. "checkout conversion rate"
+  impactPrediction: text("impact_prediction"), // e.g. "5% improvement"
+  impactActual: text("impact_actual"),        // logged after ship
+  impactLoggedAt: timestamp("impact_logged_at", { withTimezone: true }),
   deadlineAt: timestamp("deadline_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

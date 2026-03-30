@@ -24,6 +24,8 @@ export function NewRequestForm({ onClose }: Props) {
       businessContext: form.get("businessContext") || null,
       successMetrics: form.get("successMetrics") || null,
       figmaUrl: form.get("figmaUrl") || null,
+      impactMetric: form.get("impactMetric") || null,
+      impactPrediction: form.get("impactPrediction") || null,
       deadlineAt: form.get("deadlineAt") || null,
     };
 
@@ -136,6 +138,33 @@ export function NewRequestForm({ onClose }: Props) {
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
               placeholder="https://figma.com/file/..."
             />
+          </div>
+
+          <div className="border border-zinc-800/60 rounded-xl p-4 space-y-4 bg-zinc-900/30">
+            <div>
+              <p className="text-xs font-medium text-zinc-400 uppercase tracking-wide mb-0.5">Impact prediction</p>
+              <p className="text-[11px] text-zinc-600">What metric will this move, and by how much? Log the actual result after ship to close the loop.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">Metric</label>
+                <input
+                  name="impactMetric"
+                  type="text"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+                  placeholder="e.g. checkout conversion"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-zinc-500 mb-1.5">Prediction</label>
+                <input
+                  name="impactPrediction"
+                  type="text"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
+                  placeholder="e.g. +5% improvement"
+                />
+              </div>
+            </div>
           </div>
 
           {error && (
