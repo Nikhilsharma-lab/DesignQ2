@@ -9,6 +9,7 @@ import { StageControls } from "@/components/requests/stage-controls";
 import { CommentBox } from "@/components/requests/comment-box";
 import { ImpactPanel } from "@/components/requests/impact-panel";
 import { EditRequestButton } from "@/components/requests/edit-request-button";
+import { HandoffChecklist } from "@/components/requests/handoff-checklist";
 
 const priorityConfig: Record<string, { label: string; color: string; desc: string }> = {
   p0: { label: "P0", color: "bg-red-500/15 text-red-400 border-red-500/20", desc: "Critical — blocking" },
@@ -167,6 +168,8 @@ export default async function RequestDetailPage({
                 </a>
               </section>
             )}
+
+            <HandoffChecklist requestId={request.id} stage={request.stage} />
 
             <ImpactPanel
               requestId={request.id}

@@ -34,6 +34,14 @@ interface Props {
 }
 
 const DONE_STATUSES = new Set(["completed", "shipped"]);
+const STALL_EXEMPT = new Set(["draft", "completed", "shipped", "blocked"]);
+const STALL_DAYS = 5;
+
+function isStalled(r: Request) {
+  if (STALL_EXEMPT.has(r.status)) return false;
+  const daysSince = (Date.now() - new Date(r.updatedAt).getTime()) / 86_400_000;
+  return daysSince >= STALL_DAYS;
+}
 const TYPE_LABELS: Record<string, string> = {
   feature: "Feature", bug: "Bug", research: "Research",
   content: "Content", infra: "Infra", process: "Process", other: "Other",
@@ -176,9 +184,16 @@ export function RequestList({ requests, myRequestIds }: Props) {
                   <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{r.description}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className={`text-xs ${statusColors[r.status] ?? "text-zinc-500"}`}>
-                    {r.status.replace(/_/g, " ")}
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {isStalled(r) && (
+                      <span className="text-[10px] text-yellow-500/70 bg-yellow-500/10 border border-yellow-500/20 rounded px-1.5 py-0.5">
+                        stalled
+                      </span>
+                    )}
+                    <span className={`text-xs ${statusColors[r.status] ?? "text-zinc-500"}`}>
+                      {r.status.replace(/_/g, " ")}
+                    </span>
+                  </div>
                   <span className="text-xs text-zinc-700">{formatDate(r.createdAt)}</span>
                 </div>
               </div>

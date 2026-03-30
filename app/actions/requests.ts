@@ -126,6 +126,14 @@ export async function advanceStage(requestId: string) {
     })
     .where(eq(requests.id, requestId));
 
+  // System comment to surface movement in activity feed
+  await db.insert(comments).values({
+    requestId,
+    authorId: null,
+    body: `⭢ Moved to ${nextStage.charAt(0).toUpperCase() + nextStage.slice(1)} stage`,
+    isSystem: true,
+  });
+
   revalidatePath(`/dashboard/requests/${requestId}`);
   revalidatePath("/dashboard");
   return { success: true };
