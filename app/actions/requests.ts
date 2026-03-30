@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { comments, requests, requestStages } from "@/db/schema";
+import { comments, profiles, requests, requestStages } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 const STAGES = [
@@ -23,6 +23,57 @@ const STAGE_STATUS_MAP: Record<Stage, string> = {
   build: "completed",
   impact: "shipped",
 };
+
+export async function updateRequest(
+  requestId: string,
+  data: {
+    title: string;
+    description: string;
+    businessContext?: string | null;
+    successMetrics?: string | null;
+    figmaUrl?: string | null;
+    impactMetric?: string | null;
+    impactPrediction?: string | null;
+    deadlineAt?: string | null;
+  }
+) {
+  if (!data.title?.trim() || !data.description?.trim()) {
+    return { error: "Title and description are required" };
+  }
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
+  if (!request) return { error: "Request not found" };
+
+  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+  const canEdit =
+    request.requesterId === user.id ||
+    profile?.role === "lead" ||
+    profile?.role === "admin";
+  if (!canEdit) return { error: "Only the requester or a lead can edit this request" };
+
+  await db
+    .update(requests)
+    .set({
+      title: data.title.trim(),
+      description: data.description.trim(),
+      businessContext: data.businessContext?.trim() || null,
+      successMetrics: data.successMetrics?.trim() || null,
+      figmaUrl: data.figmaUrl?.trim() || null,
+      impactMetric: data.impactMetric?.trim() || null,
+      impactPrediction: data.impactPrediction?.trim() || null,
+      deadlineAt: data.deadlineAt ? new Date(data.deadlineAt) : null,
+      updatedAt: new Date(),
+    })
+    .where(eq(requests.id, requestId));
+
+  revalidatePath(`/dashboard/requests/${requestId}`);
+  revalidatePath("/dashboard");
+  return { success: true };
+}
 
 export async function addComment(requestId: string, body: string) {
   if (!body.trim()) return { error: "Comment cannot be empty" };

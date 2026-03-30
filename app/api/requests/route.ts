@@ -49,12 +49,22 @@ export async function POST(req: NextRequest) {
   // Run AI triage
   let triage = null;
   try {
+    // Fetch recent org requests for duplicate detection (exclude the one just created)
+    const existing = await db
+      .select({ id: requests.id, title: requests.title, description: requests.description })
+      .from(requests)
+      .where(eq(requests.orgId, profile.orgId))
+      .orderBy(requests.createdAt)
+      .limit(40);
+    const existingRequests = existing.filter((r) => r.id !== request.id);
+
     const result = await triageRequest({
       title: request.title,
       description: request.description,
       businessContext: request.businessContext,
       successMetrics: request.successMetrics,
       deadline: deadlineAt ?? null,
+      existingRequests,
     });
 
     const [saved] = await db
@@ -69,6 +79,7 @@ export async function POST(req: NextRequest) {
         summary: result.summary,
         reasoning: result.reasoning,
         suggestions: result.suggestions,
+        potentialDuplicates: result.potentialDuplicates ?? [],
         aiModel: "claude-3-5-haiku-20241022",
       })
       .returning();

@@ -8,6 +8,7 @@ import { AssignPanel } from "@/components/requests/assign-panel";
 import { StageControls } from "@/components/requests/stage-controls";
 import { CommentBox } from "@/components/requests/comment-box";
 import { ImpactPanel } from "@/components/requests/impact-panel";
+import { EditRequestButton } from "@/components/requests/edit-request-button";
 
 const priorityConfig: Record<string, { label: string; color: string; desc: string }> = {
   p0: { label: "P0", color: "bg-red-500/15 text-red-400 border-red-500/20", desc: "Critical — blocking" },
@@ -113,7 +114,14 @@ export default async function RequestDetailPage({
                   <span className="text-xs text-zinc-600 capitalize">· {request.requestType}</span>
                 )}
               </div>
-              <h1 className="text-2xl font-semibold mb-2">{request.title}</h1>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <h1 className="text-2xl font-semibold">{request.title}</h1>
+                {(profile.id === request.requesterId || profile.role === "lead" || profile.role === "admin") && (
+                  <div className="shrink-0 mt-1">
+                    <EditRequestButton request={request} />
+                  </div>
+                )}
+              </div>
               <p className="text-sm text-zinc-500">
                 Submitted by {requester?.fullName ?? "Unknown"} · {formatDate(request.createdAt)}
               </p>
@@ -242,6 +250,28 @@ export default async function RequestDetailPage({
                           <li key={i} className="text-sm text-zinc-400 flex items-start gap-2">
                             <span className="text-zinc-600">→</span>
                             {s}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Potential duplicates */}
+                  {(triage.potentialDuplicates as { id: string; title: string; reason: string }[])?.length > 0 && (
+                    <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-4">
+                      <h3 className="text-xs text-yellow-400/80 font-medium uppercase tracking-wide mb-2">
+                        ⚠ Potential overlaps detected
+                      </h3>
+                      <ul className="space-y-2">
+                        {(triage.potentialDuplicates as { id: string; title: string; reason: string }[]).map((d) => (
+                          <li key={d.id}>
+                            <a
+                              href={`/dashboard/requests/${d.id}`}
+                              className="text-sm text-yellow-400 hover:text-yellow-300 font-medium transition-colors"
+                            >
+                              {d.title}
+                            </a>
+                            <p className="text-xs text-zinc-500 mt-0.5">{d.reason}</p>
                           </li>
                         ))}
                       </ul>

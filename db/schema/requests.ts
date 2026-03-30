@@ -88,6 +88,10 @@ export const requestAiAnalysis = pgTable("request_ai_analysis", {
   summary: text("summary").notNull(),
   reasoning: text("reasoning").notNull(),
   suggestions: jsonb("suggestions").$type<string[]>().notNull().default([]),
+  potentialDuplicates: jsonb("potential_duplicates")
+    .$type<{ id: string; title: string; reason: string }[]>()
+    .notNull()
+    .default([]),
   aiModel: text("ai_model").notNull(),
   tokensUsed: integer("tokens_used"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

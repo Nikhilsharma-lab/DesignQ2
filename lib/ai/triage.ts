@@ -23,6 +23,15 @@ const triageSchema = z.object({
   suggestions: z.array(z.string()).describe(
     "Concrete suggestions to improve the request before assigning"
   ),
+  potentialDuplicates: z.array(
+    z.object({
+      id: z.string(),
+      title: z.string(),
+      reason: z.string().describe("One sentence on why this is a potential overlap"),
+    })
+  ).describe(
+    "Existing requests that appear semantically similar or overlapping. Only include if genuinely similar — not just same topic area."
+  ),
 });
 
 export type TriageResult = z.infer<typeof triageSchema>;
@@ -33,7 +42,16 @@ export async function triageRequest(input: {
   businessContext?: string | null;
   successMetrics?: string | null;
   deadline?: string | null;
+  existingRequests?: Array<{ id: string; title: string; description: string }>;
 }): Promise<TriageResult> {
+  const existingBlock = input.existingRequests?.length
+    ? `\nEXISTING REQUESTS IN THIS WORKSPACE (for duplicate detection):\n${
+        input.existingRequests
+          .map((r, i) => `${i + 1}. [${r.id}] "${r.title}" — ${r.description.slice(0, 120)}`)
+          .join("\n")
+      }\n`
+    : "";
+
   const { object } = await generateObject({
     model: anthropic("claude-3-5-haiku-20241022"),
     schema: triageSchema,
@@ -51,8 +69,8 @@ ${input.businessContext ? `BUSINESS CONTEXT:\n${input.businessContext}\n` : ""}
 ${input.successMetrics ? `SUCCESS METRICS:\n${input.successMetrics}\n` : ""}
 ${input.deadline ? `DEADLINE: ${input.deadline}\n` : ""}
 ---
-
-Assess priority based on business impact and urgency. Assess complexity based on design effort required. Score quality based on how complete and actionable the request is for a designer to pick up without clarification.`,
+${existingBlock}
+Assess priority based on business impact and urgency. Assess complexity based on design effort required. Score quality based on how complete and actionable the request is for a designer to pick up without clarification. For potentialDuplicates, only flag requests that genuinely overlap in scope or goal — not just requests that touch the same product area.`,
   });
 
   return object;
