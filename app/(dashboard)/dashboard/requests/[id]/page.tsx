@@ -45,6 +45,7 @@ export default async function RequestDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
+  try {
   const { id } = await params;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -73,14 +74,14 @@ export default async function RequestDetailPage({
     .from(requestStages)
     .where(eq(requestStages.requestId, id))
     .orderBy(requestStages.completedAt)
-    .catch((e) => { console.error("[RequestDetail] stageHistory error:", e); return []; });
+    .catch(() => []);
 
   const requestComments = await db
     .select()
     .from(comments)
     .where(eq(comments.requestId, id))
     .orderBy(comments.createdAt)
-    .catch((e) => { console.error("[RequestDetail] comments error:", e); return []; });
+    .catch(() => []);
 
   // Build a profile lookup for comment authors
   const authorIds = [...new Set(requestComments.map((c) => c.authorId).filter(Boolean))] as string[];
@@ -403,6 +404,24 @@ export default async function RequestDetailPage({
       </main>
     </div>
   );
+
+  } catch (err: unknown) {
+    // Re-throw Next.js internal errors (redirect, notFound)
+    if (err && typeof err === "object" && "digest" in err && typeof (err as { digest: unknown }).digest === "string") {
+      const d = (err as { digest: string }).digest;
+      if (d.startsWith("NEXT_REDIRECT") || d.startsWith("NEXT_NOT_FOUND")) throw err;
+    }
+    // Show actual error on page for debugging
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : "";
+    return (
+      <div className="min-h-screen bg-zinc-950 text-white p-10 max-w-2xl mx-auto">
+        <h1 className="text-xl font-semibold mb-2">Debug: Page render error</h1>
+        <p className="text-sm text-red-400 font-mono whitespace-pre-wrap mb-4">{message}</p>
+        <pre className="text-xs text-zinc-600 whitespace-pre-wrap overflow-auto">{stack}</pre>
+      </div>
+    );
+  }
 }
 
 function QualityBadge({ score }: { score: number }) {
