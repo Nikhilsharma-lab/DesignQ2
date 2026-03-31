@@ -70,7 +70,6 @@ export async function updateRequest(
     })
     .where(eq(requests.id, requestId));
 
-  revalidatePath(`/dashboard/requests/${requestId}`);
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -89,7 +88,6 @@ export async function addComment(requestId: string, body: string) {
     isSystem: false,
   });
 
-  revalidatePath(`/dashboard/requests/${requestId}`);
   return { success: true };
 }
 
@@ -139,7 +137,6 @@ export async function advanceStage(requestId: string) {
     return { error: "Database error — check server logs" };
   }
 
-  revalidatePath(`/dashboard/requests/${requestId}`);
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -160,7 +157,6 @@ export async function logImpact(requestId: string, impactActual: string) {
     })
     .where(eq(requests.id, requestId));
 
-  revalidatePath(`/dashboard/requests/${requestId}`);
   return { success: true };
 }
 
@@ -182,7 +178,6 @@ export async function toggleBlocked(requestId: string, currentStatus: string) {
     .set({ status: newStatus as typeof requests.$inferSelect.status, updatedAt: new Date() })
     .where(eq(requests.id, requestId));
 
-  revalidatePath(`/dashboard/requests/${requestId}`);
   revalidatePath("/dashboard");
   return { success: true };
 }
@@ -210,7 +205,6 @@ export async function nudgeRequest(requestId: string) {
     return { error: "Database error — check server logs" };
   }
 
-  revalidatePath(`/dashboard/requests/${requestId}`);
   revalidatePath("/dashboard");
   return { success: true };
 }

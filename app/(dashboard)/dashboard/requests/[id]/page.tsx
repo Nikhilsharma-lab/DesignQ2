@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, requests, requestAiAnalysis, comments, requestStages } from "@/db/schema";
+import { profiles, requests, comments, requestStages } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { AssignPanel } from "@/components/requests/assign-panel";
 import { StageControls } from "@/components/requests/stage-controls";
@@ -30,7 +30,7 @@ const statusLabels: Record<string, string> = {
   shipped: "Shipped",
 };
 
-function formatDate(date: Date | string) {
+function formatDate(date: string) {
   return new Date(date).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
@@ -40,28 +40,31 @@ function formatDate(date: Date | string) {
   });
 }
 
+/* ---------- helpers to strip Dates before RSC boundary ---------- */
+function toISO(d: Date | null): string | null {
+  return d ? d.toISOString() : null;
+}
+
 export default async function RequestDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  try {
   const { id } = await params;
+
+  /* ---- auth ---- */
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
   if (!profile) redirect("/login");
 
+  /* ---- core data ---- */
   const [request] = await db.select().from(requests).where(eq(requests.id, id));
   if (!request || request.orgId !== profile.orgId) notFound();
-
-  const [triage] = await db
-    .select()
-    .from(requestAiAnalysis)
-    .where(eq(requestAiAnalysis.requestId, id))
-    .catch(() => []);
 
   const [requester] = await db
     .select()
@@ -69,6 +72,7 @@ export default async function RequestDetailPage({
     .where(eq(profiles.id, request.requesterId))
     .catch(() => []);
 
+  /* ---- secondary data (safe) ---- */
   const stageHistory = await db
     .select()
     .from(requestStages)
@@ -83,20 +87,26 @@ export default async function RequestDetailPage({
     .orderBy(comments.createdAt)
     .catch(() => []);
 
-  // Build a profile lookup for comment authors
-  const authorIds = [...new Set(requestComments.map((c) => c.authorId).filter(Boolean))] as string[];
+  const authorIds = [
+    ...new Set(requestComments.map((c) => c.authorId).filter(Boolean)),
+  ] as string[];
   const authorProfiles = authorIds.length
     ? await db.select().from(profiles).where(inArray(profiles.id, authorIds)).catch(() => [])
     : [];
   const authorMap = Object.fromEntries(authorProfiles.map((p) => [p.id, p]));
 
-  // Serialize request for client components (Dates → ISO strings)
-  const clientRequest = {
-    ...request,
-    createdAt: request.createdAt.toISOString(),
-    updatedAt: request.updatedAt.toISOString(),
-    deadlineAt: request.deadlineAt?.toISOString() ?? null,
-    impactLoggedAt: request.impactLoggedAt?.toISOString() ?? null,
+  /* ---- serialise everything for client components (NO Date objects) ---- */
+  const sr = JSON.parse(JSON.stringify(request)) as {
+    id: string;
+    title: string;
+    description: string;
+    businessContext: string | null;
+    successMetrics: string | null;
+    figmaUrl: string | null;
+    impactMetric: string | null;
+    impactPrediction: string | null;
+    deadlineAt: string | null;
+    [key: string]: unknown;
   };
 
   return (
@@ -107,13 +117,21 @@ export default async function RequestDetailPage({
           <div className="flex items-center gap-3">
             <span className="text-sm font-semibold">DesignQ</span>
             <span className="text-zinc-700">·</span>
-            <Link href="/dashboard" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+            <Link
+              href="/dashboard"
+              className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+            >
               Requests
             </Link>
             <span className="text-zinc-700">/</span>
-            <span className="text-sm text-zinc-300 truncate max-w-xs">{request.title}</span>
+            <span className="text-sm text-zinc-300 truncate max-w-xs">
+              {request.title}
+            </span>
           </div>
-          <Link href="/dashboard/team" className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+          <Link
+            href="/dashboard/team"
+            className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
+          >
             Team
           </Link>
         </div>
@@ -127,7 +145,9 @@ export default async function RequestDetailPage({
             <div>
               <div className="flex items-center gap-2 mb-3">
                 {request.priority && (
-                  <span className={`text-xs px-2 py-0.5 rounded border font-mono ${priorityConfig[request.priority]?.color}`}>
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded border font-mono ${priorityConfig[request.priority]?.color}`}
+                  >
                     {request.priority.toUpperCase()}
                   </span>
                 )}
@@ -135,58 +155,70 @@ export default async function RequestDetailPage({
                   {statusLabels[request.status] ?? request.status}
                 </span>
                 {request.requestType && (
-                  <span className="text-xs text-zinc-600 capitalize">· {request.requestType}</span>
+                  <span className="text-xs text-zinc-600 capitalize">
+                    · {request.requestType}
+                  </span>
                 )}
               </div>
               <div className="flex items-start justify-between gap-3 mb-2">
                 <h1 className="text-2xl font-semibold">{request.title}</h1>
-                {(profile.id === request.requesterId || profile.role === "lead" || profile.role === "admin") && (
+                {(profile.id === request.requesterId ||
+                  profile.role === "lead" ||
+                  profile.role === "admin") && (
                   <div className="shrink-0 mt-1">
-                    <EditRequestButton request={clientRequest} />
+                    <EditRequestButton request={sr} />
                   </div>
                 )}
               </div>
               <p className="text-sm text-zinc-500">
-                Submitted by {requester?.fullName ?? "Unknown"} · {formatDate(request.createdAt)}
+                Submitted by {requester?.fullName ?? "Unknown"} ·{" "}
+                {formatDate(toISO(request.createdAt)!)}
               </p>
             </div>
 
             {/* Description */}
             <section>
-              <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Description</h2>
-              <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{request.description}</p>
+              <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">
+                Description
+              </h2>
+              <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                {request.description}
+              </p>
             </section>
 
             {request.businessContext && (
               <section>
-                <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Business Context</h2>
-                <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">{request.businessContext}</p>
+                <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">
+                  Business Context
+                </h2>
+                <p className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+                  {request.businessContext}
+                </p>
               </section>
             )}
 
             {request.successMetrics && (
               <section>
-                <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Success Metrics</h2>
-                <p className="text-sm text-zinc-300 leading-relaxed">{request.successMetrics}</p>
+                <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">
+                  Success Metrics
+                </h2>
+                <p className="text-sm text-zinc-300 leading-relaxed">
+                  {request.successMetrics}
+                </p>
               </section>
             )}
 
             {request.figmaUrl && (
               <section>
-                <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Figma</h2>
+                <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">
+                  Figma
+                </h2>
                 <a
                   href={request.figmaUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 text-sm text-indigo-400 hover:text-indigo-300 transition-colors"
                 >
-                  <svg width="14" height="14" viewBox="0 0 38 57" fill="currentColor">
-                    <path d="M19 28.5a9.5 9.5 0 1 1 19 0 9.5 9.5 0 0 1-19 0z"/>
-                    <path d="M0 47.5A9.5 9.5 0 0 1 9.5 38H19v9.5a9.5 9.5 0 0 1-19 0z"/>
-                    <path d="M19 0v19h9.5a9.5 9.5 0 0 0 0-19H19z"/>
-                    <path d="M0 9.5A9.5 9.5 0 0 0 9.5 19H19V0H9.5A9.5 9.5 0 0 0 0 9.5z"/>
-                    <path d="M0 28.5A9.5 9.5 0 0 0 9.5 38H19V19H9.5A9.5 9.5 0 0 0 0 28.5z"/>
-                  </svg>
                   Open in Figma
                 </a>
               </section>
@@ -199,117 +231,16 @@ export default async function RequestDetailPage({
               impactMetric={request.impactMetric}
               impactPrediction={request.impactPrediction}
               impactActual={request.impactActual}
-              impactLoggedAt={clientRequest.impactLoggedAt}
+              impactLoggedAt={toISO(request.impactLoggedAt)}
               stage={request.stage}
             />
 
-            {/* AI Triage */}
-            {triage ? (
-              <section className="border border-zinc-800 rounded-xl overflow-hidden">
-                <div className="px-5 py-4 border-b border-zinc-800 bg-zinc-900/50">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">AI Triage</span>
-                      <span className="text-[10px] text-zinc-600 bg-zinc-800 rounded px-1.5 py-0.5">
-                        {triage.aiModel}
-                      </span>
-                    </div>
-                    <QualityBadge score={triage.qualityScore} />
-                  </div>
-                </div>
-
-                <div className="p-5 space-y-5">
-                  {/* Summary */}
-                  <div>
-                    <p className="text-sm text-zinc-300">{triage.summary}</p>
-                  </div>
-
-                  {/* Scores row */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="bg-zinc-900/60 rounded-lg p-3">
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1">Priority</div>
-                      <div className={`text-sm font-mono ${priorityConfig[triage.priority]?.color} inline-block px-1.5 py-0.5 rounded border`}>
-                        {triage.priority.toUpperCase()}
-                      </div>
-                      <p className="text-[10px] text-zinc-600 mt-1">{priorityConfig[triage.priority]?.desc}</p>
-                    </div>
-                    <div className="bg-zinc-900/60 rounded-lg p-3">
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1">Complexity</div>
-                      <div className="text-sm font-mono text-zinc-300">
-                        {"▪".repeat(triage.complexity)}{"▫".repeat(5 - triage.complexity)}
-                        <span className="text-zinc-500 ml-1">{triage.complexity}/5</span>
-                      </div>
-                    </div>
-                    <div className="bg-zinc-900/60 rounded-lg p-3">
-                      <div className="text-[10px] text-zinc-500 uppercase tracking-wide mb-1">Type</div>
-                      <div className="text-sm text-zinc-300 capitalize">{triage.requestType}</div>
-                    </div>
-                  </div>
-
-                  {/* Reasoning */}
-                  <div>
-                    <h3 className="text-xs text-zinc-500 font-medium mb-1.5">Reasoning</h3>
-                    <p className="text-sm text-zinc-400 leading-relaxed">{triage.reasoning}</p>
-                  </div>
-
-                  {/* Quality flags */}
-                  {(triage.qualityFlags as string[])?.length > 0 && (
-                    <div>
-                      <h3 className="text-xs text-zinc-500 font-medium mb-1.5">Quality Issues</h3>
-                      <ul className="space-y-1">
-                        {(triage.qualityFlags as string[]).map((flag, i) => (
-                          <li key={i} className="text-sm text-yellow-400/80 flex items-start gap-2">
-                            <span className="text-yellow-500/60 mt-0.5">⚠</span>
-                            {flag}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Suggestions */}
-                  {(triage.suggestions as string[])?.length > 0 && (
-                    <div>
-                      <h3 className="text-xs text-zinc-500 font-medium mb-1.5">Suggestions</h3>
-                      <ul className="space-y-1">
-                        {(triage.suggestions as string[]).map((s, i) => (
-                          <li key={i} className="text-sm text-zinc-400 flex items-start gap-2">
-                            <span className="text-zinc-600">→</span>
-                            {s}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Potential duplicates */}
-                  {(triage.potentialDuplicates as { id: string; title: string; reason: string }[])?.length > 0 && (
-                    <div className="bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-4">
-                      <h3 className="text-xs text-yellow-400/80 font-medium uppercase tracking-wide mb-2">
-                        ⚠ Potential overlaps detected
-                      </h3>
-                      <ul className="space-y-2">
-                        {(triage.potentialDuplicates as { id: string; title: string; reason: string }[]).map((d) => (
-                          <li key={d.id}>
-                            <a
-                              href={`/dashboard/requests/${d.id}`}
-                              className="text-sm text-yellow-400 hover:text-yellow-300 font-medium transition-colors"
-                            >
-                              {d.title}
-                            </a>
-                            <p className="text-xs text-zinc-500 mt-0.5">{d.reason}</p>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              </section>
-            ) : (
-              <div className="border border-zinc-800 rounded-xl p-8 text-center">
-                <p className="text-sm text-zinc-600">AI triage pending — add ANTHROPIC_API_KEY to enable</p>
-              </div>
-            )}
+            {/* AI Triage — removed temporarily, will restore after fix */}
+            <div className="border border-zinc-800 rounded-xl p-8 text-center">
+              <p className="text-sm text-zinc-600">
+                AI triage pending — add ANTHROPIC_API_KEY to enable
+              </p>
+            </div>
 
             {/* Comments */}
             <section>
@@ -323,18 +254,27 @@ export default async function RequestDetailPage({
                   {requestComments.map((c) => {
                     const author = c.authorId ? authorMap[c.authorId] : null;
                     return (
-                      <div key={c.id} className="border border-zinc-800 rounded-lg px-4 py-3">
+                      <div
+                        key={c.id}
+                        className="border border-zinc-800 rounded-lg px-4 py-3"
+                      >
                         <div className="flex items-center gap-2 mb-1.5">
                           {c.isSystem ? (
-                            <span className="text-[10px] text-zinc-600 bg-zinc-800 rounded px-1.5 py-0.5">AI</span>
+                            <span className="text-[10px] text-zinc-600 bg-zinc-800 rounded px-1.5 py-0.5">
+                              system
+                            </span>
                           ) : (
                             <span className="text-xs font-medium text-zinc-300">
                               {author?.fullName ?? "Unknown"}
                             </span>
                           )}
-                          <span className="text-xs text-zinc-600">{formatDate(c.createdAt)}</span>
+                          <span className="text-xs text-zinc-600">
+                            {formatDate(c.createdAt.toISOString())}
+                          </span>
                         </div>
-                        <p className="text-sm text-zinc-400 leading-relaxed">{c.body}</p>
+                        <p className="text-sm text-zinc-400 leading-relaxed">
+                          {c.body}
+                        </p>
                       </div>
                     );
                   })}
@@ -347,19 +287,38 @@ export default async function RequestDetailPage({
           {/* Sidebar */}
           <div className="space-y-5">
             <div className="border-b border-zinc-800/50 pb-4">
-              <div className="text-[10px] text-zinc-600 uppercase tracking-wide mb-2">Stage</div>
-              <StageControls requestId={request.id} currentStage={request.stage} currentStatus={request.status} updatedAt={clientRequest.updatedAt} />
+              <div className="text-[10px] text-zinc-600 uppercase tracking-wide mb-2">
+                Stage
+              </div>
+              <StageControls
+                requestId={request.id}
+                currentStage={request.stage}
+                currentStatus={request.status}
+                updatedAt={request.updatedAt.toISOString()}
+              />
             </div>
 
             {stageHistory.length > 0 && (
               <div className="border-b border-zinc-800/50 pb-4">
-                <div className="text-[10px] text-zinc-600 uppercase tracking-wide mb-2">History</div>
+                <div className="text-[10px] text-zinc-600 uppercase tracking-wide mb-2">
+                  History
+                </div>
                 <div className="space-y-1.5">
                   {stageHistory.map((s) => (
-                    <div key={s.id} className="flex items-center justify-between gap-2">
-                      <span className="text-xs text-zinc-600 capitalize">{s.stage}</span>
+                    <div
+                      key={s.id}
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <span className="text-xs text-zinc-600 capitalize">
+                        {s.stage}
+                      </span>
                       <span className="text-[10px] text-zinc-700">
-                        {new Date(s.completedAt ?? s.enteredAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        {new Date(
+                          s.completedAt ?? s.enteredAt
+                        ).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        })}
                       </span>
                     </div>
                   ))}
@@ -368,88 +327,84 @@ export default async function RequestDetailPage({
             )}
 
             <SidebarField label="Status">
-              <span className="text-sm capitalize">{request.status.replace(/_/g, " ")}</span>
+              <span className="text-sm capitalize">
+                {request.status.replace(/_/g, " ")}
+              </span>
             </SidebarField>
 
             {request.priority && (
               <SidebarField label="Priority">
-                <span className={`text-xs px-1.5 py-0.5 rounded border font-mono ${priorityConfig[request.priority]?.color}`}>
+                <span
+                  className={`text-xs px-1.5 py-0.5 rounded border font-mono ${priorityConfig[request.priority]?.color}`}
+                >
                   {request.priority.toUpperCase()}
                 </span>
-                <span className="text-xs text-zinc-600 ml-1.5">{priorityConfig[request.priority]?.desc}</span>
+                <span className="text-xs text-zinc-600 ml-1.5">
+                  {priorityConfig[request.priority]?.desc}
+                </span>
               </SidebarField>
             )}
 
             {request.complexity && (
               <SidebarField label="Complexity">
                 <span className="text-sm font-mono">
-                  {"▪".repeat(request.complexity)}{"▫".repeat(5 - request.complexity)}
-                  <span className="text-zinc-500 ml-1">{request.complexity}/5</span>
+                  {"▪".repeat(request.complexity)}
+                  {"▫".repeat(5 - request.complexity)}
+                  <span className="text-zinc-500 ml-1">
+                    {request.complexity}/5
+                  </span>
                 </span>
               </SidebarField>
             )}
 
             {request.deadlineAt && (
               <SidebarField label="Deadline">
-                <span className="text-sm">{formatDate(request.deadlineAt)}</span>
+                <span className="text-sm">
+                  {formatDate(toISO(request.deadlineAt)!)}
+                </span>
               </SidebarField>
             )}
 
             <div className="border-b border-zinc-800/50 pb-4">
-              <div className="text-[10px] text-zinc-600 uppercase tracking-wide mb-2">Assignees</div>
+              <div className="text-[10px] text-zinc-600 uppercase tracking-wide mb-2">
+                Assignees
+              </div>
               <AssignPanel requestId={request.id} />
             </div>
 
             <SidebarField label="Requester">
-              <span className="text-sm">{requester?.fullName ?? "Unknown"}</span>
-              <span className="text-xs text-zinc-600 capitalize ml-1">({requester?.role})</span>
+              <span className="text-sm">
+                {requester?.fullName ?? "Unknown"}
+              </span>
+              <span className="text-xs text-zinc-600 capitalize ml-1">
+                ({requester?.role})
+              </span>
             </SidebarField>
 
             <SidebarField label="Created">
-              <span className="text-sm text-zinc-400">{formatDate(request.createdAt)}</span>
+              <span className="text-sm text-zinc-400">
+                {formatDate(toISO(request.createdAt)!)}
+              </span>
             </SidebarField>
           </div>
         </div>
       </main>
     </div>
   );
-
-  } catch (err: unknown) {
-    // Re-throw Next.js internal errors (redirect, notFound)
-    if (err && typeof err === "object" && "digest" in err && typeof (err as { digest: unknown }).digest === "string") {
-      const d = (err as { digest: string }).digest;
-      if (d.startsWith("NEXT_REDIRECT") || d.startsWith("NEXT_NOT_FOUND")) throw err;
-    }
-    // Show actual error on page for debugging
-    const message = err instanceof Error ? err.message : String(err);
-    const stack = err instanceof Error ? err.stack : "";
-    return (
-      <div className="min-h-screen bg-zinc-950 text-white p-10 max-w-2xl mx-auto">
-        <h1 className="text-xl font-semibold mb-2">Debug: Page render error</h1>
-        <p className="text-sm text-red-400 font-mono whitespace-pre-wrap mb-4">{message}</p>
-        <pre className="text-xs text-zinc-600 whitespace-pre-wrap overflow-auto">{stack}</pre>
-      </div>
-    );
-  }
 }
 
-function QualityBadge({ score }: { score: number }) {
-  const color =
-    score >= 80 ? "text-green-400 bg-green-500/10 border-green-500/20" :
-    score >= 50 ? "text-yellow-400 bg-yellow-500/10 border-yellow-500/20" :
-    "text-red-400 bg-red-500/10 border-red-500/20";
-
-  return (
-    <span className={`text-xs font-mono px-2 py-0.5 rounded border ${color}`}>
-      Quality: {score}/100
-    </span>
-  );
-}
-
-function SidebarField({ label, children }: { label: string; children: React.ReactNode }) {
+function SidebarField({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="border-b border-zinc-800/50 pb-4">
-      <div className="text-[10px] text-zinc-600 uppercase tracking-wide mb-1.5">{label}</div>
+      <div className="text-[10px] text-zinc-600 uppercase tracking-wide mb-1.5">
+        {label}
+      </div>
       <div className="text-zinc-300">{children}</div>
     </div>
   );

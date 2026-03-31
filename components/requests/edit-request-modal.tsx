@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { updateRequest } from "@/app/actions/requests";
 
 interface SerializedRequest {
@@ -27,6 +28,7 @@ function toDateInput(date: Date | string | null): string {
 }
 
 export function EditRequestModal({ request, onClose }: Props) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +51,7 @@ export function EditRequestModal({ request, onClose }: Props) {
       if (res.error) {
         setError(res.error);
       } else {
+        router.refresh();
         onClose();
       }
     });

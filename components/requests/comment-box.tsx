@@ -1,9 +1,11 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { addComment } from "@/app/actions/requests";
 
 export function CommentBox({ requestId }: { requestId: string }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const ref = useRef<HTMLTextAreaElement>(null);
@@ -20,6 +22,7 @@ export function CommentBox({ requestId }: { requestId: string }) {
         setError(result.error);
       } else {
         if (ref.current) ref.current.value = "";
+        router.refresh();
       }
     });
   }

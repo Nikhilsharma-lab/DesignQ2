@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { advanceStage, toggleBlocked, nudgeRequest } from "@/app/actions/requests";
 
 const STAGES = [
@@ -28,6 +29,7 @@ export function StageControls({
   currentStatus: string;
   updatedAt: string;
 }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [nudged, setNudged] = useState(false);
@@ -45,6 +47,7 @@ export function StageControls({
     startTransition(async () => {
       const result = await advanceStage(requestId);
       if (result?.error) setError(result.error);
+      else router.refresh();
     });
   }
 
@@ -52,6 +55,7 @@ export function StageControls({
     startTransition(async () => {
       await nudgeRequest(requestId);
       setNudged(true);
+      router.refresh();
     });
   }
 
@@ -60,6 +64,7 @@ export function StageControls({
     startTransition(async () => {
       const result = await toggleBlocked(requestId, currentStatus);
       if (result?.error) setError(result.error);
+      else router.refresh();
     });
   }
 

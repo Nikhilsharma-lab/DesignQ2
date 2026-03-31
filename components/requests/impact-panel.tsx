@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { logImpact } from "@/app/actions/requests";
 
 interface Props {
@@ -26,6 +27,7 @@ export function ImpactPanel({
   impactLoggedAt,
   stage,
 }: Props) {
+  const router = useRouter();
   const [actual, setActual] = useState("");
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +45,7 @@ export function ImpactPanel({
         setError(res.error);
       } else {
         setActual("");
+        router.refresh();
       }
     });
   }
