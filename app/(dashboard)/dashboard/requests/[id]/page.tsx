@@ -59,26 +59,33 @@ export default async function RequestDetailPage({
   const [triage] = await db
     .select()
     .from(requestAiAnalysis)
-    .where(eq(requestAiAnalysis.requestId, id));
+    .where(eq(requestAiAnalysis.requestId, id))
+    .catch(() => []);
 
-  const [requester] = await db.select().from(profiles).where(eq(profiles.id, request.requesterId));
+  const [requester] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.id, request.requesterId))
+    .catch(() => []);
 
   const stageHistory = await db
     .select()
     .from(requestStages)
     .where(eq(requestStages.requestId, id))
-    .orderBy(requestStages.enteredAt);
+    .orderBy(requestStages.completedAt)
+    .catch((e) => { console.error("[RequestDetail] stageHistory error:", e); return []; });
 
   const requestComments = await db
     .select()
     .from(comments)
     .where(eq(comments.requestId, id))
-    .orderBy(comments.createdAt);
+    .orderBy(comments.createdAt)
+    .catch((e) => { console.error("[RequestDetail] comments error:", e); return []; });
 
   // Build a profile lookup for comment authors
   const authorIds = [...new Set(requestComments.map((c) => c.authorId).filter(Boolean))] as string[];
   const authorProfiles = authorIds.length
-    ? await db.select().from(profiles).where(inArray(profiles.id, authorIds))
+    ? await db.select().from(profiles).where(inArray(profiles.id, authorIds)).catch(() => [])
     : [];
   const authorMap = Object.fromEntries(authorProfiles.map((p) => [p.id, p]));
 
