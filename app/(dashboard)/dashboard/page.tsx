@@ -32,6 +32,29 @@ export default async function DashboardPage() {
 
   const myRequestIds = new Set(myAssignments.map((a) => a.requestId));
 
+  // Assignee avatars per request for the list
+  const orgReqIds = allRequests.map((r) => r.id);
+  const allAssignments = orgReqIds.length
+    ? await db
+        .select({ requestId: assignments.requestId, assigneeId: assignments.assigneeId })
+        .from(assignments)
+    : [];
+
+  const orgMembers = await db
+    .select({ id: profiles.id, fullName: profiles.fullName })
+    .from(profiles)
+    .where(eq(profiles.orgId, profile.orgId));
+
+  const memberMap = Object.fromEntries(orgMembers.map((m) => [m.id, m.fullName]));
+
+  // requestId → array of assignee names
+  const assigneesByRequest: Record<string, string[]> = {};
+  for (const a of allAssignments) {
+    if (!assigneesByRequest[a.requestId]) assigneesByRequest[a.requestId] = [];
+    const name = memberMap[a.assigneeId];
+    if (name) assigneesByRequest[a.requestId].push(name);
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 text-white">
       <header className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
@@ -76,7 +99,7 @@ export default async function DashboardPage() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-10">
-        <RequestList requests={allRequests} myRequestIds={myRequestIds} />
+        <RequestList requests={allRequests} myRequestIds={myRequestIds} assigneesByRequest={assigneesByRequest} />
       </main>
     </div>
   );
