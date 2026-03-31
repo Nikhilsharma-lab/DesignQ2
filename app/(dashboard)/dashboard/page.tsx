@@ -6,6 +6,7 @@ import { eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { logout } from "@/app/actions/auth";
 import { RequestList } from "@/components/requests/request-list";
+import { NotificationsBell } from "@/components/notifications/notifications-bell";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -83,6 +84,7 @@ export default async function DashboardPage() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <NotificationsBell />
           <span className="text-sm text-zinc-400">{profile.fullName}</span>
           <span className="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 rounded px-1.5 py-0.5 capitalize">
             {profile.role}
