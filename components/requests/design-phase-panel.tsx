@@ -4,55 +4,37 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 const STAGES = [
-  { key: "intake",  label: "Intake",  desc: "Define the problem clearly" },
-  { key: "context", label: "Context", desc: "Attach research & supporting data" },
-  { key: "shape",   label: "Shape",   desc: "Define solution direction & appetite" },
-  { key: "bet",     label: "Betting", desc: "Design Head decides: build, kill, or delay" },
+  { key: "explore",  label: "Explore",    desc: "Designer creates concepts" },
+  { key: "validate", label: "Validate",   desc: "3 sign-offs required (coming soon)" },
+  { key: "handoff",  label: "Handoff",    desc: "Figma locked, sent to dev" },
 ] as const;
 
-type PredesignStage = (typeof STAGES)[number]["key"];
+type DesignStage = (typeof STAGES)[number]["key"];
 
 interface Props {
   requestId: string;
-  currentStage: PredesignStage;
-  description: string | null;
-  businessContext: string | null;
-  successMetrics: string | null;
-  profileRole: string;
+  currentDesignStage: DesignStage;
+  figmaUrl: string | null;
 }
 
-export function PredesignPanel({
-  requestId,
-  currentStage,
-  description,
-  businessContext,
-  successMetrics,
-  profileRole,
-}: Props) {
+export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl }: Props) {
   const router = useRouter();
   const [advancing, setAdvancing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const currentIdx = STAGES.findIndex((s) => s.key === currentStage);
+  const currentIdx = STAGES.findIndex((s) => s.key === currentDesignStage);
+  const current = STAGES[currentIdx];
   const nextStage = currentIdx < STAGES.length - 1 ? STAGES[currentIdx + 1] : null;
+  const isLastDesign = currentIdx >= STAGES.length - 1; // at handoff
 
   function getGateStatus(): { canAdvance: boolean; missing: string[] } {
     const missing: string[] = [];
-    switch (currentStage) {
-      case "intake":
-        if (!description) missing.push("Problem description");
-        if (!businessContext) missing.push("Business goal (Business Context field)");
-        if (!successMetrics) missing.push("User impact (Success Metrics field)");
+    switch (currentDesignStage) {
+      case "validate":
+        missing.push("Validation requires 3 sign-offs (coming in Week 5-8)");
         break;
-      case "context":
-        if (!businessContext) missing.push("Context / research notes");
-        break;
-      case "shape":
-        if (!successMetrics) missing.push("Constraints and time appetite");
-        break;
-      case "bet":
-        if (profileRole !== "lead" && profileRole !== "admin")
-          missing.push("Requires Design Head (lead/admin) role");
+      case "handoff":
+        if (!figmaUrl) missing.push("Add a Figma URL before handing off to dev");
         break;
     }
     return { canAdvance: missing.length === 0, missing };
@@ -62,15 +44,10 @@ export function PredesignPanel({
     setAdvancing(true);
     setError(null);
     try {
-      const res = await fetch(`/api/requests/${requestId}/advance-phase`, {
-        method: "POST",
-      });
+      const res = await fetch(`/api/requests/${requestId}/advance-phase`, { method: "POST" });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to advance");
-      } else {
-        router.refresh();
-      }
+      if (!res.ok) setError(data.error ?? "Failed to advance");
+      else router.refresh();
     } catch {
       setError("Network error");
     } finally {
@@ -79,17 +56,15 @@ export function PredesignPanel({
   }
 
   const { canAdvance, missing } = getGateStatus();
-  const current = STAGES[currentIdx];
-  const isFinal = !nextStage;
 
   return (
     <div className="border border-zinc-800 rounded-xl overflow-hidden">
       {/* Header */}
       <div className="px-5 py-3 border-b border-zinc-800 bg-zinc-900/50 flex items-center justify-between">
         <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
-          Phase 1 — Predesign
+          Phase 2 — Design
         </span>
-        <span className="text-xs text-zinc-600">PM + Org decides what to build</span>
+        <span className="text-xs text-zinc-600">Designer leads</span>
       </div>
 
       {/* Stage stepper */}
@@ -97,40 +72,27 @@ export function PredesignPanel({
         <div className="flex items-start">
           {STAGES.map((s, i) => {
             const isDone = i < currentIdx;
-            const isCurrent = s.key === currentStage;
-            const isUpcoming = i > currentIdx;
+            const isCurrent = s.key === currentDesignStage;
             return (
               <div key={s.key} className="flex items-center flex-1">
                 <div className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono border transition-colors ${
-                      isDone
-                        ? "bg-green-500/15 border-green-500/30 text-green-400"
-                        : isCurrent
-                        ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400"
-                        : "bg-zinc-800/40 border-zinc-700/40 text-zinc-600"
-                    }`}
-                  >
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono border transition-colors ${
+                    isDone
+                      ? "bg-green-500/15 border-green-500/30 text-green-400"
+                      : isCurrent
+                      ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400"
+                      : "bg-zinc-800/40 border-zinc-700/40 text-zinc-600"
+                  }`}>
                     {isDone ? "✓" : i + 1}
                   </div>
-                  <span
-                    className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center ${
-                      isCurrent
-                        ? "text-indigo-400"
-                        : isDone
-                        ? "text-green-500/80"
-                        : "text-zinc-600"
-                    }`}
-                  >
+                  <span className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center ${
+                    isCurrent ? "text-indigo-400" : isDone ? "text-green-500/80" : "text-zinc-600"
+                  }`}>
                     {s.label}
                   </span>
                 </div>
                 {i < STAGES.length - 1 && (
-                  <div
-                    className={`h-px w-full mb-5 mx-0.5 ${
-                      i < currentIdx ? "bg-green-500/20" : "bg-zinc-800"
-                    }`}
-                  />
+                  <div className={`h-px w-full mb-5 mx-0.5 ${i < currentIdx ? "bg-green-500/20" : "bg-zinc-800"}`} />
                 )}
               </div>
             );
@@ -138,7 +100,7 @@ export function PredesignPanel({
         </div>
       </div>
 
-      {/* Current stage details */}
+      {/* Current stage details + controls */}
       <div className="px-5 py-4 space-y-4">
         {current && (
           <div>
@@ -152,7 +114,7 @@ export function PredesignPanel({
           {missing.length > 0 ? (
             <div className="bg-amber-500/5 border border-amber-500/15 rounded-lg px-3 py-2.5 space-y-1">
               <p className="text-[11px] text-zinc-400">
-                {isFinal ? "To approve the bet:" : `To advance to ${nextStage?.label}:`}
+                {isLastDesign ? "To hand off to dev:" : `To advance to ${nextStage?.label}:`}
               </p>
               {missing.map((m, i) => (
                 <p key={i} className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
@@ -165,13 +127,13 @@ export function PredesignPanel({
             <div className="bg-green-500/5 border border-green-500/15 rounded-lg px-3 py-2 flex items-center gap-2">
               <span className="text-green-400 text-xs">✓</span>
               <p className="text-[11px] text-green-400/80">
-                {isFinal ? "Ready to approve — this starts the Design Phase" : `Ready to advance to ${nextStage?.label}`}
+                {isLastDesign ? "Ready to hand off to dev" : `Ready to advance to ${nextStage?.label}`}
               </p>
             </div>
           )}
         </div>
 
-        {/* Advance button — always shown, label changes at final betting stage */}
+        {/* Advance button */}
         <button
           onClick={handleAdvance}
           disabled={!canAdvance || advancing}
@@ -180,7 +142,7 @@ export function PredesignPanel({
           {advancing && (
             <span className="w-3 h-3 border border-zinc-400 border-t-transparent rounded-full animate-spin" />
           )}
-          {isFinal ? "Approve Bet — Start Design Phase" : `Advance to ${nextStage?.label}`}
+          {isLastDesign ? "Hand off to Dev" : `Advance to ${nextStage?.label}`}
         </button>
 
         {error && (

@@ -12,6 +12,7 @@ import { EditRequestButton } from "@/components/requests/edit-request-button";
 import { HandoffChecklist } from "@/components/requests/handoff-checklist";
 import { TriageButton } from "@/components/requests/triage-button";
 import { PredesignPanel } from "@/components/requests/predesign-panel";
+import { DesignPhasePanel } from "@/components/requests/design-phase-panel";
 
 const priorityConfig: Record<string, { label: string; color: string; desc: string }> = {
   p0: { label: "P0", color: "bg-red-500/15 text-red-400 border-red-500/20", desc: "Critical — blocking" },
@@ -380,6 +381,14 @@ export default async function RequestDetailPage({
                   businessContext={request.businessContext}
                   successMetrics={request.successMetrics}
                   profileRole={profile.role ?? "member"}
+                />
+              </div>
+            ) : request.phase === "design" ? (
+              <div className="mb-2">
+                <DesignPhasePanel
+                  requestId={request.id}
+                  currentDesignStage={(request.designStage ?? "explore") as "explore" | "validate" | "handoff"}
+                  figmaUrl={request.figmaUrl}
                 />
               </div>
             ) : (
