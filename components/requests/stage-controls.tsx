@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { advanceStage, toggleBlocked, nudgeRequest } from "@/app/actions/requests";
 
 const STAGES = [
   { id: "intake", label: "Intake" },
@@ -45,25 +44,35 @@ export function StageControls({
   function handleAdvance() {
     setError(null);
     startTransition(async () => {
-      const result = await advanceStage(requestId);
-      if (result?.error) setError(result.error);
+      const res = await fetch(`/api/requests/${requestId}/advance`, { method: "POST" });
+      const data = await res.json();
+      if (data.error) setError(data.error);
       else router.refresh();
     });
   }
 
   function handleNudge() {
     startTransition(async () => {
-      await nudgeRequest(requestId);
-      setNudged(true);
-      router.refresh();
+      const res = await fetch(`/api/requests/${requestId}/nudge`, { method: "POST" });
+      const data = await res.json();
+      if (data.error) setError(data.error);
+      else {
+        setNudged(true);
+        router.refresh();
+      }
     });
   }
 
   function handleToggleBlocked() {
     setError(null);
     startTransition(async () => {
-      const result = await toggleBlocked(requestId, currentStatus);
-      if (result?.error) setError(result.error);
+      const res = await fetch(`/api/requests/${requestId}/toggle-blocked`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentStatus }),
+      });
+      const data = await res.json();
+      if (data.error) setError(data.error);
       else router.refresh();
     });
   }
@@ -94,7 +103,7 @@ export function StageControls({
         })}
       </div>
 
-      {/* Advance button — hidden when blocked */}
+      {/* Advance button */}
       {nextStage && !isBlocked && (
         <button
           onClick={handleAdvance}

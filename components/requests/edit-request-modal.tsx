@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { updateRequest } from "@/app/actions/requests";
 
 interface SerializedRequest {
   id: string;
@@ -38,18 +37,23 @@ export function EditRequestModal({ request, onClose }: Props) {
     const form = new FormData(e.currentTarget);
 
     startTransition(async () => {
-      const res = await updateRequest(request.id, {
-        title: form.get("title") as string,
-        description: form.get("description") as string,
-        businessContext: (form.get("businessContext") as string) || null,
-        successMetrics: (form.get("successMetrics") as string) || null,
-        figmaUrl: (form.get("figmaUrl") as string) || null,
-        impactMetric: (form.get("impactMetric") as string) || null,
-        impactPrediction: (form.get("impactPrediction") as string) || null,
-        deadlineAt: (form.get("deadlineAt") as string) || null,
+      const res = await fetch(`/api/requests/${request.id}/update`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: form.get("title") as string,
+          description: form.get("description") as string,
+          businessContext: (form.get("businessContext") as string) || null,
+          successMetrics: (form.get("successMetrics") as string) || null,
+          figmaUrl: (form.get("figmaUrl") as string) || null,
+          impactMetric: (form.get("impactMetric") as string) || null,
+          impactPrediction: (form.get("impactPrediction") as string) || null,
+          deadlineAt: (form.get("deadlineAt") as string) || null,
+        }),
       });
-      if (res.error) {
-        setError(res.error);
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
       } else {
         router.refresh();
         onClose();

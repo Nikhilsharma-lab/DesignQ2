@@ -2,7 +2,6 @@
 
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { addComment } from "@/app/actions/requests";
 
 export function CommentBox({ requestId }: { requestId: string }) {
   const router = useRouter();
@@ -17,9 +16,14 @@ export function CommentBox({ requestId }: { requestId: string }) {
 
     setError(null);
     startTransition(async () => {
-      const result = await addComment(requestId, body);
-      if (result?.error) {
-        setError(result.error);
+      const res = await fetch(`/api/requests/${requestId}/comment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
       } else {
         if (ref.current) ref.current.value = "";
         router.refresh();

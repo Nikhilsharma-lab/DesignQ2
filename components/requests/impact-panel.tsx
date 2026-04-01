@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { logImpact } from "@/app/actions/requests";
 
 interface Props {
   requestId: string;
@@ -40,9 +39,14 @@ export function ImpactPanel({
   function handleLog() {
     setError(null);
     startTransition(async () => {
-      const res = await logImpact(requestId, actual);
-      if (res.error) {
-        setError(res.error);
+      const res = await fetch(`/api/requests/${requestId}/impact`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ impactActual: actual }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setError(data.error);
       } else {
         setActual("");
         router.refresh();
