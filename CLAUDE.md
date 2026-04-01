@@ -897,10 +897,28 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 DATABASE_URL=
 ANTHROPIC_API_KEY=
-FIGMA_CLIENT_ID=              ← OAuth (future — when Figma OAuth is built)
-FIGMA_CLIENT_SECRET=          ← OAuth (future)
+
+# Email (Resend) — add these in Vercel dashboard to activate email notifications
+RESEND_API_KEY=               ← get from resend.com (free tier, 3k emails/month)
+EMAIL_FROM=                   ← e.g. "DesignQ <notifications@yourdomain.com>"
+                                  domain must be verified in Resend dashboard
+                                  OR use "onboarding@resend.dev" to test without domain
+NEXT_PUBLIC_APP_URL=          ← your Vercel deployment URL (e.g. https://designq2.vercel.app)
+                                  used in email links — without this, links in emails won't work
+
+# Figma OAuth (future — not yet built)
+FIGMA_CLIENT_ID=
+FIGMA_CLIENT_SECRET=
 # FIGMA_WEBHOOK_TOKEN removed — webhook approach dropped in favour of OAuth
 ```
+
+### Email activation checklist (TODO)
+- [ ] Sign up at resend.com → copy API key → add as `RESEND_API_KEY` in Vercel
+- [ ] Verify sending domain in Resend dashboard (or use `onboarding@resend.dev` to test first)
+- [ ] Set `EMAIL_FROM` to `DesignQ <notifications@yourdomain.com>`
+- [ ] Set `NEXT_PUBLIC_APP_URL` to the live Vercel URL
+- [ ] Redeploy on Vercel to pick up new env vars
+- [ ] Test by creating an invite — should receive email at the invited address
 
 ---
 
