@@ -389,6 +389,7 @@ export default async function RequestDetailPage({
                   requestId={request.id}
                   currentDesignStage={(request.designStage ?? "explore") as "explore" | "validate" | "handoff"}
                   figmaUrl={request.figmaUrl}
+                  profileRole={profile.role ?? "member"}
                 />
               </div>
             ) : (

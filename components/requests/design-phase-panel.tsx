@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { ValidationGate } from "./validation-gate";
 
 const STAGES = [
-  { key: "explore",  label: "Explore",    desc: "Designer creates concepts" },
-  { key: "validate", label: "Validate",   desc: "3 sign-offs required (coming soon)" },
-  { key: "handoff",  label: "Handoff",    desc: "Figma locked, sent to dev" },
+  { key: "explore",  label: "Explore",  desc: "Designer creates concepts in Figma" },
+  { key: "validate", label: "Validate", desc: "3 sign-offs: Designer · PM · Design Head" },
+  { key: "handoff",  label: "Handoff",  desc: "Figma locked, sent to dev" },
 ] as const;
 
 type DesignStage = (typeof STAGES)[number]["key"];
@@ -15,9 +16,10 @@ interface Props {
   requestId: string;
   currentDesignStage: DesignStage;
   figmaUrl: string | null;
+  profileRole: string;
 }
 
-export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl }: Props) {
+export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, profileRole }: Props) {
   const router = useRouter();
   const [advancing, setAdvancing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,17 +27,13 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl }: Pr
   const currentIdx = STAGES.findIndex((s) => s.key === currentDesignStage);
   const current = STAGES[currentIdx];
   const nextStage = currentIdx < STAGES.length - 1 ? STAGES[currentIdx + 1] : null;
-  const isLastDesign = currentIdx >= STAGES.length - 1; // at handoff
+  const isLastDesign = currentIdx >= STAGES.length - 1;
+  const isValidateStage = currentDesignStage === "validate";
 
   function getGateStatus(): { canAdvance: boolean; missing: string[] } {
     const missing: string[] = [];
-    switch (currentDesignStage) {
-      case "validate":
-        missing.push("Validation requires 3 sign-offs (coming in Week 5-8)");
-        break;
-      case "handoff":
-        if (!figmaUrl) missing.push("Add a Figma URL before handing off to dev");
-        break;
+    if (currentDesignStage === "handoff" && !figmaUrl) {
+      missing.push("Add a Figma URL before handing off to dev");
     }
     return { canAdvance: missing.length === 0, missing };
   }
@@ -100,7 +98,7 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl }: Pr
         </div>
       </div>
 
-      {/* Current stage details + controls */}
+      {/* Current stage content */}
       <div className="px-5 py-4 space-y-4">
         {current && (
           <div>
@@ -109,46 +107,48 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl }: Pr
           </div>
         )}
 
-        {/* Gate status */}
-        <div>
-          {missing.length > 0 ? (
-            <div className="bg-amber-500/5 border border-amber-500/15 rounded-lg px-3 py-2.5 space-y-1">
-              <p className="text-[11px] text-zinc-400">
-                {isLastDesign ? "To hand off to dev:" : `To advance to ${nextStage?.label}:`}
-              </p>
-              {missing.map((m, i) => (
-                <p key={i} className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-amber-400/60 shrink-0" />
-                  {m}
-                </p>
-              ))}
+        {/* Validate stage: show ValidationGate instead of advance button */}
+        {isValidateStage ? (
+          <ValidationGate requestId={requestId} myProfileRole={profileRole} />
+        ) : (
+          <>
+            {/* Gate status for explore + handoff */}
+            <div>
+              {missing.length > 0 ? (
+                <div className="bg-amber-500/5 border border-amber-500/15 rounded-lg px-3 py-2.5 space-y-1">
+                  <p className="text-[11px] text-zinc-400">
+                    {isLastDesign ? "To hand off to dev:" : `To advance to ${nextStage?.label}:`}
+                  </p>
+                  {missing.map((m, i) => (
+                    <p key={i} className="text-[11px] text-amber-400/80 flex items-center gap-1.5">
+                      <span className="w-1 h-1 rounded-full bg-amber-400/60 shrink-0" />
+                      {m}
+                    </p>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-green-500/5 border border-green-500/15 rounded-lg px-3 py-2 flex items-center gap-2">
+                  <span className="text-green-400 text-xs">✓</span>
+                  <p className="text-[11px] text-green-400/80">
+                    {isLastDesign ? "Ready to hand off to dev" : `Ready to advance to ${nextStage?.label}`}
+                  </p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="bg-green-500/5 border border-green-500/15 rounded-lg px-3 py-2 flex items-center gap-2">
-              <span className="text-green-400 text-xs">✓</span>
-              <p className="text-[11px] text-green-400/80">
-                {isLastDesign ? "Ready to hand off to dev" : `Ready to advance to ${nextStage?.label}`}
-              </p>
-            </div>
-          )}
-        </div>
 
-        {/* Advance button */}
-        <button
-          onClick={handleAdvance}
-          disabled={!canAdvance || advancing}
-          className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {advancing && (
-            <span className="w-3 h-3 border border-zinc-400 border-t-transparent rounded-full animate-spin" />
-          )}
-          {isLastDesign ? "Hand off to Dev" : `Advance to ${nextStage?.label}`}
-        </button>
+            <button
+              onClick={handleAdvance}
+              disabled={!canAdvance || advancing}
+              className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {advancing && <span className="w-3 h-3 border border-zinc-400 border-t-transparent rounded-full animate-spin" />}
+              {isLastDesign ? "Hand off to Dev" : `Advance to ${nextStage?.label}`}
+            </button>
+          </>
+        )}
 
         {error && (
-          <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
-            {error}
-          </p>
+          <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">{error}</p>
         )}
       </div>
     </div>
