@@ -4,8 +4,26 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, requests, requestAiAnalysis, assignments } from "@/db/schema";
-import { eq, inArray, count } from "drizzle-orm";
+import { profiles, requests, assignments } from "@/db/schema";
+import { eq, inArray } from "drizzle-orm";
+
+const digestSchema = z.object({
+  headline: z.string().describe("One punchy sentence summarising the team's week"),
+  shippedThisWeek: z.string().describe(
+    "What shipped this week — list each item with designer name and cycle time. If nothing shipped, say so plainly."
+  ),
+  teamHealth: z.string().describe(
+    "Throughput (items shipped), avg cycle time, and whether the pace is improving or slipping"
+  ),
+  standout: z.string().describe(
+    "Standout performer(s) this week — fastest output, most shipped, or highest-impact work. Name them directly."
+  ),
+  recommendations: z.array(z.string()).min(1).max(3).describe(
+    "2-3 direct, actionable coaching recommendations — reassign work, address a bottleneck, coaching need"
+  ),
+});
+
+export type WeeklyDigest = z.infer<typeof digestSchema>;
 
 export async function GET() {
   const supabase = await createClient();
@@ -15,103 +33,129 @@ export async function GET() {
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  // Fetch all org data for the digest
   const members = await db.select().from(profiles).where(eq(profiles.orgId, profile.orgId));
   const orgRequests = await db.select().from(requests).where(eq(requests.orgId, profile.orgId));
-
   const orgReqIds = orgRequests.map((r) => r.id);
 
-  const triageRows = orgReqIds.length
-    ? await db.select({ requestId: requestAiAnalysis.requestId, qualityScore: requestAiAnalysis.qualityScore })
-        .from(requestAiAnalysis)
-        .where(inArray(requestAiAnalysis.requestId, orgReqIds))
-    : [];
-
-  const workloadRows = orgReqIds.length
-    ? await db.select({ assigneeId: assignments.assigneeId, cnt: count() })
+  const allAssignments = orgReqIds.length
+    ? await db
+        .select({ requestId: assignments.requestId, assigneeId: assignments.assigneeId, role: assignments.role })
         .from(assignments)
         .where(inArray(assignments.requestId, orgReqIds))
-        .groupBy(assignments.assigneeId)
     : [];
 
-  // Compute stalled: active requests not updated in 5+ days
+  const memberMap = Object.fromEntries(members.map((m) => [m.id, m.fullName]));
+
+  // Lead assignee per request (role = "lead")
+  const leadByRequest: Record<string, string> = {};
+  for (const a of allAssignments) {
+    if (a.role === "lead") leadByRequest[a.requestId] = memberMap[a.assigneeId] ?? "Unknown";
+  }
+
   const now = Date.now();
+  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+
+  // Shipped/completed requests — for cycle time calculation
+  const shippedAll = orgRequests.filter(
+    (r) => r.status === "shipped" || r.status === "completed" || r.trackStage === "complete"
+  );
+
+  // This week vs last week (for throughput trend)
+  const shippedThisWeek = shippedAll.filter(
+    (r) => now - new Date(r.updatedAt).getTime() < ONE_WEEK_MS
+  );
+  const shippedLastWeek = shippedAll.filter((r) => {
+    const age = now - new Date(r.updatedAt).getTime();
+    return age >= ONE_WEEK_MS && age < TWO_WEEKS_MS;
+  });
+
+  const cycleDays = (r: typeof orgRequests[0]) =>
+    Math.round((new Date(r.updatedAt).getTime() - new Date(r.createdAt).getTime()) / 86_400_000);
+
+  const avgCycle = (reqs: typeof orgRequests) => {
+    if (!reqs.length) return null;
+    return Math.round(reqs.reduce((s, r) => s + cycleDays(r), 0) / reqs.length);
+  };
+
+  const shippedThisWeekAvgCycle = avgCycle(shippedThisWeek);
+  const shippedLastWeekAvgCycle = avgCycle(shippedLastWeek);
+
+  // Stalled: active, no update for 5+ days
   const STALL_EXEMPT = new Set(["draft", "completed", "shipped", "blocked"]);
   const stalledRequests = orgRequests.filter((r) => {
     if (STALL_EXEMPT.has(r.status)) return false;
     return (now - new Date(r.updatedAt).getTime()) / 86_400_000 >= 5;
   });
 
-  // PM quality map
-  const qualityByPM: Record<string, { total: number; count: number }> = {};
-  for (const t of triageRows) {
-    const req = orgRequests.find((r) => r.id === t.requestId);
-    if (!req) continue;
-    if (!qualityByPM[req.requesterId]) qualityByPM[req.requesterId] = { total: 0, count: 0 };
-    qualityByPM[req.requesterId].total += t.qualityScore;
-    qualityByPM[req.requesterId].count += 1;
+  // Active requests per designer (workload)
+  const activeByDesigner: Record<string, number> = {};
+  for (const a of allAssignments) {
+    const req = orgRequests.find((r) => r.id === a.requestId);
+    if (!req || STALL_EXEMPT.has(req.status)) continue;
+    if (a.role === "lead") {
+      activeByDesigner[a.assigneeId] = (activeByDesigner[a.assigneeId] ?? 0) + 1;
+    }
   }
 
-  const workloadMap = Object.fromEntries(workloadRows.map((w) => [w.assigneeId, Number(w.cnt)]));
+  // Shipped this week — list for prompt
+  const shippedItems = shippedThisWeek.map((r) => {
+    const designer = leadByRequest[r.id] ?? "Unassigned";
+    const days = cycleDays(r);
+    const impact = r.impactPrediction ? ` (predicted: ${r.impactPrediction})` : "";
+    return `• "${r.title}" — ${designer}, ${days}d cycle time${impact}`;
+  });
 
-  // Build context for Claude
-  const statusCounts: Record<string, number> = {};
-  for (const r of orgRequests) statusCounts[r.status] = (statusCounts[r.status] ?? 0) + 1;
-
-  const pmSummaries = members
-    .filter((m) => m.role === "pm" || m.role === "lead")
-    .map((m) => {
-      const q = qualityByPM[m.id];
-      return `${m.fullName} (${m.role}): ${q ? `avg quality ${Math.round(q.total / q.count)}/100 across ${q.count} requests` : "no requests yet"}`;
-    }).join("\n");
-
+  // Designer workload summary
   const designerSummaries = members
     .filter((m) => m.role === "designer" || m.role === "lead")
-    .map((m) => `${m.fullName}: ${workloadMap[m.id] ?? 0} active assignments`)
-    .join("\n");
+    .map((m) => {
+      const active = activeByDesigner[m.id] ?? 0;
+      const shipped = shippedThisWeek.filter((r) => leadByRequest[r.id] === m.fullName).length;
+      return `${m.fullName} (${m.role}): ${active} active, ${shipped} shipped this week`;
+    });
 
-  const stalledList = stalledRequests
-    .map((r) => {
-      const daysStuck = Math.floor((now - new Date(r.updatedAt).getTime()) / 86_400_000);
-      return `"${r.title}" — ${r.status}, ${daysStuck} days since update`;
-    }).join("\n") || "None";
+  // Stalled list
+  const stalledList = stalledRequests.map((r) => {
+    const days = Math.floor((now - new Date(r.updatedAt).getTime()) / 86_400_000);
+    const designer = leadByRequest[r.id] ?? "Unassigned";
+    return `• "${r.title}" — ${designer}, stuck ${days}d`;
+  });
 
-  const recentShipped = orgRequests
-    .filter((r) => r.status === "shipped" || r.status === "completed")
-    .slice(-5)
-    .map((r) => `"${r.title}" (${r.requestType ?? "unknown"})`)
-    .join("\n") || "Nothing shipped yet";
+  const throughputTrend =
+    shippedLastWeekAvgCycle !== null && shippedThisWeekAvgCycle !== null
+      ? shippedThisWeekAvgCycle < shippedLastWeekAvgCycle
+        ? "improving (cycle time down)"
+        : shippedThisWeekAvgCycle > shippedLastWeekAvgCycle
+        ? "slowing (cycle time up)"
+        : "steady"
+      : "insufficient data for trend";
 
   const { object } = await generateObject({
     model: anthropic("claude-3-5-haiku-20241022"),
-    schema: z.object({
-      headline: z.string().describe("One punchy sentence summarizing the team's week"),
-      shipped: z.string().describe("2-3 sentences on what shipped and its impact"),
-      attention: z.string().describe("2-3 sentences on what needs immediate attention (stalls, overload, quality issues)"),
-      teamHealth: z.string().describe("1-2 sentences on overall team health — workload balance, PM quality trends"),
-      topAction: z.string().describe("The single most important thing the design lead should do today — one sentence, direct"),
-    }),
-    prompt: `You are a design ops AI writing the weekly digest for a design team.
+    schema: digestSchema,
+    prompt: `You are a design ops AI writing the weekly digest for a design team lead.
 
-TEAM SIZE: ${members.length} members
+TODAY: ${new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
 
-REQUEST PIPELINE:
-${Object.entries(statusCounts).map(([s, c]) => `  ${s}: ${c}`).join("\n")}
-Total: ${orgRequests.length}
+SHIPPED THIS WEEK (${shippedThisWeek.length} items):
+${shippedItems.length ? shippedItems.join("\n") : "Nothing shipped this week."}
 
-RECENTLY SHIPPED:
-${recentShipped}
+SHIPPED LAST WEEK: ${shippedLastWeek.length} items
 
-STALLED (active, 5+ days no update):
-${stalledList}
-
-PM REQUEST QUALITY:
-${pmSummaries || "No PM data"}
+THROUGHPUT TREND: ${throughputTrend}
+This week avg cycle: ${shippedThisWeekAvgCycle !== null ? `${shippedThisWeekAvgCycle} days` : "n/a"}
+Last week avg cycle: ${shippedLastWeekAvgCycle !== null ? `${shippedLastWeekAvgCycle} days` : "n/a"}
 
 DESIGNER WORKLOAD:
-${designerSummaries || "No designer data"}
+${designerSummaries.length ? designerSummaries.join("\n") : "No designers yet."}
 
-Write a weekly digest. Be direct and specific — name actual requests and people where relevant. This is a private internal digest for the design lead, not a PR document. Flag real problems.`,
+STALLED (5+ days no update):
+${stalledList.length ? stalledList.join("\n") : "None."}
+
+TOTAL PIPELINE: ${orgRequests.length} requests
+
+Write the weekly digest. Be specific — name people and requests. This is a private internal report for the design lead, not a PR document. Flag real problems plainly.`,
   });
 
   return NextResponse.json(object);
