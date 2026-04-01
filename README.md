@@ -218,8 +218,8 @@ organizations
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/designq.git
-cd designq
+git clone https://github.com/yourusername/DesignQ2.git
+cd DesignQ2
 ```
 
 ### 2. Install Dependencies
@@ -232,11 +232,7 @@ pnpm install
 
 ### 3. Set Up Environment Variables
 
-Copy the example environment file and fill in your credentials:
-
-```bash
-cp .env.example .env.local
-```
+Create a `.env.local` file in the project root and fill in your credentials:
 
 ```env
 # Supabase
@@ -346,7 +342,7 @@ designq/
 ├── public/                   # Static assets
 │   └── assets/               # Logo, images
 ├── tests/                    # Test files
-├── .env.example              # Environment variable template
+├── .env.local                # Local environment variables (create this file)
 ├── tailwind.config.ts        # Tailwind configuration
 ├── next.config.ts            # Next.js configuration
 └── package.json
@@ -477,8 +473,9 @@ Before/after screenshots or a short recording.
 ### Code Style
 
 - **TypeScript** — Strict mode enabled. No `any` types unless absolutely necessary (and documented why).
-- **Formatting** — We use Prettier with the project config. Run `npm run format` before committing.
+- **Formatting** — Follow the existing file style in the repo. There is currently no dedicated formatting script in `package.json`.
 - **Linting** — ESLint with the Next.js recommended config. Run `npm run lint` to check.
+- **Type checking** — Run `npx tsc --noEmit` before committing to catch TypeScript issues.
 - **Component naming** — PascalCase for components, camelCase for utilities, kebab-case for file names.
 - **AI prompts** — All AI prompt templates live in `lib/ai/`. If you're modifying an AI agent's behavior, update the prompt template, not the API route.
 
