@@ -49,8 +49,6 @@ export default async function RequestDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const failures: string[] = [];
-
   /* ---- auth ---- */
   const { id } = await params;
   const supabase = await createClient();
@@ -78,7 +76,7 @@ export default async function RequestDetailPage({
       requesterRole = requester.role ?? "";
     }
   } catch (e: unknown) {
-    failures.push(`requester: ${e instanceof Error ? e.message : String(e)}`);
+    // requester query failed silently
   }
 
   let stageHistory: (typeof requestStages.$inferSelect)[] = [];
@@ -89,7 +87,7 @@ export default async function RequestDetailPage({
       .where(eq(requestStages.requestId, id))
       .orderBy(requestStages.completedAt);
   } catch (e: unknown) {
-    failures.push(`stageHistory: ${e instanceof Error ? e.message : String(e)}`);
+    // stageHistory query failed silently
   }
 
   let requestComments: (typeof comments.$inferSelect)[] = [];
@@ -114,7 +112,7 @@ export default async function RequestDetailPage({
       );
     }
   } catch (e: unknown) {
-    failures.push(`comments: ${e instanceof Error ? e.message : String(e)}`);
+    // comments query failed silently
   }
 
   /* ---- serialise for client components ---- */
@@ -157,15 +155,6 @@ export default async function RequestDetailPage({
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-10">
-        {/* Debug: show any query failures */}
-        {failures.length > 0 && (
-          <div className="mb-6 border border-yellow-500/30 bg-yellow-500/5 rounded-lg p-3">
-            <p className="text-xs text-yellow-400 font-mono">
-              Query failures: {failures.join(" | ")}
-            </p>
-          </div>
-        )}
-
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main content */}
           <div className="lg:col-span-2 space-y-8">
@@ -234,6 +223,13 @@ export default async function RequestDetailPage({
               impactLoggedAt={toISO(request.impactLoggedAt)}
               stage={request.stage}
             />
+
+            {/* AI Triage */}
+            <div className="border border-zinc-800 rounded-xl p-8 text-center">
+              <p className="text-sm text-zinc-600">
+                AI triage pending — add ANTHROPIC_API_KEY to enable
+              </p>
+            </div>
 
             {/* Comments */}
             <section>
