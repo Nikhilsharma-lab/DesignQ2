@@ -105,6 +105,12 @@ export default async function InsightsPage() {
             <Link href="/dashboard/ideas" className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors">
               Ideas
             </Link>
+            <Link
+              href="/dashboard/radar"
+              className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors"
+            >
+              Radar
+            </Link>
           </nav>
         </div>
         <div className="flex items-center gap-3">
