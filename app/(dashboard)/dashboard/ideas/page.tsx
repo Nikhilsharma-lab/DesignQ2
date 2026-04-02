@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { profiles, ideas, ideaVotes } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
+import { HeaderSearch } from "@/components/ui/header-search";
 import { UserMenu } from "@/components/settings/user-menu";
 import { IdeaBoard } from "@/components/ideas/idea-board";
 
@@ -74,6 +75,7 @@ export default async function IdeasPage() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <HeaderSearch />
           <NotificationsBell />
           <span className="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 rounded px-1.5 py-0.5 capitalize">
             {profile.role}

@@ -7,6 +7,7 @@ import { eq, inArray, count } from "drizzle-orm";
 import { DigestPanel } from "@/components/insights/digest-panel";
 import { UserMenu } from "@/components/settings/user-menu";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
+import { HeaderSearch } from "@/components/ui/header-search";
 import { PmCalibration } from "@/components/insights/pm-calibration";
 
 function formatDate(d: Date | string) {
@@ -107,6 +108,7 @@ export default async function InsightsPage() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <HeaderSearch />
           <NotificationsBell />
           <UserMenu fullName={profile.fullName} />
         </div>

@@ -8,6 +8,7 @@ import { RequestList } from "@/components/requests/request-list";
 import { UserMenu } from "@/components/settings/user-menu";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import { RealtimeDashboard } from "@/components/realtime/realtime-dashboard";
+import { HeaderSearch } from "@/components/ui/header-search";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -93,6 +94,7 @@ export default async function DashboardPage() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <HeaderSearch />
           <NotificationsBell />
           <span className="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 rounded px-1.5 py-0.5 capitalize">
             {profile.role}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 const STAGES = [
@@ -84,6 +84,17 @@ export function PredesignPanel({
   const { canAdvance, missing } = getGateStatus();
   const current = STAGES[currentIdx];
   const isFinal = !nextStage;
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault();
+        if (canAdvance) handleAdvance();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [canAdvance]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="border border-zinc-800 rounded-xl overflow-hidden">
@@ -180,6 +191,9 @@ export function PredesignPanel({
           className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isFinal ? "Approve Bet — Start Design Phase" : `Advance to ${nextStage?.label}`}
+          <kbd className="hidden md:inline ml-2 text-[10px] border border-zinc-600 rounded px-1 py-0.5 font-mono opacity-60">
+            ⌘↵
+          </kbd>
         </button>
 
         {error && (

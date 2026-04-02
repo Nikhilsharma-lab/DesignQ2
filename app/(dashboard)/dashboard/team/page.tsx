@@ -7,6 +7,7 @@ import { eq, avg, count, inArray } from "drizzle-orm";
 import { InviteForm } from "@/components/team/invite-form";
 import { UserMenu } from "@/components/settings/user-menu";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
+import { HeaderSearch } from "@/components/ui/header-search";
 
 const roleLabels: Record<string, string> = {
   pm: "PM",
@@ -118,6 +119,7 @@ export default async function TeamPage() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <HeaderSearch />
           <NotificationsBell />
           <UserMenu fullName={profile.fullName} />
         </div>
