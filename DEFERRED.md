@@ -7,7 +7,7 @@
 Agreed 2026-04-02. No hard deadline — launch when all 7 are done.
 
 ### Approach 3 — Speed + Visibility (build first)
-- [ ] **Speed Layer** — Cmd+K command palette, J/K navigation, Cmd+N quick capture, optimistic UI
+- [x] **Speed Layer** — Cmd+K command palette, J/K navigation, Cmd+N quick capture, optimistic UI ✅ Built 2026-04-02
 - [ ] **Design Radar** — live designer status (in flow/idle/blocked), phase heat map, risk panel, shipped this week
 - [ ] **AI Context Brief** — auto-generated brief when designer opens a request (what PM means, related past work, constraints, questions to ask)
 
