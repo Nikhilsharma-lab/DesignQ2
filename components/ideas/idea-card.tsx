@@ -74,49 +74,42 @@ export function IdeaCard({
   profileRole,
 }: IdeaCardProps) {
   const router = useRouter();
-  const [localUpvotes, setLocalUpvotes] = useState(upvotes);
-  const [localDownvotes, setLocalDownvotes] = useState(downvotes);
-  const [localUserVote, setLocalUserVote] = useState<string | null>(userVote);
-  const [voting, setVoting] = useState(false);
+  const [optimisticVotes, setOptimisticVotes] = useState({
+    upvotes: upvotes ?? 0,
+    downvotes: downvotes ?? 0,
+    myVote: userVote as "upvote" | "downvote" | null,
+  });
 
   async function handleVote(type: "upvote" | "downvote") {
-    if (voting) return;
-    setVoting(true);
+    const previous = optimisticVotes;
 
-    // Optimistic update
-    const prev = localUserVote;
-    if (prev === type) {
-      // Toggle off
-      setLocalUserVote(null);
-      if (type === "upvote") setLocalUpvotes((v) => v - 1);
-      else setLocalDownvotes((v) => v - 1);
-    } else {
-      if (prev) {
-        if (prev === "upvote") setLocalUpvotes((v) => v - 1);
-        else setLocalDownvotes((v) => v - 1);
-      }
-      setLocalUserVote(type);
-      if (type === "upvote") setLocalUpvotes((v) => v + 1);
-      else setLocalDownvotes((v) => v + 1);
-    }
+    setOptimisticVotes((prev) => {
+      const isToggle = prev.myVote === type;
+      return {
+        upvotes:
+          type === "upvote"
+            ? isToggle ? prev.upvotes - 1 : prev.upvotes + 1
+            : prev.myVote === "upvote" ? prev.upvotes - 1 : prev.upvotes,
+        downvotes:
+          type === "downvote"
+            ? isToggle ? prev.downvotes - 1 : prev.downvotes + 1
+            : prev.myVote === "downvote" ? prev.downvotes - 1 : prev.downvotes,
+        myVote: isToggle ? null : type,
+      };
+    });
 
-    try {
-      await fetch(`/api/ideas/${id}/vote`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ voteType: type }),
-      });
-    } catch {
-      // Revert optimistic on failure
-      setLocalUpvotes(upvotes);
-      setLocalDownvotes(downvotes);
-      setLocalUserVote(prev);
-    } finally {
-      setVoting(false);
+    const res = await fetch(`/api/ideas/${id}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ voteType: type }),
+    });
+
+    if (!res.ok) {
+      setOptimisticVotes(previous);
     }
   }
 
-  const localNetScore = localUpvotes - localDownvotes;
+  const localNetScore = optimisticVotes.upvotes - optimisticVotes.downvotes;
   const canValidate = (profileRole === "lead" || profileRole === "admin") && status === "pending_votes";
 
   return (
@@ -156,27 +149,25 @@ export function IdeaCard({
         <div className="flex items-center gap-1">
           <button
             onClick={() => handleVote("upvote")}
-            disabled={voting}
-            className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors disabled:opacity-40 ${
-              localUserVote === "upvote"
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors ${
+              optimisticVotes.myVote === "upvote"
                 ? "bg-green-500/15 border-green-500/30 text-green-400"
                 : "border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
             }`}
           >
             <span>▲</span>
-            <span className="font-mono">{localUpvotes}</span>
+            <span className="font-mono">{optimisticVotes.upvotes}</span>
           </button>
           <button
             onClick={() => handleVote("downvote")}
-            disabled={voting}
-            className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors disabled:opacity-40 ${
-              localUserVote === "downvote"
+            className={`flex items-center gap-1 text-xs px-2 py-1 rounded border transition-colors ${
+              optimisticVotes.myVote === "downvote"
                 ? "bg-red-500/15 border-red-500/30 text-red-400"
                 : "border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700"
             }`}
           >
             <span>▼</span>
-            <span className="font-mono">{localDownvotes}</span>
+            <span className="font-mono">{optimisticVotes.downvotes}</span>
           </button>
         </div>
 
