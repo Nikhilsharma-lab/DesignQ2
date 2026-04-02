@@ -50,9 +50,13 @@ export function ValidationGate({ requestId, myProfileRole }: ValidationGateProps
   const mySignerRole = signerRoleFromProfile(myProfileRole);
 
   const [signoffs, setSignoffs] = useState<Signoff[]>([]);
+  const [optimisticSignoffs, setOptimisticSignoffs] = useState<Signoff[]>(signoffs);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setOptimisticSignoffs(signoffs);
+  }, [signoffs]);
 
   // Per-role action state
   const [activeDecision, setActiveDecision] = useState<Decision | null>(null);
@@ -72,32 +76,45 @@ export function ValidationGate({ requestId, myProfileRole }: ValidationGateProps
   useEffect(() => { fetchSignoffs(); }, [fetchSignoffs]);
 
   async function handleSubmit() {
-    if (!activeDecision) return;
-    setSubmitting(true);
+    if (!activeDecision || !mySignerRole) return;
     setError(null);
-    try {
-      const res = await fetch(`/api/requests/${requestId}/validate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ decision: activeDecision, conditions, comments: commentText }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error ?? "Failed to submit");
-      } else {
-        setActiveDecision(null);
-        setConditions("");
-        setCommentText("");
-        if (data.autoAdvanced) {
-          router.refresh();
-        } else {
-          await fetchSignoffs();
-        }
-      }
-    } catch {
-      setError("Network error");
-    } finally {
-      setSubmitting(false);
+
+    // Optimistic: immediately show this role as signed
+    const tempSignoff: Signoff = {
+      id: `temp-${mySignerRole}`,
+      signerRole: mySignerRole,
+      decision: activeDecision,
+      conditions: activeDecision === "approved_with_conditions" ? conditions || null : null,
+      comments: activeDecision === "rejected" ? commentText || null : null,
+      signedAt: new Date().toISOString(),
+    };
+    setOptimisticSignoffs((prev) => {
+      const without = prev.filter((s) => s.signerRole !== mySignerRole);
+      return [...without, tempSignoff];
+    });
+    setActiveDecision(null);
+    setConditions("");
+    setCommentText("");
+
+    const res = await fetch(`/api/requests/${requestId}/validate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ decision: activeDecision, conditions, comments: commentText }),
+    });
+
+    if (!res.ok) {
+      // Rollback
+      setOptimisticSignoffs(signoffs);
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Failed to submit sign-off — please try again");
+      return;
+    }
+
+    const data = await res.json().catch(() => ({}));
+    if (data.autoAdvanced) {
+      router.refresh();
+    } else {
+      await fetchSignoffs();
     }
   }
 
@@ -132,7 +149,7 @@ export function ValidationGate({ requestId, myProfileRole }: ValidationGateProps
           {/* 3-row sign-off table */}
           <div className="border border-zinc-800 rounded-xl overflow-hidden divide-y divide-zinc-800/60">
             {ROLES.map((role) => {
-              const signoff = signoffs.find((s) => s.signerRole === role.key);
+              const signoff = optimisticSignoffs.find((s) => s.signerRole === role.key);
               const isMyRole = mySignerRole === role.key;
 
               return (
@@ -213,15 +230,14 @@ export function ValidationGate({ requestId, myProfileRole }: ValidationGateProps
                       {activeDecision && (
                         <button
                           onClick={handleSubmit}
-                          disabled={submitting || (activeDecision === "approved_with_conditions" && !conditions.trim())}
-                          className={`text-[11px] px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5 ${
+                          disabled={activeDecision === "approved_with_conditions" && !conditions.trim()}
+                          className={`text-[11px] px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                             activeDecision === "rejected"
                               ? "bg-red-600 hover:bg-red-500 text-white"
                               : "bg-indigo-600 hover:bg-indigo-500 text-white"
                           }`}
                         >
-                          {submitting && <span className="w-2.5 h-2.5 border border-white border-t-transparent rounded-full animate-spin" />}
-                          {submitting ? "Submitting..." : "Confirm"}
+                          Confirm
                         </button>
                       )}
                     </div>
