@@ -7,7 +7,7 @@ interface Props {
   seatCount: number;
 }
 
-const PLAN_LABELS: Record<string, string> = { free: "Free", pro: "Pro", enterprise: "Enterprise" };
+const PLAN_LABELS: Record<string, string> = { free: "Starter", pro: "Pro", enterprise: "Enterprise" };
 const PLAN_PRICE: Record<string, string> = { free: "$99/month", pro: "$299/month", enterprise: "Custom" };
 const MEMBER_LIMITS: Record<string, string> = { free: "Up to 3 members", pro: "Up to 10 members", enterprise: "Unlimited members" };
 const PLAN_LIMITS: Record<string, number> = { free: 3, pro: 10, enterprise: Infinity };
@@ -141,8 +141,8 @@ export function PlanDisplay({ plan, seatCount }: Props) {
       )}
       {/* Upgrade / Downgrade Modal */}
       {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md mx-4 space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setModal(null)}>
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-6 w-full max-w-md mx-4 space-y-4" onClick={(e) => e.stopPropagation()}>
             {modal.stage === "confirm" ? (
               <>
                 <h3 className="text-base font-semibold text-white">
