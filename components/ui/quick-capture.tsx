@@ -18,6 +18,7 @@ export function QuickCapture({ onClose }: { onClose: () => void }) {
   const [businessGoal, setBusinessGoal] = useState("");
   const [priority, setPriority] = useState<Priority>("p2");
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -29,8 +30,9 @@ export function QuickCapture({ onClose }: { onClose: () => void }) {
     if (!trimmed) return;
 
     setSaving(true);
+    setError(null);
     try {
-      await fetch("/api/requests", {
+      const res = await fetch("/api/requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -39,6 +41,10 @@ export function QuickCapture({ onClose }: { onClose: () => void }) {
           priority,
         }),
       });
+      if (!res.ok) {
+        setError("Failed to create request — please try again");
+        return;
+      }
       router.refresh();
       onClose();
     } finally {
@@ -46,12 +52,7 @@ export function QuickCapture({ onClose }: { onClose: () => void }) {
     }
   }
 
-  function onTitleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Escape") { onClose(); return; }
-    if (e.key === "Enter") submit();
-  }
-
-  function onGoalKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+  function onInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Escape") { onClose(); return; }
     if (e.key === "Enter") submit();
   }
@@ -72,8 +73,8 @@ export function QuickCapture({ onClose }: { onClose: () => void }) {
         <input
           ref={titleRef}
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={onTitleKeyDown}
+          onChange={(e) => { setTitle(e.target.value); setError(null); }}
+          onKeyDown={onInputKeyDown}
           placeholder="What needs to be designed?"
           className="w-full bg-transparent text-white text-sm placeholder-zinc-700 outline-none pb-3 mb-3 border-b border-zinc-800 focus:border-zinc-600 transition-colors"
         />
@@ -81,10 +82,14 @@ export function QuickCapture({ onClose }: { onClose: () => void }) {
         <input
           value={businessGoal}
           onChange={(e) => setBusinessGoal(e.target.value)}
-          onKeyDown={onGoalKeyDown}
+          onKeyDown={onInputKeyDown}
           placeholder="Business goal (optional)"
           className="w-full bg-transparent text-zinc-400 text-sm placeholder-zinc-700 outline-none pb-3 mb-4 border-b border-zinc-800 focus:border-zinc-600 transition-colors"
         />
+
+        {error && (
+          <p className="text-xs text-red-400 mb-3">{error}</p>
+        )}
 
         <div className="flex items-center justify-between">
           {/* Priority selector */}
