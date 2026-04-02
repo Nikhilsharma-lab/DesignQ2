@@ -4,7 +4,7 @@ import { useState } from "react";
 
 interface Props {
   plan: "free" | "pro" | "enterprise";
-  seatCount?: number;
+  seatCount: number;
 }
 
 const PLAN_LABELS: Record<string, string> = { free: "Free", pro: "Pro", enterprise: "Enterprise" };

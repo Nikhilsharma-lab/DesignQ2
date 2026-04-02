@@ -21,7 +21,7 @@ export default async function PlanPage() {
         <h1 className="text-lg font-semibold text-white mb-1">Plan</h1>
         <p className="text-sm text-zinc-500">Your current plan and included features.</p>
       </div>
-      <PlanDisplay plan={org.plan} />
+      <PlanDisplay plan={org.plan} seatCount={0} />
     </div>
   );
 }
