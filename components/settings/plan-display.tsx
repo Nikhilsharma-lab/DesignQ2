@@ -1,8 +1,16 @@
-interface Props { plan: "free" | "pro" | "enterprise"; }
+"use client";
+
+import { useState } from "react";
+
+interface Props {
+  plan: "free" | "pro" | "enterprise";
+  seatCount?: number;
+}
 
 const PLAN_LABELS: Record<string, string> = { free: "Free", pro: "Pro", enterprise: "Enterprise" };
-const PLAN_PRICE: Record<string, string> = { free: "$0/month", pro: "$299/month", enterprise: "Custom" };
+const PLAN_PRICE: Record<string, string> = { free: "$99/month", pro: "$299/month", enterprise: "Custom" };
 const MEMBER_LIMITS: Record<string, string> = { free: "Up to 3 members", pro: "Up to 10 members", enterprise: "Unlimited members" };
+const PLAN_LIMITS: Record<string, number> = { free: 3, pro: 10, enterprise: Infinity };
 
 type Feature = { label: string; free: boolean; pro: boolean; enterprise: boolean };
 const FEATURES: Feature[] = [
@@ -15,7 +23,7 @@ const FEATURES: Feature[] = [
   { label: "SLA", free: false, pro: false, enterprise: true },
 ];
 
-export function PlanDisplay({ plan }: Props) {
+export function PlanDisplay({ plan, seatCount = 0 }: Props) {
   return (
     <div className="space-y-8">
       <div className="border border-zinc-800 rounded-xl px-6 py-5">
