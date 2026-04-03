@@ -1,21 +1,12 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { NewRequestForm } from "./new-request-form";
 import type { Request } from "@/db/schema";
 import { useKeyboardNav } from "@/hooks/use-keyboard-nav";
-import { ProjectBadge } from "@/components/projects/project-badge";
 
 // ── Styling helpers ─────────────────────────────────────────────────────────
-
-const priorityColors: Record<string, string> = {
-  p0: "bg-red-500/15 text-red-400 border-red-500/20",
-  p1: "bg-orange-500/15 text-orange-400 border-orange-500/20",
-  p2: "bg-yellow-500/15 text-yellow-400 border-yellow-500/20",
-  p3: "bg-zinc-700/50 text-zinc-400 border-zinc-700",
-};
 
 const TYPE_LABELS: Record<string, string> = {
   feature: "Feature", bug: "Bug", research: "Research",
@@ -124,10 +115,6 @@ function priorityOrder(r: Request) {
   return r.priority ? (PRIORITY_ORDER[r.priority] ?? 4) : 4;
 }
 
-function formatDate(date: Date | string) {
-  return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-}
-
 function deadlineStatus(deadlineAt: Date | string | null) {
   if (!deadlineAt) return null;
   const days = (new Date(deadlineAt).getTime() - Date.now()) / 86_400_000;
@@ -146,7 +133,19 @@ function isStalled(r: Request) {
 function Initials({ name }: { name: string }) {
   const init = name.split(" ").map((w) => w[0]).slice(0, 2).join("").toUpperCase();
   return (
-    <div className="w-5 h-5 rounded-full bg-zinc-700 border border-zinc-600 flex items-center justify-center text-[9px] font-medium text-zinc-300 shrink-0">
+    <div
+      className="flex items-center justify-center shrink-0"
+      style={{
+        width: 20,
+        height: 20,
+        borderRadius: "50%",
+        background: "var(--bg-hover)",
+        border: "1px solid var(--border)",
+        fontSize: 9,
+        fontWeight: 600,
+        color: "var(--text-secondary)",
+      }}
+    >
       {init}
     </div>
   );
@@ -215,7 +214,9 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, p
 
       if (e.key === "Enter" && focused >= 0) {
         e.preventDefault();
-        router.push(`/dashboard/requests/${flatVisible[focused].id}`);
+        const params = new URLSearchParams(window.location.search);
+        params.set("dock", flatVisible[focused].id);
+        router.push(`?${params.toString()}`);
       }
       if (e.key === "/") {
         e.preventDefault();
@@ -243,17 +244,65 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, p
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <div>
-            <h1 className="text-xl font-semibold text-white">Requests</h1>
-            <p className="text-zinc-500 text-sm mt-0.5">{visible.length} total</p>
+            <h1 style={{ fontSize: 18, fontWeight: 600, color: "var(--text-primary)" }}>
+              Requests
+            </h1>
+            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 2 }}>
+              {visible.length} total
+            </p>
           </div>
           {hasMine && (
-            <div className="flex items-center gap-1 bg-zinc-900 border border-zinc-800 rounded-lg p-1">
-              <button onClick={() => setFilter("all")} className={`text-xs px-2.5 py-1 rounded transition-colors ${filter === "all" ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"}`}>All</button>
-              <button onClick={() => setFilter("mine")} className={`text-xs px-2.5 py-1 rounded transition-colors ${filter === "mine" ? "bg-zinc-700 text-white" : "text-zinc-500 hover:text-zinc-300"}`}>Mine</button>
+            <div
+              className="flex items-center gap-1 rounded-lg p-1"
+              style={{ background: "var(--bg-surface)", border: "1px solid var(--border)" }}
+            >
+              <button
+                onClick={() => setFilter("all")}
+                className="rounded"
+                style={{
+                  fontSize: 12,
+                  padding: "4px 10px",
+                  background: filter === "all" ? "var(--bg-hover)" : "transparent",
+                  color: filter === "all" ? "var(--text-primary)" : "var(--text-tertiary)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilter("mine")}
+                className="rounded"
+                style={{
+                  fontSize: 12,
+                  padding: "4px 10px",
+                  background: filter === "mine" ? "var(--bg-hover)" : "transparent",
+                  color: filter === "mine" ? "var(--text-primary)" : "var(--text-tertiary)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
+                Mine
+              </button>
             </div>
           )}
         </div>
-        <button onClick={() => setShowForm(true)} className="bg-white text-zinc-900 rounded-lg px-4 py-2 text-sm font-medium hover:bg-zinc-100 transition-colors">
+        <button
+          onClick={() => setShowForm(true)}
+          className="rounded-md flex items-center gap-2"
+          style={{
+            background: "var(--accent)",
+            color: "var(--accent-text)",
+            fontSize: 13,
+            fontWeight: 600,
+            padding: "7px 14px",
+            border: "none",
+            cursor: "pointer",
+            fontFamily: "inherit",
+          }}
+        >
           + New request
         </button>
       </div>
@@ -266,13 +315,47 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, p
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search requests…"
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-zinc-600 transition-colors"
+          className="w-full rounded-lg px-3 py-2 text-sm focus:outline-none transition-colors"
+          style={{
+            background: "var(--bg-surface)",
+            border: "1px solid var(--border)",
+            color: "var(--text-primary)",
+          }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
         />
         {availableTypes.length > 0 && (
           <div className="flex items-center gap-1 flex-wrap">
-            <button onClick={() => setTypeFilter("all")} className={`text-xs px-2.5 py-1 rounded-lg transition-colors ${typeFilter === "all" ? "bg-zinc-800 text-zinc-200" : "text-zinc-600 hover:text-zinc-400"}`}>All types</button>
+            <button
+              onClick={() => setTypeFilter("all")}
+              className="rounded-lg transition-colors"
+              style={{
+                fontSize: 12,
+                padding: "4px 10px",
+                background: typeFilter === "all" ? "var(--bg-hover)" : "var(--bg-surface)",
+                color: typeFilter === "all" ? "var(--text-primary)" : "var(--text-tertiary)",
+                border: "1px solid var(--border)",
+                cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
+              All types
+            </button>
             {availableTypes.map((t) => (
-              <button key={t} onClick={() => setTypeFilter(t)} className={`text-xs px-2.5 py-1 rounded-lg capitalize transition-colors ${typeFilter === t ? "bg-zinc-800 text-zinc-200" : "text-zinc-600 hover:text-zinc-400"}`}>
+              <button
+                key={t}
+                onClick={() => setTypeFilter(t)}
+                className="rounded-lg capitalize transition-colors"
+                style={{
+                  fontSize: 12,
+                  padding: "4px 10px",
+                  background: typeFilter === t ? "var(--bg-hover)" : "var(--bg-surface)",
+                  color: typeFilter === t ? "var(--text-primary)" : "var(--text-tertiary)",
+                  border: "1px solid var(--border)",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
                 {TYPE_LABELS[t] ?? t}
               </button>
             ))}
@@ -293,16 +376,25 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, p
                 onClick={() => toggleCollapse(phase.key)}
                 className="w-full flex items-center gap-3 mb-3 group"
               >
-                <div className={`w-1.5 h-1.5 rounded-full ${phase.dotColor} shrink-0`} />
-                <span className={`text-xs font-semibold uppercase tracking-wider ${phase.color}`}>
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: "var(--accent)" }} />
+                <span
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: "var(--text-secondary)" }}
+                >
                   Phase {phase.number} — {phase.label}
                 </span>
-                <span className="text-[10px] text-zinc-700">{phase.desc}</span>
-                <div className="flex-1 h-px bg-zinc-800/60 mx-1" />
-                <span className={`text-[10px] font-mono ${list.length > 0 ? "text-zinc-400" : "text-zinc-700"}`}>
+                <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{phase.desc}</span>
+                <div className="flex-1 h-px mx-1" style={{ background: "var(--border)" }} />
+                <span
+                  className="font-mono"
+                  style={{ fontSize: 10, color: list.length > 0 ? "var(--text-secondary)" : "var(--text-tertiary)" }}
+                >
                   {list.length}
                 </span>
-                <span className="text-[10px] text-zinc-700 group-hover:text-zinc-500 transition-colors">
+                <span
+                  className="transition-colors"
+                  style={{ fontSize: 10, color: "var(--text-tertiary)" }}
+                >
                   {isCollapsed ? "▸" : "▾"}
                 </span>
               </button>
@@ -310,11 +402,14 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, p
               {!isCollapsed && (
                 <>
                   {list.length === 0 ? (
-                    <div className="border border-dashed border-zinc-800/60 rounded-xl px-5 py-4 text-center">
-                      <p className="text-xs text-zinc-700">No requests in this phase</p>
+                    <div
+                      className="rounded-xl px-5 py-4 text-center"
+                      style={{ border: "1px dashed var(--border)" }}
+                    >
+                      <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>No requests in this phase</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div>
                       {list.map((r, listIdx) => {
                         const phaseStartIndex = PHASES.slice(0, PHASES.indexOf(phase)).reduce(
                           (sum, p) => sum + (grouped.get(p.key)?.length ?? 0),
@@ -329,59 +424,109 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, p
                         const stageLabel = (stageDef?.stageLabels as Record<string, string>)?.[r.subStage] ?? r.subStage;
 
                         return (
-                          <Link
+                          <div
                             key={r.id}
-                            href={`/dashboard/requests/${r.id}`}
-                            onClick={() => setFocused(itemIndex)}
-                            className={`block border rounded-xl px-5 py-3.5 transition-colors ${
-                              isFocused
-                                ? "border-l-2 border-l-indigo-500 border-zinc-700 bg-zinc-900"
-                                : "border-zinc-800 hover:border-zinc-700"
-                            }`}
+                            onClick={() => {
+                              setFocused(itemIndex);
+                              const params = new URLSearchParams(window.location.search);
+                              params.set("dock", r.id);
+                              router.push(`?${params.toString()}`);
+                            }}
+                            className="cursor-pointer rounded-lg px-4 py-3 transition-colors"
+                            style={{
+                              background: "var(--bg-surface)",
+                              border: `1px solid ${isFocused ? "var(--accent)" : "var(--border)"}`,
+                              marginBottom: 6,
+                            }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = "var(--bg-surface)")}
                           >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-                                  {/* Sub-stage badge */}
-                                  <span className={`text-[10px] px-1.5 py-0.5 rounded border font-medium ${phase.stageBadge}`}>
-                                    {stageLabel}
-                                  </span>
-                                  {r.priority && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border font-mono ${priorityColors[r.priority]}`}>
-                                      {r.priority.toUpperCase()}
-                                    </span>
-                                  )}
-                                  {r.requestType && (
-                                    <span className="text-[10px] text-zinc-600 capitalize">{TYPE_LABELS[r.requestType] ?? r.requestType}</span>
-                                  )}
-                                  {deadline && (
-                                    <span className={`text-[10px] px-1.5 py-0.5 rounded border ${deadline.color}`}>{deadline.label}</span>
-                                  )}
-                                  {isStalled(r) && (
-                                    <span className="text-[10px] text-yellow-500/70 bg-yellow-500/10 border border-yellow-500/20 rounded px-1.5 py-0.5">stalled</span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-white font-medium truncate">{r.title}</p>
-                                <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{r.description}</p>
-                                {projectMap[r.projectId ?? ""] && (
-                                  <ProjectBadge
-                                    name={projectMap[r.projectId!].name}
-                                    color={projectMap[r.projectId!].color}
-                                    className="mt-1"
-                                  />
-                                )}
+                            {/* Top row: ID + title + priority */}
+                            <div className="flex items-start justify-between gap-3 mb-2">
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span
+                                  style={{
+                                    fontFamily: "'Geist Mono', monospace",
+                                    fontSize: 9,
+                                    color: "var(--text-tertiary)",
+                                    letterSpacing: "0.03em",
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  #{r.id.slice(0, 6).toUpperCase()}
+                                </span>
+                                <span
+                                  style={{
+                                    fontSize: 13,
+                                    fontWeight: 600,
+                                    color: "var(--text-primary)",
+                                    overflow: "hidden",
+                                    textOverflow: "ellipsis",
+                                    whiteSpace: "nowrap",
+                                  }}
+                                >
+                                  {r.title}
+                                </span>
                               </div>
-                              <div className="flex flex-col items-end gap-1.5 shrink-0">
-                                {assignees.length > 0 && (
-                                  <div className="flex items-center gap-0.5">
-                                    {assignees.slice(0, 3).map((name) => <Initials key={name} name={name} />)}
-                                    {assignees.length > 3 && <span className="text-[9px] text-zinc-600 ml-0.5">+{assignees.length - 3}</span>}
-                                  </div>
-                                )}
-                                <span className="text-[10px] text-zinc-700">{formatDate(r.createdAt)}</span>
-                              </div>
+                              {r.priority && (
+                                <span
+                                  className="shrink-0 rounded"
+                                  style={{
+                                    fontSize: 10,
+                                    fontWeight: 600,
+                                    padding: "2px 6px",
+                                    background: r.priority === "p0" ? "#FEE2E2" : r.priority === "p1" ? "#FFEDD5" : r.priority === "p2" ? "#FEF9C3" : "var(--bg-hover)",
+                                    color: r.priority === "p0" ? "#DC2626" : r.priority === "p1" ? "#C2410C" : r.priority === "p2" ? "#A16207" : "var(--text-secondary)",
+                                  }}
+                                >
+                                  {r.priority.toUpperCase()}
+                                </span>
+                              )}
                             </div>
-                          </Link>
+
+                            {/* Bottom row: phase·stage + deadline + stalled + assignees */}
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <span
+                                  style={{
+                                    fontFamily: "'Geist Mono', monospace",
+                                    fontSize: 9,
+                                    color: "var(--text-tertiary)",
+                                    letterSpacing: "0.04em",
+                                    textTransform: "uppercase",
+                                  }}
+                                >
+                                  {phase.label} · {stageLabel}
+                                </span>
+                                {deadline && (
+                                  <span
+                                    className="rounded"
+                                    style={{
+                                      fontSize: 10,
+                                      fontWeight: 500,
+                                      padding: "1px 5px",
+                                      background: "#FEF3C7",
+                                      color: "#B45309",
+                                    }}
+                                  >
+                                    {deadline.label}
+                                  </span>
+                                )}
+                                {isStalled(r) && (
+                                  <span style={{ fontSize: 10, color: "#B45309" }}>stalled</span>
+                                )}
+                                {r.requestType && (
+                                  <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>{TYPE_LABELS[r.requestType] ?? r.requestType}</span>
+                                )}
+                              </div>
+                              {assignees.length > 0 && (
+                                <div className="flex items-center gap-0.5 shrink-0">
+                                  {assignees.slice(0, 3).map((name) => <Initials key={name} name={name} />)}
+                                  {assignees.length > 3 && <span style={{ fontSize: 9, color: "var(--text-tertiary)", marginLeft: 2 }}>+{assignees.length - 3}</span>}
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         );
                       })}
                     </div>
@@ -395,24 +540,45 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, p
 
       {/* Keyboard hint bar — desktop only */}
       <div className="hidden md:flex items-center gap-4 pt-4 pb-2">
-        <span className="text-[10px] text-zinc-700">J/K navigate</span>
-        <span className="text-[10px] text-zinc-700">↵ open</span>
-        <span className="text-[10px] text-zinc-700">/ search</span>
-        <span className="text-[10px] text-zinc-700">? shortcuts</span>
+        <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>J/K navigate</span>
+        <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>↵ open</span>
+        <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>/ search</span>
+        <span style={{ fontSize: 10, color: "var(--text-tertiary)" }}>? shortcuts</span>
       </div>
 
       {visible.length === 0 && (
-        <div className="border border-zinc-800 rounded-xl p-16 text-center mt-4">
+        <div
+          className="rounded-xl p-16 text-center mt-4"
+          style={{ border: "1px solid var(--border)" }}
+        >
           {search ? (
             <>
-              <p className="text-zinc-600 text-sm mb-1">No results for &ldquo;{search}&rdquo;</p>
-              <button onClick={() => setSearch("")} className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors mt-2">Clear search</button>
+              <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 4 }}>No results for &ldquo;{search}&rdquo;</p>
+              <button
+                onClick={() => setSearch("")}
+                className="transition-colors mt-2"
+                style={{ fontSize: 12, color: "var(--text-tertiary)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
+              >
+                Clear search
+              </button>
             </>
           ) : (
             <>
-              <p className="text-zinc-600 text-sm mb-1">No requests yet</p>
-              <p className="text-zinc-700 text-xs mb-5">Submit one to see AI triage in action</p>
-              <button onClick={() => setShowForm(true)} className="text-sm text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 rounded-lg px-4 py-2 transition-colors">
+              <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 4 }}>No requests yet</p>
+              <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 20 }}>Submit one to see AI triage in action</p>
+              <button
+                onClick={() => setShowForm(true)}
+                className="rounded-lg transition-colors"
+                style={{
+                  fontSize: 13,
+                  color: "var(--text-secondary)",
+                  border: "1px solid var(--border)",
+                  padding: "8px 16px",
+                  background: "var(--bg-surface)",
+                  cursor: "pointer",
+                  fontFamily: "inherit",
+                }}
+              >
                 + New request
               </button>
             </>
