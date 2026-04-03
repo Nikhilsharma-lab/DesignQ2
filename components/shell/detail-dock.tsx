@@ -15,6 +15,11 @@ import { CommentBox } from "@/components/requests/comment-box";
 import { HandoffChecklist } from "@/components/requests/handoff-checklist";
 import { ImpactPanel } from "@/components/requests/impact-panel";
 import { FigmaHistory } from "@/components/requests/figma-history";
+import { TriageButton } from "@/components/requests/triage-button";
+import { EditRequestButton } from "@/components/requests/edit-request-button";
+import { ContextBriefPanel } from "@/components/requests/context-brief-panel";
+import { ProjectBadge } from "@/components/projects/project-badge";
+import { RealtimeRequest } from "@/components/realtime/realtime-request";
 import type {
   RequestAiAnalysis,
   Comment,
@@ -29,6 +34,8 @@ interface EnrichedData {
   stageHistory: RequestStage[];
   existingBrief: RequestContextBrief | null;
   requesterName: string;
+  project: { id: string; name: string; color: string } | null;
+  canEdit: boolean;
 }
 
 const DOCK_WIDTH = 520;
@@ -156,6 +163,9 @@ export function DetailDock({ profileRole = "member" }: { profileRole?: string })
         animation: "dockSlideIn 200ms ease-out",
       }}
     >
+      {/* Realtime subscription — invisible, refreshes on any DB change */}
+      <RealtimeRequest requestId={request.id} />
+
       {/* Header */}
       <div
         className="flex items-start justify-between px-5 py-4"
@@ -181,14 +191,34 @@ export function DetailDock({ profileRole = "member" }: { profileRole?: string })
             </span>
           </div>
         </div>
-        <button onClick={close} className="shrink-0 rounded flex items-center justify-center transition-colors"
-          style={{ width: 28, height: 28, color: "var(--text-tertiary)", background: "transparent", border: "none", cursor: "pointer" }}>
-          <X size={14} />
-        </button>
+        <div className="flex items-center gap-2 shrink-0">
+          {enriched?.canEdit && (
+            <EditRequestButton request={{
+              id: request.id,
+              title: request.title,
+              description: request.description,
+              businessContext: request.businessContext,
+              successMetrics: request.successMetrics,
+              figmaUrl: request.figmaUrl,
+              impactMetric: request.impactMetric,
+              impactPrediction: request.impactPrediction,
+              deadlineAt: toISOorNull(request.deadlineAt),
+            }} />
+          )}
+          <button onClick={close} className="shrink-0 rounded flex items-center justify-center transition-colors"
+            style={{ width: 28, height: 28, color: "var(--text-tertiary)", background: "transparent", border: "none", cursor: "pointer" }}>
+            <X size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Body */}
       <div className="flex flex-col gap-5 px-5 py-5">
+
+        {/* ── Project badge ── */}
+        {enriched?.project && (
+          <ProjectBadge name={enriched.project.name} color={enriched.project.color} />
+        )}
 
         {/* ── Phase panel ── */}
         {request.phase === "predesign" && (
@@ -283,52 +313,12 @@ export function DetailDock({ profileRole = "member" }: { profileRole?: string })
         )}
 
         {/* ── AI Context Brief (design phase) ── */}
-        {request.phase === "design" && enriched && (
+        {request.phase === "design" && (
           <div style={divider}>
-            <p style={{ ...labelStyle, marginBottom: 10 }}>AI Context Brief</p>
-            {enriched.existingBrief ? (
-              <div className="flex flex-col gap-3">
-                {enriched.existingBrief.plainSummary && (
-                  <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
-                    {enriched.existingBrief.plainSummary}
-                  </p>
-                )}
-                {enriched.existingBrief.keyConstraints.length > 0 && (
-                  <div>
-                    <p style={{ ...labelStyle, marginBottom: 6 }}>Key constraints</p>
-                    <ul className="space-y-1">
-                      {enriched.existingBrief.keyConstraints.map((c, i) => (
-                        <li key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>· {c}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {enriched.existingBrief.questionsToAsk.length > 0 && (
-                  <div>
-                    <p style={{ ...labelStyle, marginBottom: 6 }}>Questions to ask</p>
-                    <ul className="space-y-1">
-                      {enriched.existingBrief.questionsToAsk.map((q, i) => (
-                        <li key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>· {q}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {enriched.existingBrief.explorationDirections.length > 0 && (
-                  <div>
-                    <p style={{ ...labelStyle, marginBottom: 6 }}>Exploration directions</p>
-                    <ul className="space-y-1">
-                      {enriched.existingBrief.explorationDirections.map((d, i) => (
-                        <li key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>· {d}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
-                Open full page to generate brief.
-              </p>
-            )}
+            <ContextBriefPanel
+              requestId={request.id}
+              existingBrief={enriched?.existingBrief ?? null}
+            />
           </div>
         )}
 
@@ -409,10 +399,7 @@ export function DetailDock({ profileRole = "member" }: { profileRole?: string })
         )}
         {enriched && !enriched.aiAnalysis && (
           <div style={divider}>
-            <p style={labelStyle}>AI Triage</p>
-            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>
-              No triage yet — open full page to run.
-            </p>
+            <TriageButton requestId={request.id} />
           </div>
         )}
 

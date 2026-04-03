@@ -10,6 +10,7 @@ import {
   requestAiAnalysis,
   requestStages,
   requestContextBriefs,
+  projects,
 } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 
@@ -110,6 +111,26 @@ export async function GET(
     }
   }
 
+  // Project
+  let project: { id: string; name: string; color: string } | null = null;
+  if (request.projectId) {
+    try {
+      const [proj] = await db
+        .select()
+        .from(projects)
+        .where(eq(projects.id, request.projectId));
+      if (proj) project = { id: proj.id, name: proj.name, color: proj.color };
+    } catch {
+      // silent fail
+    }
+  }
+
+  // canEdit
+  const canEdit =
+    profile.id === request.requesterId ||
+    profile.role === "lead" ||
+    profile.role === "admin";
+
   return NextResponse.json({
     aiAnalysis,
     comments: requestComments,
@@ -117,5 +138,7 @@ export async function GET(
     stageHistory,
     existingBrief,
     requesterName,
+    project,
+    canEdit,
   });
 }
