@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { FigmaConnectPrompt } from "./figma-connect-prompt";
 
 interface FigmaUpdate {
   id: string;
@@ -51,7 +52,10 @@ export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props)
     }
   }, [requestId]);
 
-  useEffect(() => { fetchUpdates(); }, [fetchUpdates]);
+  useEffect(() => {
+    if (isConnected) fetchUpdates();
+    else setLoading(false);
+  }, [fetchUpdates, isConnected]);
 
   async function markReviewed(updateId: string) {
     setReviewing(updateId);
@@ -72,6 +76,12 @@ export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props)
       setReviewing(null);
     }
   }
+
+  if (!isConnected && figmaUrl) {
+    return <FigmaConnectPrompt />;
+  }
+
+  if (!figmaUrl) return null;
 
   const unreviewedPostHandoff = updates.filter((u) => u.postHandoff && !u.devReviewed);
 
