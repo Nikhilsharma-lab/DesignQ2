@@ -70,29 +70,29 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
   }
 
   return (
-    <div className="border border-zinc-800 rounded-xl overflow-hidden">
+    <div className="border border-[var(--border)] rounded-xl overflow-hidden">
       {/* Header */}
-      <div className="px-5 py-3 border-b border-zinc-800 bg-zinc-900/50 flex items-center justify-between">
-        <span className="text-xs font-medium text-zinc-400 uppercase tracking-wide">
+      <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-subtle)] flex items-center justify-between">
+        <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
           Phase 3 — Dev
         </span>
-        <span className="text-xs text-zinc-600">Dev leads</span>
+        <span className="text-xs text-[var(--text-tertiary)]">Dev leads</span>
       </div>
 
       {/* Figma lock badge */}
       {figmaUrl && (
-        <div className="px-5 py-2.5 border-b border-zinc-800/50 flex items-center gap-2">
-          <span className="text-[10px] text-zinc-600 uppercase tracking-wide">Figma</span>
+        <div className="px-5 py-2.5 border-b border-[var(--border)] flex items-center gap-2">
+          <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wide">Figma</span>
           <a
             href={figmaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors truncate"
+            className="text-xs text-[var(--accent)] hover:text-[var(--accent)] transition-colors truncate"
           >
             Open design
           </a>
           {figmaLockedAt && (
-            <span className="text-[10px] text-zinc-700 ml-auto shrink-0">
+            <span className="text-[10px] text-[var(--text-tertiary)] ml-auto shrink-0">
               locked {new Date(figmaLockedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           )}
@@ -100,7 +100,7 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
       )}
 
       {/* Kanban stepper */}
-      <div className="px-5 py-4 border-b border-zinc-800/50">
+      <div className="px-5 py-4 border-b border-[var(--border)]">
         <div className="flex items-start">
           {STATES.map((s, i) => {
             const isPast = i < optimisticIdx;
@@ -113,22 +113,22 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
                       isPast
                         ? "bg-green-500/15 border-green-500/30 text-green-400"
                         : isCur
-                        ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400"
-                        : "bg-zinc-800/40 border-zinc-700/40 text-zinc-600"
+                        ? "bg-[#7DA5C4]/10 border-[#7DA5C4]/20 text-[#7DA5C4]"
+                        : "bg-[var(--bg-hover)] border-[var(--border)] text-[var(--text-tertiary)]"
                     }`}
                   >
                     {isPast ? "✓" : i + 1}
                   </div>
                   <span
                     className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center leading-tight ${
-                      isCur ? "text-indigo-400" : isPast ? "text-green-500/80" : "text-zinc-600"
+                      isCur ? "text-[#7DA5C4]" : isPast ? "text-green-500/80" : "text-[var(--text-tertiary)]"
                     }`}
                   >
                     {s.label}
                   </span>
                 </div>
                 {i < STATES.length - 1 && (
-                  <div className={`h-px w-full mb-5 mx-0.5 ${i < optimisticIdx ? "bg-green-500/20" : "bg-zinc-800"}`} />
+                  <div className={`h-px w-full mb-5 mx-0.5 ${i < optimisticIdx ? "bg-green-500/20" : "bg-[var(--bg-hover)]"}`} />
                 )}
               </div>
             );
@@ -140,8 +140,8 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
       <div className="px-5 py-4 space-y-3">
         {current && (
           <div>
-            <p className="text-xs font-semibold text-zinc-200 mb-0.5">{current.label}</p>
-            <p className="text-xs text-zinc-500">{current.desc}</p>
+            <p className="text-xs font-semibold text-[var(--text-primary)] mb-0.5">{current.label}</p>
+            <p className="text-xs text-[var(--text-secondary)]">{current.desc}</p>
           </div>
         )}
 
@@ -151,14 +151,14 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
             {optimisticIdx > 0 && (
               <button
                 onClick={() => moveState(STATES[optimisticIdx - 1].key)}
-                className="text-xs text-zinc-500 hover:text-zinc-300 border border-zinc-800 hover:border-zinc-700 px-3 py-1.5 rounded-lg transition-colors"
+                className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--border-strong)] px-3 py-1.5 rounded-lg transition-colors"
               >
                 ← {STATES[optimisticIdx - 1].label}
               </button>
             )}
             <button
               onClick={() => moveState(STATES[optimisticIdx + 1].key)}
-              className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors"
+              className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] px-3 py-1.5 rounded-lg border border-[var(--border)] transition-colors"
             >
               Move to {STATES[optimisticIdx + 1].label}
             </button>
@@ -175,10 +175,10 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
             <button
               onClick={shipToTrack}
               disabled={shipping}
-              className="text-xs bg-zinc-800 hover:bg-zinc-700 text-zinc-200 px-3 py-1.5 rounded-lg border border-zinc-700 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] px-3 py-1.5 rounded-lg border border-[var(--border)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {shipping && (
-                <span className="w-3 h-3 border border-zinc-400 border-t-transparent rounded-full animate-spin" />
+                <span className="w-3 h-3 border border-[var(--text-secondary)] border-t-transparent rounded-full animate-spin" />
               )}
               Ship to Track
             </button>
