@@ -84,6 +84,12 @@ export default async function IdeasPage() {
             >
               Radar
             </Link>
+            <Link
+              href="/dashboard/dev"
+              className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors"
+            >
+              Dev Board
+            </Link>
           </nav>
           <ProjectSwitcher projects={activeProjects} />
         </div>
