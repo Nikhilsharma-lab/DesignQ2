@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
     return res;
   };
 
-  if (!code || !state || state !== storedState) {
+  if (!code || !state || !storedState || state !== storedState) {
     return clearState(
       NextResponse.redirect(new URL("/settings/integrations?error=oauth_failed", req.url))
     );
@@ -47,12 +47,20 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const tokenData = await tokenRes.json() as {
-    access_token: string;
-    refresh_token?: string;
-    expires_in?: number;
-    scope?: string;
-  };
+  let tokenData: { access_token: string; refresh_token?: string; expires_in?: number; scope?: string };
+  try {
+    tokenData = await tokenRes.json();
+  } catch {
+    return clearState(
+      NextResponse.redirect(new URL("/settings/integrations?error=token_exchange_failed", req.url))
+    );
+  }
+
+  if (!tokenData.access_token) {
+    return clearState(
+      NextResponse.redirect(new URL("/settings/integrations?error=token_exchange_failed", req.url))
+    );
+  }
 
   const expiresAt = tokenData.expires_in
     ? new Date(Date.now() + tokenData.expires_in * 1000)
