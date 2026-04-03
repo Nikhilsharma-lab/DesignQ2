@@ -1,3 +1,4 @@
+// components/requests/dev-phase-panel.tsx
 "use client";
 
 import { useState } from "react";
@@ -18,13 +19,23 @@ interface Props {
   kanbanState: KState;
   figmaUrl: string | null;
   figmaLockedAt: string | null;
+  devQuestionCount: number;
 }
 
-export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt }: Props) {
+export function DevPhasePanel({
+  requestId,
+  kanbanState,
+  figmaUrl,
+  figmaLockedAt,
+  devQuestionCount,
+}: Props) {
   const router = useRouter();
   const [optimisticKanban, setOptimisticKanban] = useState<KState>(kanbanState);
   const [shipping, setShipping] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [askOpen, setAskOpen] = useState(false);
+  const [askBody, setAskBody] = useState("");
+  const [askSubmitting, setAskSubmitting] = useState(false);
 
   const currentIdx = STATES.findIndex((s) => s.key === kanbanState);
   const optimisticIdx = STATES.findIndex((s) => s.key === optimisticKanban);
@@ -69,6 +80,25 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
     }
   }
 
+  async function submitQuestion() {
+    if (!askBody.trim()) return;
+    setAskSubmitting(true);
+    try {
+      await fetch(`/api/requests/${requestId}/comment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: askBody.trim(), isDevQuestion: true }),
+      });
+      setAskBody("");
+      setAskOpen(false);
+      router.refresh();
+    } catch {
+      // silent fail
+    } finally {
+      setAskSubmitting(false);
+    }
+  }
+
   return (
     <div className="border border-[var(--border)] rounded-xl overflow-hidden">
       {/* Header */}
@@ -76,23 +106,30 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
         <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
           Phase 3 — Dev
         </span>
-        <span className="text-xs text-[var(--text-tertiary)]">Dev leads</span>
+        <div className="flex items-center gap-2">
+          {devQuestionCount > 0 && (
+            <span className="text-[10px] font-mono bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded px-1.5 py-0.5">
+              {devQuestionCount} dev {devQuestionCount === 1 ? "question" : "questions"}
+            </span>
+          )}
+          <span className="text-xs text-[var(--text-tertiary)]">Dev leads</span>
+        </div>
       </div>
 
       {/* Figma lock badge */}
       {figmaUrl && (
-        <div className="px-5 py-2.5 border-b border-[var(--border)] flex items-center gap-2">
+        <div className="px-5 py-2.5 border-b border-[var(--border)]/50 flex items-center gap-2">
           <span className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wide">Figma</span>
           <a
             href={figmaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-[var(--accent)] hover:text-[var(--accent)] transition-colors truncate"
+            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors truncate"
           >
             Open design
           </a>
           {figmaLockedAt && (
-            <span className="text-[10px] text-[var(--text-tertiary)] ml-auto shrink-0">
+            <span className="text-[10px] text-[var(--text-tertiary)]/60 ml-auto shrink-0">
               locked {new Date(figmaLockedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
             </span>
           )}
@@ -100,7 +137,7 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
       )}
 
       {/* Kanban stepper */}
-      <div className="px-5 py-4 border-b border-[var(--border)]">
+      <div className="px-5 py-4 border-b border-[var(--border)]/50">
         <div className="flex items-start">
           {STATES.map((s, i) => {
             const isPast = i < optimisticIdx;
@@ -108,27 +145,21 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
             return (
               <div key={s.key} className="flex items-center flex-1">
                 <div className="flex flex-col items-center flex-1">
-                  <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono border transition-colors ${
-                      isPast
-                        ? "bg-green-500/15 border-green-500/30 text-green-400"
-                        : isCur
-                        ? "bg-[#7DA5C4]/10 border-[#7DA5C4]/20 text-[#7DA5C4]"
-                        : "bg-[var(--bg-hover)] border-[var(--border)] text-[var(--text-tertiary)]"
-                    }`}
-                  >
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono border transition-colors ${
+                    isPast ? "bg-green-500/15 border-green-500/30 text-green-400"
+                    : isCur ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400"
+                    : "bg-[var(--bg-hover)]/40 border-[var(--border)] text-[var(--text-tertiary)]"
+                  }`}>
                     {isPast ? "✓" : i + 1}
                   </div>
-                  <span
-                    className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center leading-tight ${
-                      isCur ? "text-[#7DA5C4]" : isPast ? "text-green-500/80" : "text-[var(--text-tertiary)]"
-                    }`}
-                  >
+                  <span className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center leading-tight ${
+                    isCur ? "text-indigo-400" : isPast ? "text-green-500/80" : "text-[var(--text-tertiary)]"
+                  }`}>
                     {s.label}
                   </span>
                 </div>
                 {i < STATES.length - 1 && (
-                  <div className={`h-px w-full mb-5 mx-0.5 ${i < optimisticIdx ? "bg-green-500/20" : "bg-[var(--bg-hover)]"}`} />
+                  <div className={`h-px w-full mb-5 mx-0.5 ${i < optimisticIdx ? "bg-green-500/20" : "bg-[var(--border)]"}`} />
                 )}
               </div>
             );
@@ -145,7 +176,6 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
           </div>
         )}
 
-        {/* Move buttons */}
         {!isDone && (
           <div className="flex gap-2">
             {optimisticIdx > 0 && (
@@ -158,14 +188,13 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
             )}
             <button
               onClick={() => moveState(STATES[optimisticIdx + 1].key)}
-              className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] px-3 py-1.5 rounded-lg border border-[var(--border)] transition-colors"
+              className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)]/80 text-[var(--text-primary)] px-3 py-1.5 rounded-lg border border-[var(--border)] transition-colors"
             >
               Move to {STATES[optimisticIdx + 1].label}
             </button>
           </div>
         )}
 
-        {/* Done state: ship to track */}
         {isDone && (
           <div className="space-y-3">
             <div className="bg-green-500/5 border border-green-500/15 rounded-lg px-3 py-2 flex items-center gap-2">
@@ -175,15 +204,50 @@ export function DevPhasePanel({ requestId, kanbanState, figmaUrl, figmaLockedAt 
             <button
               onClick={shipToTrack}
               disabled={shipping}
-              className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] px-3 py-1.5 rounded-lg border border-[var(--border)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+              className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)]/80 text-[var(--text-primary)] px-3 py-1.5 rounded-lg border border-[var(--border)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {shipping && (
-                <span className="w-3 h-3 border border-[var(--text-secondary)] border-t-transparent rounded-full animate-spin" />
-              )}
+              {shipping && <span className="w-3 h-3 border border-[var(--text-secondary)] border-t-transparent rounded-full animate-spin" />}
               Ship to Track
             </button>
           </div>
         )}
+
+        {/* Ask Designer */}
+        <div className="pt-1 border-t border-[var(--border)]/50">
+          {!askOpen ? (
+            <button
+              onClick={() => setAskOpen(true)}
+              className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--border-strong)] px-3 py-1.5 rounded-lg transition-colors w-full text-left"
+            >
+              Ask designer a question
+            </button>
+          ) : (
+            <div className="space-y-2">
+              <textarea
+                value={askBody}
+                onChange={(e) => setAskBody(e.target.value)}
+                placeholder="What do you need clarification on?"
+                rows={3}
+                className="w-full text-xs bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] resize-none focus:outline-none focus:border-[var(--border-strong)]"
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={submitQuestion}
+                  disabled={askSubmitting || !askBody.trim()}
+                  className="text-xs bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {askSubmitting ? "Sending…" : "Ask designer"}
+                </button>
+                <button
+                  onClick={() => { setAskOpen(false); setAskBody(""); }}
+                  className="text-xs text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {error && (
           <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">

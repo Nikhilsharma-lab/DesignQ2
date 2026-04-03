@@ -442,6 +442,7 @@ export default async function RequestDetailPage({
                   kanbanState={(request.kanbanState ?? "todo") as "todo" | "in_progress" | "in_review" | "qa" | "done"}
                   figmaUrl={request.figmaUrl}
                   figmaLockedAt={toISO(request.figmaLockedAt)}
+                  devQuestionCount={requestComments.filter((c) => c.isDevQuestion).length}
                 />
               </div>
             ) : request.phase === "track" ? (

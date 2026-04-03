@@ -56,6 +56,7 @@ export function CardDrawer({ card, onClose }: Props) {
             kanbanState={card.kanbanState}
             figmaUrl={card.figmaUrl}
             figmaLockedAt={card.figmaLockedAt}
+            devQuestionCount={0}
           />
 
           {/* Description */}
