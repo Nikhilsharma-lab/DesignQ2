@@ -27,9 +27,11 @@ type ActionState = "idle" | "loading" | "done";
 function DesignerCard({
   designer,
   canAct,
+  avgDevQuestions,
 }: {
   designer: RadarDesigner;
   canAct: boolean;
+  avgDevQuestions: number;
 }) {
   const [nudge, setNudge] = useState<ActionState>("idle");
   const [risk, setRisk] = useState<ActionState>("idle");
@@ -77,6 +79,15 @@ function DesignerCard({
           {designer.status === "blocked" && designer.blockedTitle &&
             ` · BLOCKED · ${designer.blockedTitle}`}
         </p>
+        {avgDevQuestions > 0 && (
+          <p className={`text-[10px] mt-1 ${
+            avgDevQuestions <= 1 ? "text-green-400"
+            : avgDevQuestions <= 3 ? "text-yellow-400"
+            : "text-red-400"
+          }`}>
+            {avgDevQuestions} avg dev {avgDevQuestions === 1 ? "question" : "questions"}/handoff (30d)
+          </p>
+        )}
       </div>
       {canAct && designer.mostStalledRequestId && (
         <div className="flex items-center gap-2 shrink-0 ml-4">
@@ -109,9 +120,11 @@ function DesignerCard({
 export function DesignerStatus({
   designers,
   canActionMap,
+  avgDevQuestionsMap,
 }: {
   designers: RadarDesigner[];
   canActionMap: Record<string, boolean>;
+  avgDevQuestionsMap: Record<string, number>;
 }) {
   if (designers.length === 0) {
     return (
@@ -123,7 +136,12 @@ export function DesignerStatus({
   return (
     <div className="space-y-2">
       {designers.map((d) => (
-        <DesignerCard key={d.id} designer={d} canAct={canActionMap[d.id] ?? false} />
+        <DesignerCard
+          key={d.id}
+          designer={d}
+          canAct={canActionMap[d.id] ?? false}
+          avgDevQuestions={avgDevQuestionsMap[d.id] ?? 0}
+        />
       ))}
     </div>
   );

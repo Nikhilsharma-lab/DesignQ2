@@ -124,7 +124,7 @@ export function DevPhasePanel({
             href={figmaUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs text-indigo-400 hover:text-indigo-300 transition-colors truncate"
+            className="text-xs text-[var(--accent)] hover:opacity-80 transition-colors truncate"
           >
             Open design
           </a>
@@ -147,13 +147,13 @@ export function DevPhasePanel({
                 <div className="flex flex-col items-center flex-1">
                   <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono border transition-colors ${
                     isPast ? "bg-green-500/15 border-green-500/30 text-green-400"
-                    : isCur ? "bg-indigo-500/15 border-indigo-500/30 text-indigo-400"
+                    : isCur ? "bg-[#7DA5C4]/15 border-[#7DA5C4]/30 text-[#7DA5C4]"
                     : "bg-[var(--bg-hover)]/40 border-[var(--border)] text-[var(--text-tertiary)]"
                   }`}>
                     {isPast ? "✓" : i + 1}
                   </div>
                   <span className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center leading-tight ${
-                    isCur ? "text-indigo-400" : isPast ? "text-green-500/80" : "text-[var(--text-tertiary)]"
+                    isCur ? "text-[#7DA5C4]" : isPast ? "text-green-500/80" : "text-[var(--text-tertiary)]"
                   }`}>
                     {s.label}
                   </span>
