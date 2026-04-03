@@ -159,6 +159,7 @@ export const comments = pgTable("comments", {
   authorId: uuid("author_id").references(() => profiles.id),
   body: text("body").notNull(),
   isSystem: boolean("is_system").notNull().default(false), // true for AI-generated
+  isDevQuestion: boolean("is_dev_question").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
