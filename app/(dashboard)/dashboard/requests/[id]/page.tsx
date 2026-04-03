@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, requests, comments, requestStages, requestAiAnalysis, requestContextBriefs, projects } from "@/db/schema";
+import { profiles, requests, comments, requestStages, requestAiAnalysis, requestContextBriefs, projects, figmaConnections } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { AssignPanel } from "@/components/requests/assign-panel";
 import { StageControls } from "@/components/requests/stage-controls";
@@ -21,6 +21,7 @@ import { ProjectBadge } from "@/components/projects/project-badge";
 import { ContextBriefPanel } from "@/components/requests/context-brief-panel";
 import { HandoffBriefPanel } from "@/components/requests/handoff-brief-panel";
 import { requestHandoffBriefs } from "@/db/schema";
+import { syncFigmaVersions } from "@/lib/figma/sync";
 
 const priorityConfig: Record<string, { label: string; color: string; desc: string }> = {
   p0: { label: "P0", color: "bg-red-500/15 text-red-400 border-red-500/20", desc: "Critical — blocking" },
@@ -73,6 +74,51 @@ export default async function RequestDetailPage({
 
   const [request] = await db.select().from(requests).where(eq(requests.id, id));
   if (!request || request.orgId !== profile.orgId) notFound();
+
+  // Figma connection check
+  let isConnected = false;
+  let figmaAccessToken: string | null = null;
+  try {
+    const [conn] = await db
+      .select()
+      .from(figmaConnections)
+      .where(eq(figmaConnections.orgId, profile.orgId));
+    if (conn) {
+      isConnected = true;
+      figmaAccessToken = conn.accessToken;
+    }
+  } catch {
+    // silent
+  }
+
+  // On-demand Figma sync
+  if (
+    isConnected &&
+    figmaAccessToken &&
+    request.figmaUrl &&
+    (request.phase === "design" || request.phase === "dev" || request.phase === "track")
+  ) {
+    const requestPhase =
+      request.phase === "design" ? "design"
+      : request.phase === "dev" ? "dev"
+      : null;
+    const postHandoff =
+      request.phase === "dev" ||
+      request.phase === "track" ||
+      !!request.figmaLockedAt;
+
+    try {
+      await syncFigmaVersions({
+        requestId: request.id,
+        figmaUrl: request.figmaUrl,
+        accessToken: figmaAccessToken,
+        requestPhase: requestPhase as "design" | "dev" | null,
+        postHandoff,
+      });
+    } catch {
+      // silent — page always loads
+    }
+  }
 
   const project = request.projectId
     ? await db.select().from(projects).where(eq(projects.id, request.projectId)).then(([p]) => p ?? null)
@@ -266,8 +312,8 @@ export default async function RequestDetailPage({
             )}
 
             {/* Figma update history — visible from design phase onwards */}
-            {request.figmaUrl && (request.phase === "design" || request.phase === "dev" || request.phase === "track") && (
-              <FigmaHistory requestId={request.id} phase={request.phase as string} />
+            {(request.phase === "design" || request.phase === "dev" || request.phase === "track") && (
+              <FigmaHistory requestId={request.id} phase={request.phase as string} isConnected={isConnected} figmaUrl={request.figmaUrl} />
             )}
 
             <HandoffChecklist requestId={request.id} stage={request.stage} />

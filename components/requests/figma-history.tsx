@@ -19,6 +19,8 @@ interface FigmaUpdate {
 interface Props {
   requestId: string;
   phase: string;
+  isConnected?: boolean;
+  figmaUrl?: string | null;
 }
 
 function timeAgo(dateStr: string): string {
@@ -32,7 +34,7 @@ function timeAgo(dateStr: string): string {
   return `${days}d ago`;
 }
 
-export function FigmaHistory({ requestId, phase }: Props) {
+export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props) {
   const router = useRouter();
   const [updates, setUpdates] = useState<FigmaUpdate[]>([]);
   const [loading, setLoading] = useState(true);
