@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { projects, profiles, requests } from "@/db/schema";
-import { eq, and, ne } from "drizzle-orm";
+import { eq, and, ne, isNull } from "drizzle-orm";
 import { PROJECT_COLORS } from "@/lib/projects";
 
 async function getAuthProfile() {
@@ -105,16 +105,16 @@ export async function deleteProject(
   const [project] = await db.select().from(projects).where(eq(projects.id, projectId));
   if (!project || project.orgId !== profile.orgId) return { error: "Project not found" };
 
-  // Guard: must have at least one other project in the org
+  // Guard: must have at least one other active (non-archived) project in the org
   const [otherProject] = await db.select({ id: projects.id }).from(projects)
-    .where(and(eq(projects.orgId, profile.orgId), ne(projects.id, projectId)))
+    .where(and(eq(projects.orgId, profile.orgId), ne(projects.id, projectId), isNull(projects.archivedAt)))
     .limit(1);
   if (!otherProject) return { error: "You can't delete your last project. Create another project first." };
 
   if (action === "move") {
     if (!moveToProjectId) return { error: "Target project is required" };
     const [target] = await db.select().from(projects).where(eq(projects.id, moveToProjectId));
-    if (!target || target.orgId !== profile.orgId) return { error: "Target project not found" };
+    if (!target || target.orgId !== profile.orgId || target.archivedAt) return { error: "Target project not found" };
 
     await db.update(requests)
       .set({ projectId: moveToProjectId })
