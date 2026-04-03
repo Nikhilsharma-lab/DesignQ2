@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: requestId } = await params;
-  const { body } = await req.json();
+  const { body, isDevQuestion } = await req.json();
 
   if (!body?.trim()) return NextResponse.json({ error: "Comment cannot be empty" });
 
@@ -21,6 +21,7 @@ export async function POST(
     authorId: user.id,
     body: body.trim(),
     isSystem: false,
+    isDevQuestion: Boolean(isDevQuestion),
   });
 
   return NextResponse.json({ success: true });
