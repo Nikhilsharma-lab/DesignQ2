@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { NewRequestForm } from "./new-request-form";
 import type { Request } from "@/db/schema";
 import { useKeyboardNav } from "@/hooks/use-keyboard-nav";
+import { ProjectBadge } from "@/components/projects/project-badge";
 
 // ── Styling helpers ─────────────────────────────────────────────────────────
 
@@ -157,9 +158,11 @@ interface Props {
   requests: Request[];
   myRequestIds?: Set<string>;
   assigneesByRequest?: Record<string, string[]>;
+  projects?: { id: string; name: string; color: string }[];
+  projectMap?: Record<string, { name: string; color: string }>;
 }
 
-export function RequestList({ requests, myRequestIds, assigneesByRequest = {} }: Props) {
+export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, projects = [], projectMap = {} }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<"all" | "mine">("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
@@ -234,7 +237,7 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {} }:
 
   return (
     <>
-      {showForm && <NewRequestForm onClose={() => setShowForm(false)} />}
+      {showForm && <NewRequestForm onClose={() => setShowForm(false)} projects={projects} />}
 
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-6">
@@ -360,6 +363,13 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {} }:
                                 </div>
                                 <p className="text-sm text-white font-medium truncate">{r.title}</p>
                                 <p className="text-xs text-zinc-500 mt-0.5 line-clamp-1">{r.description}</p>
+                                {projectMap[r.projectId ?? ""] && (
+                                  <ProjectBadge
+                                    name={projectMap[r.projectId!].name}
+                                    color={projectMap[r.projectId!].color}
+                                    className="mt-1"
+                                  />
+                                )}
                               </div>
                               <div className="flex flex-col items-end gap-1.5 shrink-0">
                                 {assignees.length > 0 && (

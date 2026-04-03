@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, invites, requests, requestAiAnalysis, assignments } from "@/db/schema";
-import { eq, avg, count, inArray } from "drizzle-orm";
+import { profiles, invites, requests, requestAiAnalysis, assignments, projects } from "@/db/schema";
+import { eq, avg, count, inArray, and, isNull } from "drizzle-orm";
+import { ProjectSwitcher } from "@/components/projects/project-switcher";
 import { InviteForm } from "@/components/team/invite-form";
 import { ReportsToSelect } from "@/components/team/reports-to-select";
 import { UserMenu } from "@/components/settings/user-menu";
@@ -33,6 +34,11 @@ export default async function TeamPage() {
 
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
   if (!profile) redirect("/login");
+
+  const activeProjects = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.orgId, profile.orgId), isNull(projects.archivedAt)));
 
   const members = await db.select().from(profiles).where(eq(profiles.orgId, profile.orgId));
 
@@ -124,6 +130,7 @@ export default async function TeamPage() {
               Radar
             </Link>
           </nav>
+          <ProjectSwitcher projects={activeProjects} />
         </div>
         <div className="flex items-center gap-3">
           <HeaderSearch />

@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, requests, requestAiAnalysis, assignments } from "@/db/schema";
-import { eq, inArray, count } from "drizzle-orm";
+import { profiles, requests, requestAiAnalysis, assignments, projects } from "@/db/schema";
+import { eq, inArray, count, and, isNull } from "drizzle-orm";
+import { ProjectSwitcher } from "@/components/projects/project-switcher";
 import { DigestPanel } from "@/components/insights/digest-panel";
 import { UserMenu } from "@/components/settings/user-menu";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
@@ -23,6 +24,11 @@ export default async function InsightsPage() {
 
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
   if (!profile) redirect("/login");
+
+  const activeProjects = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.orgId, profile.orgId), isNull(projects.archivedAt)));
 
   const members = await db.select().from(profiles).where(eq(profiles.orgId, profile.orgId));
   const orgRequests = await db.select().from(requests).where(eq(requests.orgId, profile.orgId));
@@ -112,6 +118,7 @@ export default async function InsightsPage() {
               Radar
             </Link>
           </nav>
+          <ProjectSwitcher projects={activeProjects} />
         </div>
         <div className="flex items-center gap-3">
           <HeaderSearch />

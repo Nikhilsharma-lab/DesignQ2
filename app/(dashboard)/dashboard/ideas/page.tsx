@@ -2,8 +2,9 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, ideas, ideaVotes } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { profiles, ideas, ideaVotes, projects } from "@/db/schema";
+import { eq, sql, and, isNull } from "drizzle-orm";
+import { ProjectSwitcher } from "@/components/projects/project-switcher";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import { HeaderSearch } from "@/components/ui/header-search";
 import { UserMenu } from "@/components/settings/user-menu";
@@ -16,6 +17,11 @@ export default async function IdeasPage() {
 
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
   if (!profile) redirect("/login");
+
+  const activeProjects = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.orgId, profile.orgId), isNull(projects.archivedAt)));
 
   // Fetch org members for author names
   const orgMembers = await db
@@ -79,6 +85,7 @@ export default async function IdeasPage() {
               Radar
             </Link>
           </nav>
+          <ProjectSwitcher projects={activeProjects} />
         </div>
         <div className="flex items-center gap-3">
           <HeaderSearch />
