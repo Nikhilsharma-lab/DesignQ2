@@ -17,6 +17,7 @@ export default async function DashboardLayout({
 }) {
   let orgRequests: Request[] = [];
   let userId = "";
+  let profileRole = "member";
 
   try {
     const supabase = await createClient();
@@ -30,6 +31,7 @@ export default async function DashboardLayout({
         .where(eq(profiles.id, user.id));
 
       if (profile) {
+        profileRole = profile.role ?? "member";
         orgRequests = await db
           .select()
           .from(requests)
@@ -50,7 +52,7 @@ export default async function DashboardLayout({
             {children}
           </main>
           <Suspense>
-            <DetailDock />
+            <DetailDock profileRole={profileRole} />
           </Suspense>
         </div>
       </GlobalShortcutsProvider>

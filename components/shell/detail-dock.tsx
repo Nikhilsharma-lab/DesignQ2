@@ -1,10 +1,32 @@
 // components/shell/detail-dock.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useRequests } from "@/context/requests-context";
 import { X } from "lucide-react";
+import { PredesignPanel } from "@/components/requests/predesign-panel";
+import { DesignPhasePanel } from "@/components/requests/design-phase-panel";
+import { DevPhasePanel } from "@/components/requests/dev-phase-panel";
+import { TrackPhasePanel } from "@/components/requests/track-phase-panel";
+import { AssignPanel } from "@/components/requests/assign-panel";
+import { CommentBox } from "@/components/requests/comment-box";
+import type {
+  RequestAiAnalysis,
+  Comment,
+  RequestStage,
+  RequestContextBrief,
+} from "@/db/schema";
+
+interface EnrichedData {
+  aiAnalysis: RequestAiAnalysis | null;
+  comments: Comment[];
+  authorMap: Record<string, { fullName: string | null }>;
+  stageHistory: RequestStage[];
+  existingBrief: RequestContextBrief | null;
+  requesterName: string;
+}
 
 const PHASE_LABELS: Record<string, string> = {
   predesign: "Predesign",
@@ -41,6 +63,14 @@ function formatDate(d: Date | string | null): string {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+function formatDateTime(d: Date | string | null): string {
+  if (!d) return "";
+  return new Date(d).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", year: "numeric",
+    hour: "numeric", minute: "2-digit",
+  });
+}
+
 const labelStyle: React.CSSProperties = {
   fontFamily: "'Geist Mono', monospace",
   fontSize: 9,
@@ -57,7 +87,13 @@ const metaValueStyle: React.CSSProperties = {
   fontWeight: 500,
 };
 
-export function DetailDock() {
+const sectionDivider: React.CSSProperties = {
+  borderTop: "1px solid var(--border)",
+  paddingTop: 16,
+  marginTop: 4,
+};
+
+export function DetailDock({ profileRole = "member" }: { profileRole?: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -65,6 +101,23 @@ export function DetailDock() {
 
   const dockId = searchParams.get("dock");
   const request = dockId ? requests.find((r) => r.id === dockId) : null;
+
+  const [enriched, setEnriched] = useState<EnrichedData | null>(null);
+  const [enrichedLoading, setEnrichedLoading] = useState(false);
+
+  useEffect(() => {
+    if (!dockId) {
+      setEnriched(null);
+      return;
+    }
+    setEnriched(null);
+    setEnrichedLoading(true);
+    fetch(`/api/requests/${dockId}/enriched`)
+      .then((r) => r.json())
+      .then((data) => setEnriched(data))
+      .catch(() => {})
+      .finally(() => setEnrichedLoading(false));
+  }, [dockId]);
 
   if (!request) return null;
 
@@ -97,7 +150,6 @@ export function DetailDock() {
         animation: "dockSlideIn 200ms ease-out",
       }}
     >
-
       {/* Header */}
       <div
         className="flex items-start justify-between px-5 py-4"
@@ -172,7 +224,52 @@ export function DetailDock() {
       {/* Body */}
       <div className="flex flex-col gap-5 px-5 py-5">
 
-        {/* Problem statement */}
+        {/* ── Phase Panel (stage advancement actions) ── */}
+        {request.phase === "predesign" && (
+          <div style={sectionDivider}>
+            <PredesignPanel
+              requestId={request.id}
+              currentStage={(request.predesignStage ?? request.stage) as "intake" | "context" | "shape" | "bet"}
+              description={request.description}
+              businessContext={request.businessContext}
+              successMetrics={request.successMetrics}
+              profileRole={profileRole}
+            />
+          </div>
+        )}
+        {request.phase === "design" && (
+          <div style={sectionDivider}>
+            <DesignPhasePanel
+              requestId={request.id}
+              currentDesignStage={(request.designStage ?? "explore") as "explore" | "validate" | "handoff"}
+              figmaUrl={request.figmaUrl}
+              profileRole={profileRole}
+            />
+          </div>
+        )}
+        {request.phase === "dev" && (
+          <div style={sectionDivider}>
+            <DevPhasePanel
+              requestId={request.id}
+              kanbanState={(request.kanbanState ?? "todo") as "todo" | "in_progress" | "in_review" | "qa" | "done"}
+              figmaUrl={request.figmaUrl}
+              figmaLockedAt={request.figmaLockedAt ? new Date(request.figmaLockedAt).toISOString() : null}
+            />
+          </div>
+        )}
+        {request.phase === "track" && (
+          <div style={sectionDivider}>
+            <TrackPhasePanel
+              requestId={request.id}
+              trackStage={(request.trackStage ?? "measuring") as "measuring" | "complete"}
+              impactMetric={request.impactMetric}
+              impactPrediction={request.impactPrediction}
+              impactActual={request.impactActual}
+            />
+          </div>
+        )}
+
+        {/* ── Description / Context ── */}
         {request.description && (
           <div>
             <p style={labelStyle}>Problem</p>
@@ -182,7 +279,6 @@ export function DetailDock() {
           </div>
         )}
 
-        {/* Business context */}
         {request.businessContext && (
           <div>
             <p style={labelStyle}>Business context</p>
@@ -192,7 +288,6 @@ export function DetailDock() {
           </div>
         )}
 
-        {/* Success metrics */}
         {request.successMetrics && (
           <div>
             <p style={labelStyle}>Success metrics</p>
@@ -202,43 +297,281 @@ export function DetailDock() {
           </div>
         )}
 
-        {/* Meta grid */}
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <p style={labelStyle}>Priority</p>
-            <p style={metaValueStyle}>
-              {request.priority ? PRIORITY_LABELS[request.priority] : "—"}
+        {/* ── AI Context Brief (design phase) ── */}
+        {request.phase === "design" && enriched && (
+          <div style={sectionDivider}>
+            <p style={{ ...labelStyle, marginBottom: 10 }}>AI Context Brief</p>
+            {enriched.existingBrief ? (
+              <div className="flex flex-col gap-3">
+                {enriched.existingBrief.plainSummary && (
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                    {enriched.existingBrief.plainSummary}
+                  </p>
+                )}
+                {enriched.existingBrief.keyConstraints.length > 0 && (
+                  <div>
+                    <p style={{ ...labelStyle, marginBottom: 6 }}>Key constraints</p>
+                    <ul className="space-y-1">
+                      {enriched.existingBrief.keyConstraints.map((c, i) => (
+                        <li key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                          · {c}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {enriched.existingBrief.questionsToAsk.length > 0 && (
+                  <div>
+                    <p style={{ ...labelStyle, marginBottom: 6 }}>Questions to ask</p>
+                    <ul className="space-y-1">
+                      {enriched.existingBrief.questionsToAsk.map((q, i) => (
+                        <li key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                          · {q}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {enriched.existingBrief.explorationDirections.length > 0 && (
+                  <div>
+                    <p style={{ ...labelStyle, marginBottom: 6 }}>Exploration directions</p>
+                    <ul className="space-y-1">
+                      {enriched.existingBrief.explorationDirections.map((d, i) => (
+                        <li key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                          · {d}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                Open full page to generate a brief for this request.
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* ── AI Triage ── */}
+        {enriched?.aiAnalysis && (
+          <div style={sectionDivider}>
+            <div className="flex items-center justify-between mb-3">
+              <p style={labelStyle}>AI Triage</p>
+              <span style={{ fontFamily: "'Geist Mono', monospace", fontSize: 9, color: "var(--text-tertiary)" }}>
+                {enriched.aiAnalysis.aiModel}
+              </span>
+            </div>
+            <div className="flex flex-col gap-3">
+              {/* Summary */}
+              <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                {enriched.aiAnalysis.summary}
+              </p>
+
+              {/* Quality score */}
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <p style={labelStyle}>Request quality</p>
+                  <span
+                    style={{
+                      fontFamily: "'Geist Mono', monospace",
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color:
+                        enriched.aiAnalysis.qualityScore >= 70 ? "#166534" :
+                        enriched.aiAnalysis.qualityScore >= 40 ? "#B45309" : "#DC2626",
+                    }}
+                  >
+                    {enriched.aiAnalysis.qualityScore}/100
+                  </span>
+                </div>
+                <div
+                  style={{
+                    width: "100%",
+                    height: 4,
+                    background: "var(--bg-hover)",
+                    borderRadius: 2,
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${enriched.aiAnalysis.qualityScore}%`,
+                      borderRadius: 2,
+                      background:
+                        enriched.aiAnalysis.qualityScore >= 70 ? "#86A87A" :
+                        enriched.aiAnalysis.qualityScore >= 40 ? "#D4A84B" : "#E07070",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Quality flags */}
+              {enriched.aiAnalysis.qualityFlags.length > 0 && (
+                <div>
+                  <p style={{ ...labelStyle, marginBottom: 6 }}>Issues</p>
+                  <div className="flex flex-wrap gap-1">
+                    {enriched.aiAnalysis.qualityFlags.map((flag, i) => (
+                      <span
+                        key={i}
+                        style={{
+                          fontSize: 11,
+                          color: "#B45309",
+                          background: "#FEF3C7",
+                          border: "1px solid #FDE68A",
+                          borderRadius: "var(--radius-sm)",
+                          padding: "2px 6px",
+                        }}
+                      >
+                        {flag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Reasoning */}
+              <div>
+                <p style={{ ...labelStyle, marginBottom: 4 }}>Reasoning</p>
+                <p style={{ fontSize: 11, color: "var(--text-tertiary)", lineHeight: 1.6 }}>
+                  {enriched.aiAnalysis.reasoning}
+                </p>
+              </div>
+
+              {/* Suggestions */}
+              {enriched.aiAnalysis.suggestions.length > 0 && (
+                <div>
+                  <p style={{ ...labelStyle, marginBottom: 6 }}>Suggestions</p>
+                  <ul className="space-y-1">
+                    {enriched.aiAnalysis.suggestions.map((s, i) => (
+                      <li key={i} style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                        · {s}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Potential duplicates */}
+              {enriched.aiAnalysis.potentialDuplicates.length > 0 && (
+                <div>
+                  <p style={{ ...labelStyle, marginBottom: 6 }}>Potential duplicates</p>
+                  <div className="space-y-1.5">
+                    {enriched.aiAnalysis.potentialDuplicates.map((dup, i) => (
+                      <Link
+                        key={i}
+                        href={`/dashboard/requests/${dup.id}`}
+                        style={{
+                          display: "block",
+                          fontSize: 12,
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--radius-md)",
+                          padding: "6px 10px",
+                          color: "var(--text-secondary)",
+                          textDecoration: "none",
+                        }}
+                      >
+                        <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>{dup.title}</span>
+                        <span style={{ color: "var(--text-tertiary)", marginLeft: 6 }}>{dup.reason}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Show triage hint if no analysis yet */}
+        {enriched && !enriched.aiAnalysis && (
+          <div style={sectionDivider}>
+            <p style={labelStyle}>AI Triage</p>
+            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginTop: 4 }}>
+              No triage yet — open full page to run AI triage.
             </p>
           </div>
-          <div>
-            <p style={labelStyle}>Type</p>
-            <p style={metaValueStyle}>{request.requestType ?? "—"}</p>
-          </div>
-          <div>
-            <p style={labelStyle}>Due</p>
-            <p style={metaValueStyle}>{formatDate(request.deadlineAt ?? null)}</p>
-          </div>
-          <div>
-            <p style={labelStyle}>Created</p>
-            <p style={metaValueStyle}>{formatDate(request.createdAt)}</p>
-          </div>
-          {request.complexity && (
-            <div>
-              <p style={labelStyle}>Complexity</p>
-              <p style={metaValueStyle}>{request.complexity} / 5</p>
-            </div>
-          )}
-          {request.impactPrediction && (
-            <div>
-              <p style={labelStyle}>Predicted impact</p>
-              <p style={metaValueStyle}>{request.impactPrediction}</p>
-            </div>
-          )}
+        )}
+
+        {/* ── Assignees ── */}
+        <div style={sectionDivider}>
+          <p style={{ ...labelStyle, marginBottom: 10 }}>Assignees</p>
+          <AssignPanel requestId={request.id} />
         </div>
 
-        {/* Figma link */}
+        {/* ── Meta grid ── */}
+        <div style={sectionDivider}>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p style={labelStyle}>Priority</p>
+              <p style={metaValueStyle}>
+                {request.priority ? PRIORITY_LABELS[request.priority] : "—"}
+              </p>
+            </div>
+            <div>
+              <p style={labelStyle}>Type</p>
+              <p style={metaValueStyle}>{request.requestType ?? "—"}</p>
+            </div>
+            <div>
+              <p style={labelStyle}>Due</p>
+              <p style={metaValueStyle}>{formatDate(request.deadlineAt ?? null)}</p>
+            </div>
+            <div>
+              <p style={labelStyle}>Created</p>
+              <p style={metaValueStyle}>{formatDate(request.createdAt)}</p>
+            </div>
+            {request.complexity && (
+              <div>
+                <p style={labelStyle}>Complexity</p>
+                <p style={metaValueStyle}>{request.complexity} / 5</p>
+              </div>
+            )}
+            {request.impactPrediction && (
+              <div>
+                <p style={labelStyle}>Predicted impact</p>
+                <p style={metaValueStyle}>{request.impactPrediction}</p>
+              </div>
+            )}
+            {enriched?.requesterName && (
+              <div className="col-span-2">
+                <p style={labelStyle}>Submitted by</p>
+                <p style={metaValueStyle}>{enriched.requesterName}</p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Stage history ── */}
+        {enriched && enriched.stageHistory.length > 0 && (
+          <div style={sectionDivider}>
+            <p style={{ ...labelStyle, marginBottom: 8 }}>History</p>
+            <div className="space-y-1.5">
+              {enriched.stageHistory.map((s) => (
+                <div key={s.id} className="flex items-center justify-between gap-2">
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)", textTransform: "capitalize" }}>
+                    {s.stage}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'Geist Mono', monospace",
+                      fontSize: 10,
+                      color: "var(--text-tertiary)",
+                    }}
+                  >
+                    {new Date(s.completedAt ?? s.enteredAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Figma link ── */}
         {request.figmaUrl && (
-          <div>
+          <div style={sectionDivider}>
             <p style={labelStyle}>Figma</p>
             <a
               href={request.figmaUrl}
@@ -252,12 +585,12 @@ export function DetailDock() {
                 textDecoration: "none",
               }}
             >
-              {request.figmaUrl}
+              Open in Figma ↗
             </a>
           </div>
         )}
 
-        {/* Actual impact (if logged) */}
+        {/* ── Actual impact (if logged) ── */}
         {request.impactActual && (
           <div>
             <p style={labelStyle}>Actual impact</p>
@@ -266,6 +599,93 @@ export function DetailDock() {
             </p>
           </div>
         )}
+
+        {/* ── Comments / Activity ── */}
+        <div style={sectionDivider}>
+          <p style={{ ...labelStyle, marginBottom: enrichedLoading ? 8 : 10 }}>
+            Activity{enriched ? ` (${enriched.comments.length})` : ""}
+          </p>
+
+          {enrichedLoading && (
+            <p style={{ fontSize: 12, color: "var(--text-tertiary)" }}>Loading…</p>
+          )}
+
+          {enriched && enriched.comments.length === 0 && (
+            <p style={{ fontSize: 12, color: "var(--text-tertiary)", marginBottom: 12 }}>
+              No comments yet
+            </p>
+          )}
+
+          {enriched && enriched.comments.length > 0 && (
+            <div className="space-y-3 mb-4">
+              {enriched.comments.map((c) => {
+                const author = c.authorId ? enriched.authorMap[c.authorId] : null;
+                return (
+                  <div
+                    key={c.id}
+                    style={{
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius-md)",
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      {c.isSystem ? (
+                        <span
+                          style={{
+                            fontFamily: "'Geist Mono', monospace",
+                            fontSize: 9,
+                            color: "var(--text-tertiary)",
+                            background: "var(--bg-subtle)",
+                            borderRadius: "var(--radius-sm)",
+                            padding: "1px 5px",
+                            letterSpacing: "0.04em",
+                            textTransform: "uppercase",
+                          }}
+                        >
+                          system
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: 12, fontWeight: 500, color: "var(--text-primary)" }}>
+                          {author?.fullName ?? "Unknown"}
+                        </span>
+                      )}
+                      <span
+                        style={{
+                          fontFamily: "'Geist Mono', monospace",
+                          fontSize: 10,
+                          color: "var(--text-tertiary)",
+                        }}
+                      >
+                        {c.createdAt ? formatDateTime(new Date(c.createdAt).toISOString()) : ""}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.6 }}>
+                      {c.body}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          <CommentBox requestId={request.id} />
+        </div>
+
+        {/* ── Open full page link ── */}
+        <div style={{ borderTop: "1px solid var(--border)", paddingTop: 12, textAlign: "center" }}>
+          <Link
+            href={`/dashboard/requests/${request.id}`}
+            style={{
+              fontSize: 12,
+              color: "var(--text-tertiary)",
+              textDecoration: "none",
+            }}
+          >
+            Open full page →
+          </Link>
+        </div>
+
       </div>
     </aside>
   );
