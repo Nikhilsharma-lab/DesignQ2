@@ -3,13 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { profiles, requests, assignments, projects } from "@/db/schema";
 import { eq, inArray, sql, and, isNull } from "drizzle-orm";
-import Link from "next/link";
 import { RequestList } from "@/components/requests/request-list";
-import { UserMenu } from "@/components/settings/user-menu";
-import { NotificationsBell } from "@/components/notifications/notifications-bell";
 import { RealtimeDashboard } from "@/components/realtime/realtime-dashboard";
-import { HeaderSearch } from "@/components/ui/header-search";
-import { ProjectSwitcher } from "@/components/projects/project-switcher";
 
 export default async function DashboardPage({
   searchParams,
@@ -76,52 +71,15 @@ export default async function DashboardPage({
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
+    <div style={{ padding: "var(--space-6)" }}>
       <RealtimeDashboard orgId={profile.orgId} />
-      <header className="border-b border-zinc-800 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-semibold">DesignQ</span>
-          <span className="text-zinc-700">·</span>
-          <nav className="flex items-center gap-1">
-            <Link href="/dashboard" className="text-sm text-white bg-zinc-800 px-2 py-1 rounded transition-colors">
-              Requests
-            </Link>
-            <Link href="/dashboard/team" className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors">
-              Team
-            </Link>
-            <Link href="/dashboard/insights" className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors">
-              Insights
-            </Link>
-            <Link href="/dashboard/ideas" className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors">
-              Ideas
-            </Link>
-            <Link href="/dashboard/radar" className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors">
-              Radar
-            </Link>
-            <Link href="/dashboard/dev" className="text-sm text-zinc-500 hover:text-zinc-300 px-2 py-1 rounded transition-colors">
-              Dev Board
-            </Link>
-          </nav>
-          <ProjectSwitcher projects={activeProjects} />
-        </div>
-        <div className="flex items-center gap-3">
-          <HeaderSearch />
-          <NotificationsBell />
-          <span className="text-xs text-zinc-600 bg-zinc-900 border border-zinc-800 rounded px-1.5 py-0.5 capitalize">
-            {profile.role}
-          </span>
-          <UserMenu fullName={profile.fullName} />
-        </div>
-      </header>
-      <main className="max-w-4xl mx-auto px-6 py-10">
-        <RequestList
-          requests={allRequests}
-          myRequestIds={myRequestIds}
-          assigneesByRequest={assigneesByRequest}
-          projects={activeProjects}
-          projectMap={projectMap}
-        />
-      </main>
+      <RequestList
+        requests={allRequests}
+        myRequestIds={myRequestIds}
+        assigneesByRequest={assigneesByRequest}
+        projects={activeProjects}
+        projectMap={projectMap}
+      />
     </div>
   );
 }
