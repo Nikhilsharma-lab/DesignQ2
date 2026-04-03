@@ -1,6 +1,7 @@
 // components/shell/detail-dock.tsx
 "use client";
 
+import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useRequests } from "@/context/requests-context";
 import { X, ExternalLink } from "lucide-react";
@@ -80,12 +81,6 @@ export function DetailDock() {
         animation: "dockSlideIn 200ms ease-out",
       }}
     >
-      <style>{`
-        @keyframes dockSlideIn {
-          from { transform: translateX(40px); opacity: 0; }
-          to   { transform: translateX(0);   opacity: 1; }
-        }
-      `}</style>
 
       {/* Header */}
       <div
@@ -260,7 +255,7 @@ export function DetailDock() {
         </div>
 
         {/* Full detail link */}
-        <a
+        <Link
           href={`/dashboard/requests/${request.id}`}
           className="flex items-center gap-2 rounded-lg px-4 py-2.5 transition-colors"
           style={{
@@ -273,7 +268,7 @@ export function DetailDock() {
         >
           <ExternalLink size={13} />
           Open full detail
-        </a>
+        </Link>
       </div>
     </aside>
   );
