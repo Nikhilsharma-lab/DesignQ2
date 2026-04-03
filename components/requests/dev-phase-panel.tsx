@@ -176,7 +176,7 @@ export function DevPhasePanel({
           </div>
         )}
 
-        {!isDone && (
+        {!isDone && optimisticIdx < STATES.length - 1 && (
           <div className="flex gap-2">
             {optimisticIdx > 0 && (
               <button
