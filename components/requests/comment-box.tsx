@@ -44,7 +44,7 @@ export function CommentBox({ requestId }: { requestId: string }) {
         <button
           type="submit"
           disabled={isPending}
-          className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
+          className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--border)] text-[var(--text-primary)] px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
         >
           {isPending ? "Posting..." : "Post"}
         </button>

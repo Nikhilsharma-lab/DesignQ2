@@ -188,7 +188,7 @@ export function PredesignPanel({
         <button
           onClick={handleAdvance}
           disabled={!canAdvance}
-          className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] px-3 py-1.5 rounded-lg border border-[var(--border)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="text-xs bg-[var(--bg-hover)] hover:bg-[var(--border)] text-[var(--text-primary)] px-3 py-1.5 rounded-lg border border-[var(--border)] transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {isFinal ? "Approve Bet — Start Design Phase" : `Advance to ${nextStage?.label}`}
           <kbd className="hidden md:inline ml-2 text-[10px] border border-[var(--border-strong)] rounded px-1 py-0.5 font-mono opacity-60">

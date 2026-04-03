@@ -93,7 +93,7 @@ export function ImpactPanel({
                 value={actual}
                 onChange={(e) => setActual(e.target.value)}
                 placeholder="e.g. +7.2% improvement in conversion"
-                className="flex-1 bg-[var(--bg-base)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-strong)] transition-colors"
+                className="flex-1 bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-strong)] transition-colors"
               />
               <button
                 onClick={handleLog}
