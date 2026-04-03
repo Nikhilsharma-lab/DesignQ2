@@ -45,21 +45,21 @@ export function InviteForm() {
     <div className="space-y-4">
       <form onSubmit={handleSubmit} className="flex items-end gap-3">
         <div className="flex-1">
-          <label className="block text-xs text-zinc-500 mb-1.5">Email address</label>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1.5">Email address</label>
           <input
             name="email"
             type="email"
             required
             placeholder="colleague@company.com"
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-zinc-600 transition-colors"
+            className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-strong)] transition-colors"
           />
         </div>
         <div>
-          <label className="block text-xs text-zinc-500 mb-1.5">Role</label>
+          <label className="block text-xs text-[var(--text-secondary)] mb-1.5">Role</label>
           <select
             name="role"
             defaultValue="designer"
-            className="bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-zinc-600 transition-colors"
+            className="bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--border-strong)] transition-colors"
           >
             {ROLES.map((r) => (
               <option key={r.value} value={r.value}>{r.label}</option>
@@ -69,7 +69,7 @@ export function InviteForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="bg-white text-zinc-900 rounded-lg px-4 py-2 text-sm font-medium hover:bg-zinc-100 transition-colors disabled:opacity-40 shrink-0"
+          className="bg-[var(--accent)] text-[var(--accent-text)] rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40 shrink-0"
         >
           {isPending ? "Generating…" : "Generate invite link"}
         </button>
@@ -82,11 +82,11 @@ export function InviteForm() {
       )}
 
       {inviteLink && (
-        <div className="flex items-center gap-3 bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3">
-          <p className="text-xs text-zinc-400 font-mono flex-1 truncate">{inviteLink}</p>
+        <div className="flex items-center gap-3 bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-4 py-3">
+          <p className="text-xs text-[var(--text-secondary)] font-mono flex-1 truncate">{inviteLink}</p>
           <button
             onClick={handleCopy}
-            className="text-xs text-zinc-400 hover:text-white border border-zinc-700 hover:border-zinc-500 rounded px-2.5 py-1 transition-colors shrink-0"
+            className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:border-[var(--border-strong)] rounded px-2.5 py-1 transition-colors shrink-0"
           >
             {copied ? "Copied!" : "Copy"}
           </button>

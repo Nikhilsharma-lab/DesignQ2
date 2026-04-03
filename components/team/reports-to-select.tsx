@@ -42,7 +42,7 @@ export function ReportsToSelect({
       value={value}
       onChange={handleChange}
       disabled={saving}
-      className="text-xs bg-zinc-900 border border-zinc-700 rounded px-2 py-1 text-zinc-400 hover:border-zinc-600 disabled:opacity-50 transition-colors"
+      className="text-xs bg-[var(--bg-subtle)] border border-[var(--border)] rounded px-2 py-1 text-[var(--text-secondary)] hover:border-[var(--border-strong)] disabled:opacity-50 transition-colors"
     >
       <option value="">No manager</option>
       {managers.map((m) => (
