@@ -214,8 +214,10 @@ export function RequestList({ requests, myRequestIds, assigneesByRequest = {}, p
 
       if (e.key === "Enter" && focused >= 0) {
         e.preventDefault();
+        const target = flatVisible[focused];
+        if (!target) return;
         const params = new URLSearchParams(window.location.search);
-        params.set("dock", flatVisible[focused].id);
+        params.set("dock", target.id);
         router.push(`?${params.toString()}`);
       }
       if (e.key === "/") {
