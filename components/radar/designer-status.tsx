@@ -94,14 +94,14 @@ function DesignerCard({
           <button
             onClick={handleNudge}
             disabled={nudge !== "idle"}
-            className="text-xs text-zinc-400 border border-zinc-700 rounded px-2 py-1 hover:border-zinc-500 hover:text-zinc-200 disabled:opacity-50 transition-colors"
+            className="text-xs text-[var(--text-secondary)] border border-[var(--border)] rounded px-2 py-1 hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:opacity-50 transition-colors"
           >
             {nudge === "loading" ? "…" : nudge === "done" ? "Sent ✓" : "Nudge"}
           </button>
           <button
             onClick={handleMarkAtRisk}
             disabled={risk !== "idle" || alreadyBlocked}
-            className="text-xs text-zinc-400 border border-zinc-700 rounded px-2 py-1 hover:border-zinc-500 hover:text-zinc-200 disabled:opacity-50 transition-colors"
+            className="text-xs text-[var(--text-secondary)] border border-[var(--border)] rounded px-2 py-1 hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:opacity-50 transition-colors"
           >
             {alreadyBlocked
               ? "Already blocked"
@@ -128,7 +128,7 @@ export function DesignerStatus({
 }) {
   if (designers.length === 0) {
     return (
-      <p className="text-sm text-zinc-600 border border-zinc-800/50 rounded-xl px-5 py-4">
+      <p className="text-sm text-[var(--text-tertiary)] border border-[var(--border)] rounded-xl px-5 py-4">
         No designers in this org yet.
       </p>
     );
