@@ -2,7 +2,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, requests, comments, requestStages, requestAiAnalysis, projects } from "@/db/schema";
+import { profiles, requests, comments, requestStages, requestAiAnalysis, requestContextBriefs, projects } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
 import { AssignPanel } from "@/components/requests/assign-panel";
 import { StageControls } from "@/components/requests/stage-controls";
@@ -18,6 +18,7 @@ import { TrackPhasePanel } from "@/components/requests/track-phase-panel";
 import { FigmaHistory } from "@/components/requests/figma-history";
 import { RealtimeRequest } from "@/components/realtime/realtime-request";
 import { ProjectBadge } from "@/components/projects/project-badge";
+import { ContextBriefPanel } from "@/components/requests/context-brief-panel";
 
 const priorityConfig: Record<string, { label: string; color: string; desc: string }> = {
   p0: { label: "P0", color: "bg-red-500/15 text-red-400 border-red-500/20", desc: "Critical — blocking" },
@@ -138,6 +139,17 @@ export default async function RequestDetailPage({
     // ai analysis query failed silently
   }
 
+  let existingBrief: (typeof requestContextBriefs.$inferSelect) | null = null;
+  try {
+    const [briefRow] = await db
+      .select()
+      .from(requestContextBriefs)
+      .where(eq(requestContextBriefs.requestId, id));
+    existingBrief = briefRow ?? null;
+  } catch {
+    // brief query failed silently
+  }
+
   /* ---- serialise for client components ---- */
   const sr = JSON.parse(JSON.stringify(request)) as {
     id: string;
@@ -230,6 +242,14 @@ export default async function RequestDetailPage({
                 <h2 className="text-xs font-medium text-zinc-500 uppercase tracking-wide mb-2">Success Metrics</h2>
                 <p className="text-sm text-zinc-300 leading-relaxed">{request.successMetrics}</p>
               </section>
+            )}
+
+            {/* AI Context Brief — design phase only */}
+            {request.phase === "design" && (
+              <ContextBriefPanel
+                requestId={request.id}
+                existingBrief={existingBrief}
+              />
             )}
 
             {request.figmaUrl && (
