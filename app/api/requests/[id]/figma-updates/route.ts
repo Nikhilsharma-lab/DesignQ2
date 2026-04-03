@@ -3,7 +3,8 @@ import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { requests, profiles, figmaUpdates } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { sendFigmaDriftEmail } from "@/lib/email";
+import { sendFigmaDriftEmail, APP_URL } from "@/lib/email";
+import { NewFigmaUpdate } from "@/db/schema/figma_updates";
 
 // GET /api/requests/[id]/figma-updates — fetch all Figma updates for a request
 export async function GET(
@@ -52,7 +53,7 @@ export async function POST(
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
   }
 
-  const body = await req.json();
+  const body = await req.json().catch(() => ({})) as Partial<NewFigmaUpdate>;
   const {
     figmaFileUrl,
     figmaFileId,
@@ -99,8 +100,7 @@ export async function POST(
         }
 
         const designerName = profile.fullName || profile.email;
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://designq.app";
-        const requestUrl = `${appUrl}/dashboard/requests/${requestId}`;
+        const requestUrl = `${APP_URL}/dashboard/requests/${requestId}`;
 
         void sendFigmaDriftEmail({
           to: devOwner.email,
