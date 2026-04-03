@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { requests, requestAiAnalysis, profiles, requestStages } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { requests, requestAiAnalysis, profiles, requestStages, projects } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 import { triageRequest } from "@/lib/ai/triage";
 
 export async function POST(req: NextRequest) {
@@ -15,10 +15,19 @@ export async function POST(req: NextRequest) {
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const body = await req.json();
-  const { title, description, businessContext, successMetrics, figmaUrl, impactMetric, impactPrediction, deadlineAt } = body;
+  const { title, description, businessContext, successMetrics, figmaUrl, impactMetric, impactPrediction, deadlineAt, projectId } = body;
 
   if (!title?.trim() || !description?.trim()) {
     return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
+  }
+  if (!projectId) {
+    return NextResponse.json({ error: "Project is required" }, { status: 400 });
+  }
+  // Validate project belongs to same org
+  const [project] = await db.select({ id: projects.id }).from(projects)
+    .where(and(eq(projects.id, projectId), eq(projects.orgId, profile.orgId)));
+  if (!project) {
+    return NextResponse.json({ error: "Invalid project" }, { status: 400 });
   }
 
   // Create request
@@ -37,6 +46,7 @@ export async function POST(req: NextRequest) {
       deadlineAt: deadlineAt ? new Date(deadlineAt) : null,
       status: "submitted",
       stage: "intake",
+      projectId,
     })
     .returning();
 

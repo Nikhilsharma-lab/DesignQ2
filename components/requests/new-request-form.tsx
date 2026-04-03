@@ -5,9 +5,10 @@ import { useRouter } from "next/navigation";
 
 interface Props {
   onClose: () => void;
+  projects: { id: string; name: string; color: string }[];
 }
 
-export function NewRequestForm({ onClose }: Props) {
+export function NewRequestForm({ onClose, projects }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -27,6 +28,7 @@ export function NewRequestForm({ onClose }: Props) {
       impactMetric: form.get("impactMetric") || null,
       impactPrediction: form.get("impactPrediction") || null,
       deadlineAt: form.get("deadlineAt") || null,
+      projectId: form.get("projectId") || null,
     };
 
     const res = await fetch("/api/requests", {
@@ -77,6 +79,22 @@ export function NewRequestForm({ onClose }: Props) {
               className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm text-white placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition-colors"
               placeholder="e.g. Redesign onboarding flow for mobile"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-zinc-400 mb-1.5 uppercase tracking-wide">
+              Project <span className="text-red-400">*</span>
+            </label>
+            <select
+              name="projectId"
+              required
+              className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-zinc-600 transition-colors"
+            >
+              <option value="">Select a project…</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
           </div>
 
           <div>
