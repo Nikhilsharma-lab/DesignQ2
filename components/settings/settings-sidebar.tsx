@@ -32,6 +32,12 @@ export function SettingsSidebar({ isAdmin }: Props) {
 
   return (
     <aside className="w-[200px] shrink-0">
+      <Link
+        href="/dashboard"
+        className="flex items-center gap-1.5 px-3 py-1.5 mb-5 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors rounded-lg hover:bg-[var(--bg-hover)]"
+      >
+        ← Dashboard
+      </Link>
       <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide mb-4 px-3">
         Settings
       </p>
