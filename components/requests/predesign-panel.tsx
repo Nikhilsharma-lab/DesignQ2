@@ -60,9 +60,8 @@ export function PredesignPanel({
   }
 
   async function handleAdvance() {
-    if (!nextStage) return;
     const previousStage = optimisticStage;
-    setOptimisticStage(nextStage.key);
+    if (nextStage) setOptimisticStage(nextStage.key);
     setError(null);
     try {
       const res = await fetch(`/api/requests/${requestId}/advance-phase`, {
@@ -70,13 +69,13 @@ export function PredesignPanel({
       });
       const data = await res.json();
       if (!res.ok) {
-        setOptimisticStage(previousStage);
+        if (nextStage) setOptimisticStage(previousStage);
         setError(data.error ?? "Failed to advance");
       } else {
         router.refresh();
       }
     } catch {
-      setOptimisticStage(previousStage);
+      if (nextStage) setOptimisticStage(previousStage);
       setError("Network error");
     }
   }
