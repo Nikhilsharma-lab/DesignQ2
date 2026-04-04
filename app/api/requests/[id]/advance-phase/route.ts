@@ -15,6 +15,7 @@ export async function POST(
   _req: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  try {
   const { id: requestId } = await params;
 
   const supabase = await createClient();
@@ -239,6 +240,11 @@ export async function POST(
   }
 
   return NextResponse.json({ error: "No advancement possible at this phase" }, { status: 422 });
+  } catch (err) {
+    console.error("[advance-phase] Unhandled error:", err);
+    const message = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────
