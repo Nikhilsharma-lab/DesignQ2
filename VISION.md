@@ -1,7 +1,7 @@
 # Lane — Product Vision
 ## Where we're going and why it matters
 
-*Internal document. Last updated: April 2026.*
+*Internal document. Last updated: April 5, 2026.*
 
 ---
 
