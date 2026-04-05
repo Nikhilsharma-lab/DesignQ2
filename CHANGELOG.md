@@ -1,0 +1,64 @@
+# Changelog
+
+**Lane** — AI-native design ops platform. Built for design teams, not adapted for them.
+Status: pre-launch beta | Solo founder: Nikhil (Head of Product Design @ Airtel Payments Bank)
+
+All notable changes are documented here. Update this file with every PR before merging.
+
+---
+
+## 2026-04-05 — Pre-customer security hardening + brand
+
+### Security (must-fix before first paying customer)
+- Replace hardcoded test email with `ENABLE_MULTI_ROLE_TESTING` env flag — removes dev backdoor from production while preserving solo testing locally (PR #6)
+- Add role allowlist + lead/admin gate to invite creation — any authenticated user could previously create invites with arbitrary roles (PR #6)
+- Add email match check in `acceptInvite` — token possession alone was enough to join any org (PR #6)
+- Add org scoping to `toggle-blocked`, `advance`, `impact`, `update` endpoints — authenticated users from other orgs could mutate requests if they knew the UUID (PR #6)
+- Validate `managerId` belongs to same org before assignment — prevented cross-org profile injection (PR #7)
+
+### Fixed
+- Record `request_stages` rows on every `advance-phase` transition — cycle-time analytics (`radar.ts`) were always returning null because no history was being written (PR #8)
+- Flag plaintext Figma OAuth token storage in schema — marked for AES-256-GCM encryption before customer onboarding (PR #8)
+
+### Docs
+- Add `STORY.md` — Lane brand story, tagline "Own your lane.", positioning, and voice rules
+- Document `ENABLE_MULTI_ROLE_TESTING=true` env var in `CLAUDE.md` — required in `.env.local` for solo validation testing
+
+---
+
+## 2026-03-01 to 2026-04-04 — MVP foundation (Weeks 1–8)
+
+### Added
+- Next.js 14 (App Router) scaffolded and deployed on Vercel
+- Supabase auth + Drizzle ORM schema (requests, profiles, organizations, ideas, assignments, figma_connections)
+- Request intake form with AI auto-triage (priority, complexity, type via Claude API)
+- 4-phase workflow engine: Predesign → Design → Dev → Track
+- Predesign stages: Intake → Context → Shape → Bet (with gate checks)
+- Idea Board — org-wide idea submission, anonymous voting, AI validation, auto-create request on approval
+- Design phase: Explore → Validate (3-sign-off gate: Designer + PM + Design Head) → Handoff
+- Figma sync — activity feed, version history, post-handoff change alerts (`figma_updates` table)
+- Dev kanban board: To Do → In Progress → In Review → QA → Done
+- Real-time updates via Supabase Realtime (WebSocket + `router.refresh()`)
+- Email notifications via Resend (invite, validation needed, all sign-offs, handoff)
+- Settings: org management, team invite flow, role assignment
+- Warm cream UI theme (`#F8F6F1` background, `#2E5339` accent, Satoshi + Geist Mono fonts)
+- Auth middleware scoping all dashboard routes
+
+---
+
+## How to update this file
+
+Every PR should include a changelog entry under the current date:
+
+```
+## YYYY-MM-DD — one-line description of the session
+
+### Security     ← auth, permissions, data exposure
+### Added        ← new features
+### Changed      ← changes to existing behaviour
+### Fixed        ← bug fixes
+### Removed      ← removed features
+### Docs         ← documentation only changes
+```
+
+Skip sections that don't apply. Keep bullets short — one line per change with the *why*, PR number at the end.

@@ -48,6 +48,17 @@ export async function PATCH(
     return NextResponse.json({ error: "Member not found" }, { status: 404 });
   }
 
+  // Cross-org guard: verify proposed managerId also belongs to viewer's org
+  if (managerId !== null) {
+    const [manager] = await db
+      .select({ id: profiles.id, orgId: profiles.orgId })
+      .from(profiles)
+      .where(eq(profiles.id, managerId));
+    if (!manager || manager.orgId !== viewer.orgId) {
+      return NextResponse.json({ error: "Manager not found" }, { status: 404 });
+    }
+  }
+
   await db
     .update(profiles)
     .set({ managerId: managerId ?? null })

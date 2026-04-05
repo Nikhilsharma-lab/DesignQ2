@@ -749,13 +749,23 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 DATABASE_URL=
 ANTHROPIC_API_KEY=
-FIGMA_WEBHOOK_TOKEN=
-FIGMA_ACCESS_TOKEN=
-UPSTASH_REDIS_REST_URL=
-UPSTASH_REDIS_REST_TOKEN=
-RESEND_API_KEY=
-STRIPE_SECRET_KEY= (post-beta)
-STRIPE_WEBHOOK_SECRET= (post-beta)
+
+# Dev/test only — allows solo multi-role validation sign-off (designer + PM + design head)
+# Add this to .env.local for local development. NEVER add to Vercel production env vars.
+ENABLE_MULTI_ROLE_TESTING=true
+
+# Email (Resend) — add these in Vercel dashboard to activate email notifications
+RESEND_API_KEY=               ← get from resend.com (free tier, 3k emails/month)
+EMAIL_FROM=                   ← e.g. "DesignQ <notifications@yourdomain.com>"
+                                  domain must be verified in Resend dashboard
+                                  OR use "onboarding@resend.dev" to test without domain
+NEXT_PUBLIC_APP_URL=          ← your Vercel deployment URL (e.g. https://designq2.vercel.app)
+                                  used in email links — without this, links in emails won't work
+
+# Figma OAuth (future — not yet built)
+FIGMA_CLIENT_ID=
+FIGMA_CLIENT_SECRET=
+# FIGMA_WEBHOOK_TOKEN removed — webhook approach dropped in favour of OAuth
 ```
 
 ---

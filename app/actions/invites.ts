@@ -23,6 +23,14 @@ export async function createInvite(formData: FormData) {
 
   if (!email) return { error: "Email is required" };
 
+  const validRoles = ["pm", "designer", "developer", "lead", "admin"];
+  if (!validRoles.includes(role)) return { error: "Invalid role" };
+
+  // Only leads and admins can create invites
+  if (profile.role !== "lead" && profile.role !== "admin") {
+    return { error: "Only leads and admins can invite team members" };
+  }
+
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
@@ -72,6 +80,11 @@ export async function acceptInvite(token: string, formData: FormData) {
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const fullName = formData.get("fullName") as string;
+
+  // Ensure the submitted email matches the invited email
+  if (email.toLowerCase().trim() !== invite.email.toLowerCase().trim()) {
+    return { error: "This invite was sent to a different email address" };
+  }
 
   // Sign up or sign in
   const { data, error } = await supabase.auth.signUp({ email, password });

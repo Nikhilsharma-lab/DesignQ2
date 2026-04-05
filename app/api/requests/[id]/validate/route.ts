@@ -73,10 +73,10 @@ export async function POST(
   const body = await req.json().catch(() => ({}));
   const { decision, conditions, comments: commentText, signerRole: roleOverride } = body;
 
-  // Test account can sign off on behalf of any role
-  const TEST_EMAIL = "hi.nikhilsharma@gmail.com";
+  // In dev/test environments, allow multi-role sign-off for solo testing.
+  // Set ENABLE_MULTI_ROLE_TESTING=true in .env.local — never in production.
   let signerRole = signerRoleFromProfile(profile.role ?? "");
-  if (profile.email === TEST_EMAIL && roleOverride && ["designer", "pm", "design_head"].includes(roleOverride)) {
+  if (process.env.ENABLE_MULTI_ROLE_TESTING === "true" && roleOverride && ["designer", "pm", "design_head"].includes(roleOverride)) {
     signerRole = roleOverride as "designer" | "pm" | "design_head";
   }
 
