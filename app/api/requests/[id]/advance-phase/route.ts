@@ -258,15 +258,17 @@ export async function POST(
         { status: 422 }
       );
     }
-    await db
-      .update(requests)
-      .set({
-        trackStage: "complete",
-        status: "shipped",
-        updatedAt: new Date(),
-      })
-      .where(eq(requests.id, requestId));
-    await addSystemComment(requestId, "✅ Impact recorded — request complete");
+    await db.transaction(async (tx) => {
+      await tx
+        .update(requests)
+        .set({
+          trackStage: "complete",
+          status: "shipped",
+          updatedAt: new Date(),
+        })
+        .where(eq(requests.id, requestId));
+      await tx.insert(comments).values({ requestId, authorId: null, body: "✅ Impact recorded — request complete", isSystem: true });
+    });
     return NextResponse.json({ success: true });
   }
 
@@ -304,4 +306,3 @@ function checkPredesignGate(
   }
   return null;
 }
-
