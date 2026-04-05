@@ -9,6 +9,7 @@
   <br /><br />
   Engineering teams have Linear.<br />
   Marketing teams have HubSpot.<br />
+  Developers have Jira.<br />
   Design teams have been borrowing tools ever since.
   <br /><br />
   Not because the tools are bad. Because design work is different.<br />
