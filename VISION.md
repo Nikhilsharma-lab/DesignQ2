@@ -9,6 +9,18 @@
 
 Lane starts as the operating system for design teams — replacing chaos with a structured 4-phase model. It evolves into an AI that runs design operations autonomously: classifying problems, briefing designers, grading predictions, generating handoff docs, measuring impact, and surfacing risks before anyone notices them. By v3, the design leader's job shifts from managing operations to approving decisions the AI surfaces. Lane becomes the chief of staff that every design team always needed but could never afford.
 
+```
+╔═══════════════════╗     ╔═══════════════════╗     ╔═══════════════════╗
+║  v1 — Foundation  ║────▶║ v2 — Intelligence  ║────▶║   v3 — Agentic    ║
+║   Months 0–3      ║     ║   Months 3–8       ║     ║   Months 8–18     ║
+╠═══════════════════╣     ╠═══════════════════╣     ╠═══════════════════╣
+║ Structured ops    ║     ║ AI runs ops        ║     ║ Lane is operator  ║
+║ Humans do it all  ║     ║ Humans steer       ║     ║ Humans approve    ║
+║ 4-phase workflow  ║     ║ 9 killer features  ║     ║ Lane Agent        ║
+║ ✅ Built & live   ║     ║ 🔨 In progress     ║     ║ 🔭 On the horizon ║
+╚═══════════════════╝     ╚═══════════════════╝     ╚═══════════════════╝
+```
+
 ---
 
 ## Who This Is For
@@ -28,9 +40,31 @@ Track their designers. Grade their team. Generate reports for their VP. They've 
 
 **The hiring bar:** Lane earns its seat at the table the first time a design leader forwards the weekly digest to their VP of Product without having written a single word of it.
 
+| Without Lane | With Lane |
+|---|---|
+| 20 min reconstructing status every Monday | Friday digest lands in inbox automatically |
+| Slack DMs to find out who's blocked | Design Radar shows it in under 10 seconds |
+| Figma link dropped in a comment at handoff | AI-generated handoff brief with decisions, edge cases, build sequence |
+| "What happened to that request?" | Full audit trail on every transition |
+| PM submits a solution, not a problem | AI intake gate blocks it before it enters |
+| No idea if design is moving a metric | PM calibration score tracks prediction vs. actual |
+
 ---
 
 ## Where We Are Now (v1 — Foundation)
+
+```
+  PREDESIGN          DESIGN             BUILD              TRACK
+  (PM + Org)         (Designers)        (Developers)       (PMs)
+┌────────────┐    ┌─────────────┐    ┌────────────┐    ┌────────────┐
+│ Intake     │    │ Explore     │    │ To Do      │    │ Measuring  │
+│ Context    │───▶│ Validate    │───▶│ In Progress│───▶│            │
+│ Shape      │    │ Handoff     │    │ Design QA  │    │ Complete   │
+│ Bet        │    │             │    │ Done       │    │            │
+└────────────┘    └─────────────┘    └────────────┘    └────────────┘
+  AI gates             3 sign-offs      Figma locked     PM calibration
+  solution requests    required         at handoff       score updated
+```
 
 What's built and shipped:
 
