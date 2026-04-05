@@ -31,8 +31,13 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
+  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
   const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
-  if (!request) return NextResponse.json({ error: "Request not found" }, { status: 404 });
+  if (!request || request.orgId !== profile.orgId) {
+    return NextResponse.json({ error: "Request not found" }, { status: 404 });
+  }
 
   const currentIndex = STAGES.indexOf(request.stage as Stage);
   if (currentIndex === -1 || currentIndex >= STAGES.length - 1) {

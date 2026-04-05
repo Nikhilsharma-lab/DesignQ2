@@ -19,14 +19,18 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
-  if (!request) return NextResponse.json({ error: "Request not found" }, { status: 404 });
-
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
+  const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
+  if (!request || request.orgId !== profile.orgId) {
+    return NextResponse.json({ error: "Request not found" }, { status: 404 });
+  }
+
   const canEdit =
     request.requesterId === user.id ||
-    profile?.role === "lead" ||
-    profile?.role === "admin";
+    profile.role === "lead" ||
+    profile.role === "admin";
   if (!canEdit) return NextResponse.json({ error: "Only the requester or a lead can edit" }, { status: 403 });
 
   await db
