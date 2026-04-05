@@ -6,3 +6,4 @@ node_modules/
 dist/
 .worktrees/
 TODO.md
+.claude/launch.json
