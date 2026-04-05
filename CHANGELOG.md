@@ -1,7 +1,7 @@
 # Changelog
 
 **Lane** — AI-native design ops platform. Built for design teams, not adapted for them.
-Status: pre-launch beta | Solo founder: Nikhil (Head of Product Design @ Airtel Payments Bank)
+Status: pre-launch beta
 
 All notable changes are documented here. Update this file with every PR before merging.
 
