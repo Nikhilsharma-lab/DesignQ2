@@ -10,3 +10,4 @@ export * from "./projects";
 export * from "./context_briefs";
 export * from "./handoff_briefs";
 export * from "./figma_connections";
+export * from "./weekly_digests";
