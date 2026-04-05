@@ -53,9 +53,22 @@ html {
   --radius-lg: 8px;
   --radius-xl: 12px;
 
+  /* Sidebar */
+  --bg-sidebar: #F0EDE6;
+  --bg-input: #EAE7DF;
+  --bg-active: #DDD9D0;
+  --accent-soft: rgba(46,83,57,0.08);
+  --accent-med: rgba(46,83,57,0.15);
+  --accent-bright: #3D6B4A;
+  --text-muted: #8C8578;
+  --text-dim: #B0A99E;
+  --border-subtle: #E8E5DD;
+  --green: #34d399;
+  --amber: #d4a84b;
+  --blue: #5B8FC9;
+
   /* Layout */
-  --rail-width: 48px;
-  --pane-width: 256px;
+  --sidebar-width: 256px;
   --dock-width: 400px;
 
   /* Accent hover */
