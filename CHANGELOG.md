@@ -34,7 +34,7 @@ Run `npm run db:push` after merging to apply: drops old `design_stage` enum, rec
 
 ---
 
-## 2026-04-05 — Security fixes, token encryption, repo cleanup
+## 2026-04-05 (evening) — Security fixes, token encryption, repo cleanup
 
 ### Security
 - Block leads from issuing `lead` or `admin` invites — vertical privilege escalation where a lead could grant themselves or others admin-level roles (PR #9)
@@ -54,7 +54,7 @@ Any orgs with existing plaintext Figma tokens must reconnect Figma after deploy.
 
 ---
 
-## 2026-04-05 — Pre-customer security hardening + brand
+## 2026-04-05 (morning) — Pre-customer security hardening + brand
 
 ### Security (must-fix before first paying customer)
 - Replace hardcoded test email with `ENABLE_MULTI_ROLE_TESTING` env flag — removes dev backdoor from production while preserving solo testing locally (PR #6)
@@ -82,7 +82,7 @@ Any orgs with existing plaintext Figma tokens must reconnect Figma after deploy.
 - 4-phase workflow engine: Predesign → Design → Dev → Track
 - Predesign stages: Intake → Context → Shape → Bet (with gate checks)
 - Idea Board — org-wide idea submission, anonymous voting, AI validation, auto-create request on approval
-- Design phase: Explore → Validate (3-sign-off gate: Designer + PM + Design Head) → Handoff
+- Design phase: Explore → Validate (3-sign-off gate: Designer + PM + Design Head) → Handoff *(superseded by 5-stage model in PR #13)*
 - Figma sync — activity feed, version history, post-handoff change alerts (`figma_updates` table)
 - Dev kanban board: To Do → In Progress → In Review → QA → Done
 - Real-time updates via Supabase Realtime (WebSocket + `router.refresh()`)
