@@ -30,7 +30,7 @@ import { logout } from "@/app/actions/auth";
 
 interface NavItem {
   href: string;
-  icon: React.ComponentType<{ size?: number }>;
+  icon: React.ComponentType<{ size?: number | string }>;
   label: string;
   badge?: number | string;
   badgeStyle?: "accent" | "warn" | "muted";
