@@ -10,9 +10,14 @@ TODO.md
 
 # Internal working documents — not for public repo
 CLAUDE.md
+DESIGN.md
+VISION.md
 Lane-PRD-v1.1.md
 04-specs/
 docs/
 DEFERRED.md
 STORY.md
 lane docs/
+UI reference/
+Misc/
+.claude/launch.json
