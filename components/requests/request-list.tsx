@@ -38,8 +38,8 @@ const PHASES = [
     borderColor: "border-[#A394C7]/20",
     bgColor: "bg-[#A394C7]/5",
     dotColor: "bg-[#A394C7]",
-    stages: ["explore", "validate", "handoff"],
-    stageLabels: { explore: "Explore", validate: "Validate", handoff: "Handoff" },
+    stages: ["sense", "frame", "diverge", "converge", "prove"],
+    stageLabels: { sense: "Sense", frame: "Frame", diverge: "Diverge", converge: "Converge", prove: "Prove" },
     stageBadge: "bg-[#A394C7]/10 text-[#A394C7] border-[#A394C7]/20",
   },
   {
@@ -84,8 +84,8 @@ function getEffectivePhaseAndStage(r: Request): { phaseKey: PhaseKey; subStage: 
         return { phaseKey: "predesign", subStage: sub, phaseOrder, stageOrder: ["intake","context","shape","bet"].indexOf(sub) };
       }
       case "design": {
-        const sub = r.designStage ?? "explore";
-        return { phaseKey: "design", subStage: sub, phaseOrder, stageOrder: ["explore","validate","handoff"].indexOf(sub) };
+        const sub = r.designStage ?? "sense";
+        return { phaseKey: "design", subStage: sub, phaseOrder, stageOrder: ["sense","frame","diverge","converge","prove"].indexOf(sub) };
       }
       case "dev": {
         const sub = r.kanbanState ?? "todo";

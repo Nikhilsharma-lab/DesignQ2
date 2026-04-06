@@ -10,9 +10,11 @@ export const PREDESIGN_STAGES: PredesignStage[] = [
 ];
 
 export const DESIGN_STAGES: DesignStage[] = [
-  "explore",
-  "validate",
-  "handoff",
+  "sense",
+  "frame",
+  "diverge",
+  "converge",
+  "prove",
 ];
 
 // Legacy flat stages (still used in older requests)
@@ -71,7 +73,7 @@ export function getActiveStageLabel(request: Pick<Request, "phase" | "stage" | "
       case "predesign":
         return stageLabel(request.predesignStage ?? "intake");
       case "design":
-        return stageLabel(request.designStage ?? "explore");
+        return stageLabel(request.designStage ?? "sense");
       case "dev":
         return stageLabel(request.kanbanState ?? "todo");
       case "track":
@@ -89,6 +91,12 @@ function stageLabel(stage: string | null | undefined): string {
     shape: "Shape",
     bet: "Betting",
     // Design
+    sense: "Sense",
+    frame: "Frame",
+    diverge: "Diverge",
+    converge: "Converge",
+    prove: "Prove",
+    // Legacy design stages (for old requests)
     explore: "Exploration",
     validate: "Validation",
     handoff: "Handoff",
@@ -119,6 +127,12 @@ export const STAGE_STATUS_MAP: Record<string, string> = {
   context: "submitted",
   shape: "submitted",
   bet: "assigned",
+  sense: "in_progress",
+  frame: "in_progress",
+  diverge: "in_progress",
+  converge: "in_progress",
+  prove: "in_review",
+  // Legacy
   explore: "in_progress",
   validate: "in_review",
   handoff: "in_review",

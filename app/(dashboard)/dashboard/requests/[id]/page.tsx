@@ -319,8 +319,7 @@ export default async function RequestDetailPage({
             )}
 
             {/* AI Handoff Brief — shown at Handoff stage and throughout dev phase */}
-            {((request.phase === "design" && request.designStage === "handoff") ||
-              request.phase === "dev") && (
+            {request.phase === "dev" && (
               <HandoffBriefPanel
                 requestId={request.id}
                 existingBrief={existingHandoffBrief}
@@ -504,7 +503,7 @@ export default async function RequestDetailPage({
               <div className="mb-2">
                 <DesignPhasePanel
                   requestId={request.id}
-                  currentDesignStage={(request.designStage ?? "explore") as "explore" | "validate" | "handoff"}
+                  currentDesignStage={(request.designStage ?? "sense") as "sense" | "frame" | "diverge" | "converge" | "prove"}
                   figmaUrl={request.figmaUrl}
                   profileRole={profile.role ?? "member"}
                   isTestUser={isTestUser}

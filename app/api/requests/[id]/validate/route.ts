@@ -66,8 +66,8 @@ export async function POST(
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
   }
 
-  if (request.designStage !== "validate") {
-    return NextResponse.json({ error: "Request is not in the validate stage" }, { status: 422 });
+  if (request.designStage !== "prove") {
+    return NextResponse.json({ error: "Request is not in the Prove stage" }, { status: 422 });
   }
 
   const body = await req.json().catch(() => ({}));
@@ -154,15 +154,22 @@ export async function POST(
   });
 
   if (allApproved && roles.has("designer") && roles.has("pm") && roles.has("design_head")) {
-    // Auto-advance to handoff
+    // All 3 Prove sign-offs received — advance to Dev phase
     await db
       .update(requests)
-      .set({ designStage: "handoff", stage: "handoff", updatedAt: new Date() })
+      .set({
+        phase: "dev",
+        kanbanState: "todo",
+        stage: "build",       // legacy
+        status: "assigned",
+        figmaLockedAt: new Date(),
+        updatedAt: new Date(),
+      })
       .where(eq(requests.id, requestId));
     await db.insert(comments).values({
       requestId,
       authorId: null,
-      body: "⭢ All 3 sign-offs received — advanced to Handoff",
+      body: "⭢ All 3 Prove sign-offs received — Figma locked, Dev phase started",
       isSystem: true,
     });
 

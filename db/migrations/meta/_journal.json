@@ -15,6 +15,13 @@
       "when": 1775210006265,
       "tag": "0001_certain_santa_claus",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775505038908,
+      "tag": "0002_cheerful_the_executioner",
+      "breakpoints": true
     }
   ]
 }
