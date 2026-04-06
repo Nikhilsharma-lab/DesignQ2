@@ -1,30 +1,49 @@
+// components/shell/sidebar.tsx
 "use client";
 
-import React, { useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { X } from "lucide-react";
 import {
   Home,
   Inbox,
   FileText,
   ArrowRight,
   LayoutGrid,
-  Columns,
+  Kanban,
   List,
-  Star,
+  Lightbulb,
   BarChart3,
   Target,
   Activity,
+  Settings,
+  LogOut,
   Plus,
   Search,
-  Settings,
   ChevronRight,
   ChevronDown,
-  type LucideIcon,
 } from "lucide-react";
-import type { Profile, Organization } from "@/db/schema";
+import { logout } from "@/app/actions/auth";
 
-/* ── Types ───────────────────────────────────────────────── */
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface NavItem {
+  href: string;
+  icon: React.ComponentType<{ size?: number }>;
+  label: string;
+  badge?: number | string;
+  badgeStyle?: "accent" | "warn" | "muted";
+  trailing?: string;
+}
+
+interface SectionProps {
+  label: string;
+  count?: number;
+  showAdd?: boolean;
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+}
 
 interface SidebarBanner {
   title: string;
@@ -33,94 +52,86 @@ interface SidebarBanner {
   ctaHref: string;
 }
 
-interface SidebarProps {
-  profile: Profile;
-  org: Organization;
-  activeRequestCount: number;
-  inboxCount?: number;
-  bettingBoardCount?: number;
-  /** Morning briefing data — only shown for lead/admin */
-  briefing?: {
-    decisions: number;
-    toTriage: number;
-    hasWarning: boolean;
-  };
-  /** Optional promo/update banner shown above user profile */
+interface Props {
+  user: { initials: string; name: string; role: string };
+  orgName: string;
+  orgPlan: string;
+  activeCount: number;
   banner?: SidebarBanner;
 }
 
-/* ── Chevron icon (reusable) ─────────────────────────────── */
+// ── Section (collapsible) ────────────────────────────────────────────────────
 
-function SectionChevron({ open }: { open: boolean }) {
+function Section({ label, count, showAdd, children, defaultOpen = true }: SectionProps) {
+  const [open, setOpen] = useState(defaultOpen);
+
   return (
-    <ChevronRight
-      size={10}
-      className="transition-transform duration-100"
-      style={{
-        color: "var(--text-muted)",
-        opacity: 0.5,
-        transform: open ? "rotate(90deg)" : "rotate(0deg)",
-      }}
-    />
+    <div className="mt-2.5">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-1.5 w-full px-2.5 py-1 group"
+      >
+        <ChevronRight
+          size={10}
+          className="transition-transform text-[var(--text-tertiary)]"
+          style={{ transform: open ? "rotate(90deg)" : undefined, opacity: 0.5 }}
+        />
+        <span
+          className="flex-1 text-left transition-colors group-hover:text-[var(--text-secondary)]"
+          style={{
+            fontFamily: "'Geist Mono', monospace",
+            fontSize: 10,
+            fontWeight: 600,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "var(--text-tertiary)",
+          }}
+        >
+          {label}
+        </span>
+        {count !== undefined && (
+          <span
+            style={{
+              fontFamily: "'Geist Mono', monospace",
+              fontSize: 10,
+              color: "var(--text-tertiary)",
+            }}
+          >
+            {count}
+          </span>
+        )}
+        {showAdd && (
+          <span className="hidden group-hover:flex opacity-50">
+            <Plus size={12} />
+          </span>
+        )}
+      </button>
+      {open && <div className="py-0.5 px-1">{children}</div>}
+    </div>
   );
 }
 
-/* ── Nav item ────────────────────────────────────────────── */
+// ── Nav Item ─────────────────────────────────────────────────────────────────
 
-function NavItem({
-  href,
-  icon: Icon,
-  label,
-  isActive,
-  badge,
-  badgeVariant = "accent",
-  trailingText,
-  indent = false,
-}: {
-  href: string;
-  icon: LucideIcon;
-  label: string;
-  isActive: boolean;
-  badge?: number;
-  badgeVariant?: "accent" | "warning" | "muted";
-  trailingText?: string;
-  indent?: boolean;
-}) {
-  const badgeStyles = {
-    accent: { background: "var(--accent)", color: "#fff" },
-    warning: { background: "rgba(212,168,75,0.12)", color: "var(--amber)" },
-    muted: { background: "var(--bg-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" },
-  };
+function NavItemLink({ href, icon: Icon, label, badge, badgeStyle, trailing }: NavItem) {
+  const pathname = usePathname();
+  const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
 
   return (
     <Link
       href={href}
-      className="group flex items-center gap-[9px] rounded-[7px] relative transition-colors"
+      className="flex items-center gap-2.5 px-2.5 py-[7px] rounded-[7px] relative transition-colors"
       style={{
-        padding: indent ? "7px 10px 7px 36px" : "7px 10px",
-        background: isActive ? "var(--bg-active)" : undefined,
-      }}
-      onMouseEnter={(e) => {
-        if (!isActive) e.currentTarget.style.background = "var(--bg-hover)";
-      }}
-      onMouseLeave={(e) => {
-        if (!isActive) e.currentTarget.style.background = "";
+        background: isActive ? "var(--bg-hover)" : undefined,
       }}
     >
-      {/* Active indicator bar */}
       {isActive && (
         <span
-          className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r-sm"
-          style={{
-            width: 2.5,
-            height: 14,
-            background: "var(--accent)",
-          }}
+          className="absolute left-0 top-1/2 -translate-y-1/2 rounded-r"
+          style={{ width: 2.5, height: 14, background: "var(--accent)" }}
         />
       )}
-
-      <Icon size={15} className="shrink-0" color={isActive ? "var(--accent)" : "var(--text-muted)"} />
-
+      <Icon size={15} />
       <span
         className="flex-1 truncate"
         style={{
@@ -132,353 +143,79 @@ function NavItem({
       >
         {label}
       </span>
-
-      {badge !== undefined && badge > 0 && (
+      {badge !== undefined && (
         <span
-          className="text-center"
+          className="rounded-full text-center"
           style={{
             fontFamily: "'Geist Mono', monospace",
             fontSize: 10,
             fontWeight: 600,
             padding: "1px 6px",
-            borderRadius: 10,
             minWidth: 16,
             lineHeight: "16px",
-            ...badgeStyles[badgeVariant],
+            ...(badgeStyle === "accent"
+              ? { background: "var(--accent)", color: "#fff" }
+              : badgeStyle === "warn"
+              ? { background: "rgba(212,168,75,0.12)", color: "#D4A84B" }
+              : { background: "var(--bg-hover)", color: "var(--text-secondary)", border: "1px solid var(--border)" }),
           }}
         >
           {badge}
         </span>
       )}
-
-      {trailingText && (
+      {trailing && (
         <span
           style={{
             fontFamily: "'Geist Mono', monospace",
             fontSize: 10,
-            color: "var(--text-dim)",
+            color: "var(--text-tertiary)",
           }}
         >
-          {trailingText}
+          {trailing}
         </span>
       )}
     </Link>
   );
 }
 
-/* ── Collapsible section ─────────────────────────────────── */
+// ── Sidebar ──────────────────────────────────────────────────────────────────
 
-function Section({
-  label,
-  count,
-  showAdd = false,
-  defaultOpen = true,
-  children,
-}: {
-  label: string;
-  count?: number;
-  showAdd?: boolean;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <div style={{ marginTop: 10 }}>
-      <button
-        onClick={() => setOpen(!open)}
-        className="group flex items-center gap-[5px] w-full"
-        style={{ padding: "5px 10px", background: "none", border: "none", cursor: "pointer" }}
-      >
-        <SectionChevron open={open} />
-        <span
-          style={{
-            fontFamily: "'Geist Mono', monospace",
-            fontSize: 10,
-            fontWeight: 600,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            color: "var(--text-muted)",
-            flex: 1,
-            textAlign: "left",
-            transition: "color 0.1s",
-          }}
-          className="group-hover:!text-[var(--text-secondary)]"
-        >
-          {label}
-        </span>
-
-        {count !== undefined && (
-          <span
-            style={{
-              fontFamily: "'Geist Mono', monospace",
-              fontSize: 10,
-              color: "var(--text-dim)",
-            }}
-          >
-            {count}
-          </span>
-        )}
-
-        {showAdd && (
-          <span
-            className="hidden group-hover:flex items-center"
-            style={{ opacity: 0.5, padding: 2, borderRadius: 3 }}
-          >
-            <Plus size={12} style={{ color: "var(--text-muted)" }} />
-          </span>
-        )}
-      </button>
-
-      {open && <div style={{ padding: "2px 4px" }}>{children}</div>}
-    </div>
-  );
-}
-
-/* ── Team block ──────────────────────────────────────────── */
-
-function TeamBlock({
-  name,
-  color,
-  letterMark,
-  count,
-  warningBadge,
-  hasNotification = false,
-  defaultExpanded = false,
-  children,
-}: {
-  name: string;
-  color: string;
-  letterMark: string;
-  count: number;
-  warningBadge?: number;
-  hasNotification?: boolean;
-  defaultExpanded?: boolean;
-  children?: React.ReactNode;
-}) {
-  const [expanded, setExpanded] = useState(defaultExpanded);
-
-  return (
-    <div>
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-[7px] w-full rounded-[7px] transition-colors hover:bg-[var(--bg-hover)]"
-        style={{ padding: "6px 10px", background: "none", border: "none", cursor: "pointer" }}
-      >
-        <ChevronRight
-          size={10}
-          className="transition-transform duration-100"
-          style={{
-            color: "var(--text-dim)",
-            opacity: 0.35,
-            transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
-          }}
-        />
-
-        <div
-          className="flex items-center justify-center shrink-0"
-          style={{
-            width: 17,
-            height: 17,
-            borderRadius: 4,
-            background: `${color}16`,
-          }}
-        >
-          <span style={{ fontSize: 9, fontWeight: 700, color }}>{letterMark}</span>
-        </div>
-
-        <span
-          className="flex-1 text-left"
-          style={{
-            fontSize: 13,
-            fontWeight: 480,
-            color: "var(--text-secondary)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {name}
-        </span>
-
-        {warningBadge !== undefined && warningBadge > 0 && (
-          <span
-            style={{
-              fontFamily: "'Geist Mono', monospace",
-              fontSize: 10,
-              fontWeight: 600,
-              padding: "1px 6px",
-              borderRadius: 10,
-              minWidth: 16,
-              textAlign: "center",
-              lineHeight: "16px",
-              background: "rgba(212,168,75,0.12)",
-              color: "var(--amber)",
-            }}
-          >
-            {warningBadge}
-          </span>
-        )}
-
-        {hasNotification && (
-          <span
-            className="shrink-0"
-            style={{
-              width: 5,
-              height: 5,
-              borderRadius: "50%",
-              background: "var(--blue)",
-            }}
-          />
-        )}
-
-        <span
-          style={{
-            fontFamily: "'Geist Mono', monospace",
-            fontSize: 10,
-            color: "var(--text-dim)",
-          }}
-        >
-          {count}
-        </span>
-      </button>
-
-      {expanded && children}
-    </div>
-  );
-}
-
-/* ── Project row ─────────────────────────────────────────── */
-
-function ProjectRow({
-  emoji,
-  name,
-  count,
-  hot = false,
-  atRisk = false,
-}: {
-  emoji: string;
-  name: string;
-  count: number;
-  hot?: boolean;
-  atRisk?: boolean;
-}) {
-  return (
-    <div
-      className="flex items-center gap-[7px] rounded-[7px] cursor-pointer transition-colors hover:bg-[var(--bg-hover)]"
-      style={{ padding: "6px 10px 6px 44px" }}
-    >
-      <span style={{ fontSize: 13, lineHeight: 1, flexShrink: 0 }}>{emoji}</span>
-      <span
-        className="flex-1 truncate"
-        style={{
-          fontSize: 12.5,
-          fontWeight: 440,
-          color: "var(--text-secondary)",
-        }}
-      >
-        {name}
-      </span>
-      {atRisk && (
-        <span
-          className="shrink-0"
-          style={{
-            width: 5,
-            height: 5,
-            borderRadius: "50%",
-            background: "var(--amber)",
-          }}
-        />
-      )}
-      <span
-        style={{
-          fontFamily: "'Geist Mono', monospace",
-          fontSize: 10,
-          color: hot ? "var(--amber)" : "var(--text-dim)",
-        }}
-      >
-        {count}
-      </span>
-    </div>
-  );
-}
-
-/* ══════════════════════════════════════════════════════════
-   SIDEBAR (Main export)
-══════════════════════════════════════════════════════════ */
-
-export function Sidebar({
-  profile,
-  org,
-  activeRequestCount,
-  inboxCount = 0,
-  bettingBoardCount = 0,
-  briefing,
-  banner,
-}: SidebarProps) {
-  const pathname = usePathname();
-  const isLeadOrAdmin = profile.role === "lead" || profile.role === "admin";
+export function Sidebar({ user, orgName, orgPlan, activeCount, banner }: Props) {
   const [bannerDismissed, setBannerDismissed] = useState(false);
-  const initials = profile.fullName
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <aside
-      className="flex flex-col select-none shrink-0"
+      className="flex flex-col shrink-0 select-none"
       style={{
-        width: "var(--sidebar-width)",
-        minWidth: "var(--sidebar-width)",
+        width: 256,
+        minWidth: 256,
         height: "100vh",
-        background: "var(--bg-sidebar)",
+        background: "var(--bg-subtle)",
         borderRight: "1px solid var(--border)",
         position: "sticky",
         top: 0,
         zIndex: 20,
-        overflow: "hidden",
       }}
     >
-      {/* ── Header ──────────────────────────────────────── */}
-      <div
-        className="shrink-0"
-        style={{
-          padding: "16px 14px 12px",
-          borderBottom: "1px solid var(--border-subtle)",
-        }}
-      >
-        {/* Workspace identity */}
-        <div
-          className="flex items-center gap-[10px] cursor-pointer rounded-lg"
-          style={{ padding: "5px 6px" }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--bg-hover)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "")}
-        >
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div className="px-3.5 pt-4 pb-3 border-b" style={{ borderColor: "var(--border)" }}>
+        <div className="flex items-center gap-2.5 px-1.5 py-1 rounded-lg cursor-pointer hover:bg-[var(--bg-hover)] transition-colors">
           <div
-            className="flex items-center justify-center shrink-0"
+            className="flex items-center justify-center rounded-[7px] shrink-0"
             style={{
               width: 28,
               height: 28,
-              borderRadius: 7,
               background: "var(--accent)",
               boxShadow: "0 1px 4px rgba(46,83,57,0.15)",
             }}
           >
             <span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>L</span>
           </div>
-
           <div className="flex-1 min-w-0">
-            <div
-              style={{
-                fontSize: 13.5,
-                fontWeight: 620,
-                color: "var(--text-primary)",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Lane
+            <div style={{ fontSize: 13.5, fontWeight: 620, color: "var(--text-primary)", letterSpacing: "-0.02em" }}>
+              {orgName}
             </div>
-            <div className="flex items-center gap-1.5" style={{ marginTop: 2 }}>
+            <div className="flex items-center gap-1.5 mt-0.5">
               <span
                 style={{
                   fontFamily: "'Geist Mono', monospace",
@@ -486,55 +223,43 @@ export function Sidebar({
                   fontWeight: 600,
                   letterSpacing: "0.04em",
                   color: "var(--accent)",
-                  background: "var(--accent-soft)",
+                  background: "rgba(46,83,57,0.08)",
                   padding: "1px 5px",
                   borderRadius: 3,
                 }}
               >
-                {org.plan?.toUpperCase() ?? "FREE"}
+                {orgPlan}
               </span>
               <span
                 style={{
                   fontFamily: "'Geist Mono', monospace",
                   fontSize: 10,
-                  color: "var(--text-muted)",
+                  color: "var(--text-tertiary)",
                 }}
               >
-                {activeRequestCount} active
+                {activeCount} active
               </span>
             </div>
           </div>
-
-          <ChevronDown
-            size={14}
-            style={{ color: "var(--text-dim)", opacity: 0.6, flexShrink: 0 }}
-          />
+          <ChevronDown size={14} className="shrink-0 opacity-40" style={{ color: "var(--text-tertiary)" }} />
         </div>
 
         {/* Search */}
         <div
-          className="flex items-center gap-2 cursor-text"
+          className="flex items-center gap-2 mt-2.5 px-2.5 py-[7px] rounded-[7px] cursor-text"
           style={{
-            padding: "7px 10px",
-            borderRadius: 7,
-            background: "var(--bg-input)",
+            background: "var(--bg-hover)",
             border: "1px solid var(--border)",
-            marginTop: 10,
           }}
         >
-          <Search size={13} style={{ color: "var(--text-dim)" }} />
-          <span
-            className="flex-1"
-            style={{ fontSize: 12.5, color: "var(--text-dim)" }}
-          >
-            Search...
-          </span>
+          <Search size={13} style={{ color: "var(--text-tertiary)" }} />
+          <span style={{ fontSize: 12.5, color: "var(--text-tertiary)", flex: 1 }}>Search...</span>
           <kbd
             style={{
               fontFamily: "'Geist Mono', monospace",
               fontSize: 9.5,
-              color: "var(--text-dim)",
-              background: "var(--bg-sidebar)",
+              color: "var(--text-tertiary)",
+              background: "var(--bg-subtle)",
               border: "1px solid var(--border)",
               padding: "1px 5px",
               borderRadius: 3,
@@ -545,335 +270,141 @@ export function Sidebar({
         </div>
       </div>
 
-      {/* ── Scrollable body ─────────────────────────────── */}
-      <div
-        className="flex-1 overflow-y-auto overflow-x-hidden"
-        style={{ padding: "6px 6px" }}
-      >
-        {/* Morning Briefing (lead/admin only) */}
-        {isLeadOrAdmin && briefing && (
-          <div
-            className="flex items-center gap-[9px] cursor-pointer transition-[border-color] duration-100"
-            style={{
-              padding: "9px 11px",
-              margin: "4px 4px 8px",
-              borderRadius: 8,
-              background: "var(--bg-surface)",
-              border: "1px solid var(--border)",
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "var(--accent-med)")}
-            onMouseLeave={(e) => (e.currentTarget.style.borderColor = "var(--border)")}
-          >
-            <div
-              className="flex items-center justify-center shrink-0"
-              style={{
-                width: 24,
-                height: 24,
-                borderRadius: 6,
-                background: "var(--accent-soft)",
-              }}
-            >
-              <Star size={13} style={{ color: "var(--accent)", fill: "none" }} />
-            </div>
-            <div className="flex-1">
-              <div style={{ fontSize: 12.5, fontWeight: 560, color: "var(--text-primary)" }}>
-                Morning Briefing
-              </div>
-              <div
-                style={{
-                  fontFamily: "'Geist Mono', monospace",
-                  fontSize: 10,
-                  color: "var(--text-muted)",
-                  marginTop: 2,
-                }}
-              >
-                {briefing.decisions} decisions · {briefing.toTriage} to triage
-              </div>
-            </div>
-            <span
-              className="shrink-0"
-              style={{
-                width: 7,
-                height: 7,
-                borderRadius: "50%",
-                background: briefing.hasWarning ? "var(--amber)" : "var(--green)",
-              }}
-            />
-          </div>
-        )}
-
-        {/* ── Personal ──────────────────────────────────── */}
+      {/* ── Scrollable ──────────────────────────────────────────── */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-1.5 py-1.5 sidebar-scroll">
+        {/* Personal */}
         <Section label="Personal">
-          <NavItem
-            href="/dashboard"
-            icon={Home}
-            label="My Work"
-            isActive={pathname === "/dashboard"}
-          />
-          <NavItem
-            href="/dashboard/inbox"
-            icon={Inbox}
-            label="Inbox"
-            isActive={pathname === "/dashboard/inbox"}
-            badge={inboxCount}
-            badgeVariant="accent"
-          />
-          <NavItem
-            href="/dashboard/drafts"
-            icon={FileText}
-            label="Drafts"
-            isActive={pathname === "/dashboard/drafts"}
-          />
+          <NavItemLink href="/dashboard" icon={Home} label="My Work" />
+          <NavItemLink href="/dashboard/inbox" icon={Inbox} label="Inbox" badge={3} badgeStyle="accent" />
+          <NavItemLink href="/dashboard/drafts" icon={FileText} label="Drafts" />
         </Section>
 
-        {/* ── Workspace ─────────────────────────────────── */}
+        {/* Workspace */}
         <Section label="Workspace">
-          <NavItem
-            href="/dashboard/journey"
-            icon={ArrowRight}
-            label="Journey View"
-            isActive={pathname === "/dashboard/journey"}
-          />
-          <NavItem
-            href="/dashboard/betting"
-            icon={LayoutGrid}
-            label="Betting Board"
-            isActive={pathname === "/dashboard/betting"}
-            badge={bettingBoardCount}
-            badgeVariant="accent"
-          />
-          <NavItem
-            href="/dashboard/dev"
-            icon={Columns}
-            label="Dev Board"
-            isActive={pathname === "/dashboard/dev"}
-          />
-          <NavItem
-            href="/dashboard"
-            icon={List}
-            label="All Requests"
-            isActive={false}
-            trailingText={String(activeRequestCount)}
-          />
+          <NavItemLink href="/dashboard/journey" icon={ArrowRight} label="Journey View" />
+          <NavItemLink href="/dashboard/betting" icon={LayoutGrid} label="Betting Board" />
+          <NavItemLink href="/dashboard/dev" icon={Kanban} label="Dev Board" />
+          <NavItemLink href="/dashboard/requests" icon={List} label="All Requests" />
+          <NavItemLink href="/dashboard/ideas" icon={Lightbulb} label="Idea Board" />
         </Section>
 
-        {/* ── Favorites ─────────────────────────────────── */}
-        <Section label="Favorites" count={3} showAdd>
-          {/* Placeholder favorites — will be dynamic later */}
-          <NavItem
-            href="#"
-            icon={Star}
-            label="💳 Checkout Redesign"
-            isActive={false}
-          />
-          <NavItem
-            href="#"
-            icon={Star}
-            label="Cart Abandonment Fix"
-            isActive={false}
-          />
-          <NavItem
-            href="#"
-            icon={Star}
-            label="My High-Priority"
-            isActive={false}
-          />
+        {/* Insights */}
+        <Section label="Insights">
+          <NavItemLink href="/dashboard/insights" icon={BarChart3} label="Capacity" />
+          <NavItemLink href="/dashboard/insights/impact" icon={Target} label="Impact" />
+          <NavItemLink href="/dashboard/radar" icon={Activity} label="Team Health" />
+          <NavItemLink href="/dashboard/team" icon={Activity} label="Team" />
         </Section>
-
-        {/* ── Teams ─────────────────────────────────────── */}
-        <Section label="Teams" count={4} showAdd>
-          <TeamBlock
-            name="Payments"
-            color="#6e5ff5"
-            letterMark="P"
-            count={4}
-            warningBadge={2}
-            defaultExpanded
-          >
-            <div>
-              <NavItem href="#" icon={Inbox} label="Triage" isActive={false} badge={2} badgeVariant="accent" indent />
-              <NavItem href="#" icon={Activity} label="Active Streams" isActive={false} trailingText="9" indent />
-              <ProjectRow emoji="💳" name="Checkout Redesign" count={5} hot />
-              <ProjectRow emoji="⚡" name="UPI Lite Experience" count={3} atRisk />
-              <ProjectRow emoji="📄" name="Bill Payments Flow" count={1} />
-            </div>
-          </TeamBlock>
-
-          <TeamBlock name="Lending" color="#ec4899" letterMark="L" count={3} />
-          <TeamBlock name="KYC & Onboarding" color="#14b8a6" letterMark="K" count={2} warningBadge={1} hasNotification />
-          <TeamBlock name="Cards" color="#f59e0b" letterMark="C" count={2} />
-        </Section>
-
-        {/* ── Insights (lead/admin only) ────────────────── */}
-        {isLeadOrAdmin && (
-          <Section label="Insights">
-            <NavItem
-              href="/dashboard/capacity"
-              icon={BarChart3}
-              label="Capacity"
-              isActive={pathname === "/dashboard/capacity"}
-            />
-            <NavItem
-              href="/dashboard/insights"
-              icon={Target}
-              label="Impact"
-              isActive={pathname === "/dashboard/insights"}
-            />
-            <NavItem
-              href="/dashboard/team"
-              icon={Activity}
-              label="Team Health"
-              isActive={pathname === "/dashboard/team"}
-            />
-          </Section>
-        )}
       </div>
 
-      {/* ── Footer ──────────────────────────────────────── */}
-      <div className="shrink-0" style={{ borderTop: "1px solid var(--border-subtle)" }}>
+      {/* ── Footer ──────────────────────────────────────────────── */}
+      <div className="shrink-0 border-t" style={{ borderColor: "var(--border)" }}>
         {/* New Request button */}
-        <Link
-          href="/dashboard/requests/new"
-          className="flex items-center justify-center gap-1.5 transition-colors"
+        <button
+          className="flex items-center justify-center gap-1.5 mx-3 mt-3 py-2 w-[calc(100%-24px)] rounded-[7px] transition-colors"
           style={{
-            margin: "12px 12px 0",
-            padding: "8px 0",
-            borderRadius: 7,
             background: "var(--accent)",
             color: "#fff",
+            fontFamily: "'Satoshi', sans-serif",
             fontSize: 12.5,
             fontWeight: 560,
+            border: "none",
+            cursor: "pointer",
             boxShadow: "0 1px 6px rgba(46,83,57,0.15)",
-            textDecoration: "none",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--accent-bright)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "var(--accent)")}
         >
           <Plus size={14} />
           New Request
-        </Link>
+        </button>
 
         {/* Promo / update banner */}
         {banner && !bannerDismissed && (
           <div
+            className="mx-2.5 mt-2.5 p-3 rounded-lg"
             style={{
-              margin: "10px 10px 0",
-              padding: "12px",
-              borderRadius: 8,
               background: "var(--bg-surface)",
               border: "1px solid var(--border)",
             }}
           >
             <div className="flex items-start justify-between gap-2">
-              <div
-                style={{
-                  fontSize: 13,
-                  fontWeight: 580,
-                  color: "var(--text-primary)",
-                  lineHeight: 1.3,
-                }}
-              >
+              <span style={{ fontSize: 13, fontWeight: 580, color: "var(--text-primary)", lineHeight: 1.3 }}>
                 {banner.title}
-              </div>
+              </span>
               <button
                 onClick={() => setBannerDismissed(true)}
-                className="shrink-0 flex items-center justify-center rounded transition-colors hover:bg-[var(--bg-hover)]"
-                style={{
-                  width: 20,
-                  height: 20,
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  color: "var(--text-muted)",
-                  marginTop: -2,
-                }}
+                className="shrink-0 flex items-center justify-center rounded hover:bg-[var(--bg-hover)] transition-colors"
+                style={{ width: 20, height: 20, background: "none", border: "none", cursor: "pointer", color: "var(--text-tertiary)", marginTop: -2 }}
               >
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M1 1l8 8M9 1l-8 8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-                </svg>
+                <X size={10} />
               </button>
             </div>
-            <div
-              style={{
-                fontSize: 12,
-                fontWeight: 400,
-                color: "var(--text-secondary)",
-                lineHeight: 1.45,
-                marginTop: 4,
-              }}
-            >
+            <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.45, marginTop: 4 }}>
               {banner.description}
-            </div>
+            </p>
             <Link
               href={banner.ctaHref}
-              className="flex items-center justify-center transition-colors"
+              className="flex items-center justify-center mt-2.5 py-1.5 rounded-md transition-opacity hover:opacity-85"
               style={{
-                marginTop: 10,
-                padding: "6px 0",
-                borderRadius: 6,
                 background: "var(--text-primary)",
                 color: "var(--bg-surface)",
                 fontSize: 12,
                 fontWeight: 560,
                 textDecoration: "none",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.85")}
-              onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
             >
               {banner.ctaLabel}
             </Link>
           </div>
         )}
 
-        {/* User profile */}
-        <div className="flex items-center gap-[9px]" style={{ padding: "10px 14px 16px" }}>
+        {/* User */}
+        <div className="flex items-center gap-2.5 px-3.5 py-2.5 pb-4">
           <div
-            className="flex items-center justify-center shrink-0 cursor-pointer"
+            className="flex items-center justify-center rounded-full shrink-0 cursor-pointer"
             style={{
               width: 28,
               height: 28,
-              borderRadius: "50%",
               background: "linear-gradient(135deg, rgba(46,83,57,0.30), rgba(194,123,158,0.30))",
               fontSize: 10.5,
               fontWeight: 650,
               color: "var(--text-primary)",
             }}
           >
-            {initials}
+            {user.initials}
           </div>
           <div className="flex-1 min-w-0">
-            <div style={{ fontSize: 12.5, fontWeight: 530, color: "var(--text-primary)" }}>
-              {profile.fullName}
-            </div>
+            <div style={{ fontSize: 12.5, fontWeight: 530, color: "var(--text-primary)" }}>{user.name}</div>
             <div
               style={{
                 fontFamily: "'Geist Mono', monospace",
                 fontSize: 10,
-                color: "var(--text-muted)",
+                color: "var(--text-tertiary)",
                 marginTop: 1,
-                textTransform: "capitalize",
               }}
             >
-              {profile.role}
+              {user.role}
             </div>
           </div>
-          <Link
-            href="/settings"
-            className="flex items-center rounded transition-opacity"
-            style={{ padding: 4, opacity: 0.4 }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.opacity = "0.7";
-              e.currentTarget.style.background = "var(--bg-hover)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.opacity = "0.4";
-              e.currentTarget.style.background = "";
-            }}
-          >
-            <Settings size={14} style={{ color: "var(--text-muted)" }} />
-          </Link>
+          <div className="flex gap-1">
+            <Link
+              href="/settings"
+              className="p-1 rounded opacity-40 hover:opacity-70 hover:bg-[var(--bg-hover)] transition-all"
+            >
+              <Settings size={14} />
+            </Link>
+            <form action={logout}>
+              <button
+                type="submit"
+                className="p-1 rounded opacity-40 hover:opacity-70 hover:bg-red-500/10 transition-all"
+                style={{ background: "none", border: "none", cursor: "pointer" }}
+              >
+                <LogOut size={14} />
+              </button>
+            </form>
+          </div>
         </div>
       </div>
+
     </aside>
   );
 }

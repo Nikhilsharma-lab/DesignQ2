@@ -7,7 +7,7 @@ import { RequestsProvider } from "@/context/requests-context";
 import { GlobalShortcutsProvider } from "@/components/ui/global-shortcuts-provider";
 import { Sidebar } from "@/components/shell/sidebar";
 import { DetailDock } from "@/components/shell/detail-dock";
-import type { Request, Profile, Organization } from "@/db/schema";
+import type { Request } from "@/db/schema";
 
 export default async function DashboardLayout({
   children,
@@ -18,8 +18,10 @@ export default async function DashboardLayout({
   let userId = "";
   let profileRole = "member";
   let isTestUser = false;
-  let userProfile: Profile | null = null;
-  let userOrg: Organization | null = null;
+  let userName = "";
+  let userInitials = "";
+  let orgName = "Lane";
+  let orgPlan = "FREE";
 
   try {
     const supabase = await createClient();
@@ -33,15 +35,24 @@ export default async function DashboardLayout({
         .where(eq(profiles.id, user.id));
 
       if (profile) {
-        userProfile = profile;
         profileRole = profile.role ?? "member";
         isTestUser = profile.email === "hi.nikhilsharma@gmail.com";
+        userName = profile.fullName ?? user.email?.split("@")[0] ?? "";
+        userInitials = userName
+          .split(" ")
+          .map((w) => w[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
 
         const [org] = await db
           .select()
           .from(organizations)
           .where(eq(organizations.id, profile.orgId));
-        userOrg = org ?? null;
+        if (org) {
+          orgName = org.name ?? "Lane";
+          orgPlan = (org as Record<string, unknown>).plan as string ?? "FREE";
+        }
 
         orgRequests = await db
           .select()
@@ -61,19 +72,18 @@ export default async function DashboardLayout({
     <RequestsProvider requests={orgRequests}>
       <GlobalShortcutsProvider>
         <div style={{ display: "flex", minHeight: "100vh", background: "var(--bg-base)" }}>
-          {userProfile && userOrg && (
-            <Sidebar
-              profile={userProfile}
-              org={userOrg}
-              activeRequestCount={activeCount}
-              banner={{
-                title: "AI Context Briefs are live",
-                description: "Designers now get auto-generated briefs when they open a request — fewer Slack threads, faster starts.",
-                ctaLabel: "Learn more",
-                ctaHref: "/dashboard/insights",
-              }}
-            />
-          )}
+          <Sidebar
+            user={{ initials: userInitials || "U", name: userName || "User", role: profileRole === "lead" ? "Lead · Design" : profileRole }}
+            orgName={orgName}
+            orgPlan={orgPlan}
+            activeCount={activeCount}
+            banner={{
+              title: "Idea Board is live",
+              description: "Anyone can submit ideas. Your org votes, AI validates the top picks.",
+              ctaLabel: "Check it out",
+              ctaHref: "/dashboard/ideas",
+            }}
+          />
           <main style={{ flex: 1, minWidth: 0, overflowY: "auto" }}>
             {children}
           </main>

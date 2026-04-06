@@ -83,7 +83,7 @@ html {
   --bg-section: #F2EFE9;
   --bg-elevated: #FDFCFA;
 
-  /* Accessible input border */
+  /* Input border — meets WCAG 3:1 on bg-surface (#FFF). Do not use on bg-base directly. */
   --border-input: #97918A;
 
   /* Focus ring */
@@ -91,7 +91,7 @@ html {
 
   /* Priority badge tokens */
   --priority-p0-bg:   #FEE2E2;
-  --priority-p0-text: #DC2626;
+  --priority-p0-text: #B91C1C;
   --priority-p1-bg:   #FFEDD5;
   --priority-p1-text: #C2410C;
   --priority-p2-bg:   #FEF9C3;
