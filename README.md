@@ -69,7 +69,7 @@ INTAKE GATE → CONTEXT → SHAPE → BET
 Designers explore the problem through five non-linear stages. No due dates. No utilization tracking. Progress is captured through reflections, not forced status updates.
 
 ```
-EXPLORE → VALIDATE → HANDOFF
+SENSE → FRAME → DIVERGE → CONVERGE → PROVE
 ```
 
 A 3-sign-off validation gate (designer + PM + design head) is required before any work moves to dev.
@@ -268,17 +268,24 @@ lib/
 - [x] Email notifications (stage transitions, validation requests, handoff alerts)
 - [x] Org invites with role-based privilege controls
 
+### Foundation ✅ (continued)
+- [x] AI auto-triage (priority, complexity, type with reasoning)
+- [x] Idea Board (anyone submits, org votes, top ideas auto-create requests)
+- [x] PM calibration dashboard (predicted vs. actual impact over time)
+- [x] Design Radar (designer status, phase heat map, risk panel, shipped this week)
+- [x] Figma token encryption at rest (AES-256-GCM)
+
 ### In Progress
-- [ ] AI auto-triage (priority, complexity, type with reasoning)
 - [ ] Duplicate detection (pgvector semantic search)
 - [ ] Smart assignment recommendations
 - [ ] Request quality scoring
+- [ ] RLS policies (Supabase row-level security, required before first customer)
 
 ### Upcoming
-- [ ] Weekly AI digest (narrative team summary for design leaders)
+- [ ] 5-stage design flow UI (Sense → Frame → Diverge → Converge → Prove)
+- [ ] Weekly AI digest (cron pre-generation, stored per org)
 - [ ] Daily morning briefing (role-specific, pushed not pulled)
-- [ ] Idea Board (anyone submits, org votes, top ideas auto-create requests)
-- [ ] PM calibration dashboard (predicted vs. actual impact over time)
+- [ ] Upstash Redis rate limiting on AI routes
 - [ ] Stripe billing
 
 ---
