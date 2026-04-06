@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { ValidationGate } from "./validation-gate";
 
 const STAGES = [
-  { key: "explore",  label: "Explore",  desc: "Designer creates concepts in Figma" },
-  { key: "validate", label: "Validate", desc: "3 sign-offs: Designer · PM · Design Head" },
-  { key: "handoff",  label: "Handoff",  desc: "Figma locked, sent to dev" },
+  { key: "sense",    label: "Sense",    desc: "Understand the problem deeply before proposing anything" },
+  { key: "frame",    label: "Frame",    desc: "Define what problem is actually being solved" },
+  { key: "diverge",  label: "Diverge",  desc: "Generate multiple solution directions" },
+  { key: "converge", label: "Converge", desc: "Narrow to a refined solution through critique" },
+  { key: "prove",    label: "Prove",    desc: "3 sign-offs: Designer · PM · Design Head" },
 ] as const;
 
 type DesignStage = (typeof STAGES)[number]["key"];
@@ -30,11 +32,11 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
   const current = STAGES[currentIdx];
   const nextStage = currentIdx < STAGES.length - 1 ? STAGES[currentIdx + 1] : null;
   const isLastDesign = currentIdx >= STAGES.length - 1;
-  const isValidateStage = currentDesignStage === "validate";
+  const isProveStage = currentDesignStage === "prove";
 
   function getGateStatus(): { canAdvance: boolean; missing: string[] } {
     const missing: string[] = [];
-    if (currentDesignStage === "handoff" && !figmaUrl) {
+    if (currentDesignStage === "prove" && !figmaUrl) {
       missing.push("Add a Figma URL before handing off to dev");
     }
     return { canAdvance: missing.length === 0, missing };
@@ -124,8 +126,8 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
           </div>
         )}
 
-        {/* Validate stage: show ValidationGate instead of advance button */}
-        {isValidateStage ? (
+        {/* Prove stage: show ValidationGate instead of advance button */}
+        {isProveStage ? (
           <ValidationGate requestId={requestId} myProfileRole={profileRole} isTestUser={isTestUser} />
         ) : (
           <>

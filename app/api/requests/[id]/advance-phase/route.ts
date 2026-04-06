@@ -7,7 +7,7 @@ import { sendEmail } from "@/lib/email";
 import { validationNeededEmail, handoffEmail } from "@/lib/email/templates";
 
 const PREDESIGN_STAGES = ["intake", "context", "shape", "bet"] as const;
-const DESIGN_STAGES = ["explore", "validate", "handoff"] as const;
+const DESIGN_STAGES = ["sense", "frame", "diverge", "converge", "prove"] as const;
 type PredesignStage = (typeof PREDESIGN_STAGES)[number];
 type DesignStage = (typeof DESIGN_STAGES)[number];
 
@@ -61,7 +61,7 @@ export async function POST(
           .update(requests)
           .set({
             phase: "design",
-            designStage: "explore",
+            designStage: "sense",
             stage: "explore",         // keep legacy stage in sync
             status: "in_progress",
             updatedAt: new Date(),
@@ -73,7 +73,7 @@ export async function POST(
           enteredAt: new Date(),
           completedById: user.id,
         });
-        await tx.insert(comments).values({ requestId, authorId: null, body: "⭢ Bet approved — Design Phase started (Exploration)", isSystem: true });
+        await tx.insert(comments).values({ requestId, authorId: null, body: "⭢ Bet approved — Design Phase started (Sense)", isSystem: true });
       });
     } else {
       const next = PREDESIGN_STAGES[currentIdx + 1];
@@ -102,12 +102,12 @@ export async function POST(
   // ── Design phase ──────────────────────────────────────────────────────────
 
   if (phase === "design") {
-    const currentDesignStage = (designStage ?? "explore") as DesignStage;
+    const currentDesignStage = (designStage ?? "sense") as DesignStage;
     const currentIdx = DESIGN_STAGES.indexOf(currentDesignStage);
 
-    if (currentDesignStage === "validate") {
+    if (currentDesignStage === "prove") {
       return NextResponse.json(
-        { error: "Validation requires 3 sign-offs. Use the validation panel." },
+        { error: "Prove requires 3 sign-offs. Use the validation panel." },
         { status: 422 }
       );
     }
@@ -168,21 +168,21 @@ export async function POST(
           .update(requests)
           .set({
             designStage: next,
-            stage: next,               // legacy
+            // legacy stage stays as "explore" for all design sub-stages
             updatedAt: new Date(),
           })
           .where(eq(requests.id, requestId));
         await tx.insert(requestStages).values({
           requestId,
-          stage: next as typeof requestStages.$inferInsert["stage"],
+          stage: "explore",   // legacy enum — all design sub-stages map to "explore"
           enteredAt: new Date(),
           completedById: user.id,
         });
         await tx.insert(comments).values({ requestId, authorId: null, body: `⭢ Moved to ${next.charAt(0).toUpperCase() + next.slice(1)} stage`, isSystem: true });
       });
 
-      // When entering validate stage, notify all signers
-      if (next === "validate") {
+      // When entering prove stage, notify all signers
+      if (next === "prove") {
         const orgMembers = await db
           .select()
           .from(profiles)

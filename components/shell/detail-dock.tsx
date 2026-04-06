@@ -46,6 +46,8 @@ const PHASE_LABELS: Record<string, string> = {
 
 const STAGE_LABELS: Record<string, string> = {
   intake: "Intake", context: "Context", shape: "Shape", bet: "Betting",
+  sense: "Sense", frame: "Frame", diverge: "Diverge", converge: "Converge", prove: "Prove",
+  // Legacy design stages
   explore: "Explore", validate: "Validate", handoff: "Handoff",
   todo: "To Do", in_progress: "In Progress", in_review: "In Review", qa: "QA", done: "Done",
   measuring: "Measuring", complete: "Complete",
@@ -144,7 +146,7 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
   const phaseLabel = PHASE_LABELS[request.phase ?? "predesign"] ?? request.phase;
   const stageKey =
     request.phase === "predesign" ? (request.predesignStage ?? "intake") :
-    request.phase === "design"    ? (request.designStage ?? "explore") :
+    request.phase === "design"    ? (request.designStage ?? "sense") :
     request.phase === "dev"       ? (request.kanbanState ?? "todo") :
                                     (request.trackStage ?? "measuring");
   const stageLabel = STAGE_LABELS[stageKey] ?? stageKey;
@@ -240,7 +242,7 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
           <div style={divider}>
             <DesignPhasePanel
               requestId={request.id}
-              currentDesignStage={(request.designStage ?? "explore") as "explore" | "validate" | "handoff"}
+              currentDesignStage={(request.designStage ?? "sense") as "sense" | "frame" | "diverge" | "converge" | "prove"}
               figmaUrl={request.figmaUrl}
               profileRole={profileRole}
               isTestUser={isTestUser}
