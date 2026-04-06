@@ -7,6 +7,27 @@ All notable changes are documented here. Update this file with every PR before m
 
 ---
 
+## 2026-04-07 — Design stage rename (v2), schema fixes, CLAUDE.md public split
+
+### Changed
+- Rename design sub-stages from v1 (`explore → validate → handoff`) to v2 (`sense → frame → diverge → converge → prove`) — aligns code with CLAUDE.md product spec (PR #13)
+- Update `designStageEnum` in Drizzle schema, `lib/workflow.ts`, `lib/radar.ts`, all UI components, and API routes to use new stage values (PR #13)
+- Sign-off gate now checks `designStage === "prove"` instead of `"validate"` (PR #13)
+- Prove completion auto-advances to dev phase; `figmaVersionId` set at that moment (PR #13)
+- `requestStages` inserts use legacy `"explore"` value to stay compatible with existing `stageEnum` (PR #13)
+
+### Added
+- `designer_owner_id` column on `requests` — tracks design assignment separately from requester (PR #13)
+
+### Docs
+- Split `CLAUDE.md` into public technical ref (`CLAUDE.md`) + private business context (`CLAUDE.local.md`, gitignored)
+- `CLAUDE.md` is now safe to commit to the public repo — no pricing, GTM, or personal details
+
+### Migration note (PR #13)
+Run `npm run db:push` after merging to apply: drops old `design_stage` enum, recreates with 5 new values, adds `designer_owner_id` column.
+
+---
+
 ## 2026-04-05 — Security fixes, token encryption, repo cleanup
 
 ### Security

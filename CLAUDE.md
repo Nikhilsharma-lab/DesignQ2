@@ -1,11 +1,11 @@
 # Lane — Technical & Product Reference
-## Version 2.0 | April 2026
 
 **Status:** Pre-launch, live GTM
 **Current Sprint:** Weeks 1-4 MVP build (Foundation + AI Brain)
-**Last Updated:** April 7, 2026
+**Last Updated:** April 7, 2026 — synced with CHANGELOG through PR #13
 
 > Business context, pricing, GTM, and founder details are in CLAUDE.local.md (gitignored).
+> For a chronological record of what shipped and when, see CHANGELOG.md.
 
 ---
 
@@ -584,8 +584,8 @@ npm run start
 
 ## Part 17: WHAT'S NEXT (Build Sequence)
 
-### Immediate (before merging PR #13)
-- [ ] Run `npm run db:push` against Supabase dev to apply migration 0002
+### Immediate (after merging PR #13)
+- [ ] Run `npm run db:push` against Supabase dev to apply migration 0002 (adds `designer_owner_id`, new design stage enum)
 
 ### Step 2 — RLS Policies (before first customer)
 - [ ] Write Supabase RLS for requests, reflections, validations — enforce org scoping at DB level
@@ -633,4 +633,4 @@ npm run start
 
 ---
 
-**Version 2.0 | April 2026**
+**Last updated: April 7, 2026 — synced with CHANGELOG through PR #13**
