@@ -88,7 +88,8 @@ export default async function InsightsPage() {
       {/* AI Digest */}
       <section>
         <h2 className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-4">Weekly digest</h2>
-        <DigestPanel />
+        {/* eslint-disable-next-line @typescript-eslint/no-empty-function */}
+        <DigestPanel onCoachingGenerated={() => {}} />
       </section>
 
       {/* Key metrics */}

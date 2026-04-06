@@ -5,7 +5,7 @@ import type { WeeklyDigest, PmCoachingNote } from "@/lib/digest";
 
 interface Props {
   initialDigest?: WeeklyDigest | null;
-  onCoachingGenerated?: (notes: PmCoachingNote[]) => void;
+  onCoachingGenerated: (notes: PmCoachingNote[]) => void;
 }
 
 export function DigestPanel({ initialDigest, onCoachingGenerated }: Props) {
@@ -18,7 +18,7 @@ export function DigestPanel({ initialDigest, onCoachingGenerated }: Props) {
       const res = await fetch("/api/digest");
       const data: { digest: WeeklyDigest; pmCoaching: PmCoachingNote[] } = await res.json();
       setDigest(data.digest);
-      onCoachingGenerated?.(data.pmCoaching);
+      onCoachingGenerated(data.pmCoaching);
     } finally {
       setLoading(false);
     }
