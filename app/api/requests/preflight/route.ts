@@ -1,0 +1,50 @@
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { db } from "@/db";
+import { requests, profiles } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { triageRequest } from "@/lib/ai/triage";
+
+export async function POST(req: NextRequest) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+
+  const body = await req.json();
+  const { title, description, businessContext, successMetrics, impactMetric, impactPrediction } = body;
+
+  if (!title?.trim() || !description?.trim()) {
+    return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
+  }
+
+  // Fetch existing org requests for duplicate detection
+  const existing = await db
+    .select({ id: requests.id, title: requests.title, description: requests.description })
+    .from(requests)
+    .where(eq(requests.orgId, profile.orgId))
+    .orderBy(requests.createdAt)
+    .limit(40);
+
+  try {
+    const result = await triageRequest({
+      title: title.trim(),
+      description: description.trim(),
+      businessContext: businessContext?.trim() || null,
+      successMetrics: successMetrics?.trim() || null,
+      existingRequests: existing,
+    });
+
+    return NextResponse.json({
+      qualityScore: result.qualityScore,
+      qualityFlags: result.qualityFlags,
+      suggestions: result.suggestions,
+      potentialDuplicates: result.potentialDuplicates,
+    });
+  } catch (err) {
+    console.error("[preflight] triage failed:", err);
+    return NextResponse.json({ error: "preflight_failed" }, { status: 500 });
+  }
+}
