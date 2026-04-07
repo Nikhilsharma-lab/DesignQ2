@@ -3,6 +3,10 @@
     {
       "path": "/api/insights/digest/generate",
       "schedule": "0 9 * * 5"
+    },
+    {
+      "path": "/api/cron/alerts",
+      "schedule": "0 * * * *"
     }
   ]
 }
