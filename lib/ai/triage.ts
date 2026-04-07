@@ -42,6 +42,8 @@ export async function triageRequest(input: {
   businessContext?: string | null;
   successMetrics?: string | null;
   deadline?: string | null;
+  impactMetric?: string | null;
+  impactPrediction?: string | null;
   existingRequests?: Array<{ id: string; title: string; description: string }>;
 }): Promise<TriageResult> {
   const existingBlock = input.existingRequests?.length
@@ -68,6 +70,7 @@ ${input.description}
 ${input.businessContext ? `BUSINESS CONTEXT:\n${input.businessContext}\n` : ""}
 ${input.successMetrics ? `SUCCESS METRICS:\n${input.successMetrics}\n` : ""}
 ${input.deadline ? `DEADLINE: ${input.deadline}\n` : ""}
+${input.impactMetric || input.impactPrediction ? `IMPACT PREDICTION:\n${input.impactMetric ? `Metric: ${input.impactMetric}\n` : ""}${input.impactPrediction ? `Prediction: ${input.impactPrediction}\n` : ""}` : ""}
 ---
 ${existingBlock}
 Assess priority based on business impact and urgency. Assess complexity based on design effort required. Score quality based on how complete and actionable the request is for a designer to pick up without clarification. For potentialDuplicates, only flag requests that genuinely overlap in scope or goal — not just requests that touch the same product area.`,

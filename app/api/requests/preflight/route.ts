@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const body = await req.json();
-  const { title, description, businessContext, successMetrics } = body;
+  const { title, description, businessContext, successMetrics, impactMetric, impactPrediction } = body;
 
   if (!title?.trim() || !description?.trim()) {
     return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
@@ -34,6 +34,8 @@ export async function POST(req: NextRequest) {
       description: description.trim(),
       businessContext: businessContext?.trim() || null,
       successMetrics: successMetrics?.trim() || null,
+      impactMetric: impactMetric?.trim() || null,
+      impactPrediction: impactPrediction?.trim() || null,
       existingRequests: existing,
     });
 
