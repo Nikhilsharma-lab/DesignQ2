@@ -150,7 +150,7 @@ export function NotificationsBell({ userRole }: { userRole?: string }) {
 
       {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-8 w-80 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl shadow-2xl z-50 overflow-hidden">
+        <div className="absolute left-0 bottom-full mb-2 w-80 bg-[var(--bg-surface)] border border-[var(--border)] rounded-xl shadow-2xl z-50 overflow-hidden">
           {/* Tabs */}
           <div className="flex border-b border-[var(--border)]">
             {(["alerts", "activity"] as const).map((tab) => (
