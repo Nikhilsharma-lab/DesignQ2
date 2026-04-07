@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { requests, profiles } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { triageRequest } from "@/lib/ai/triage";
 
 export async function POST(req: NextRequest) {
@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const body = await req.json();
-  const { title, description, businessContext, successMetrics, impactMetric, impactPrediction } = body;
+  const { title, description, businessContext, successMetrics } = body;
 
   if (!title?.trim() || !description?.trim()) {
     return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     .select({ id: requests.id, title: requests.title, description: requests.description })
     .from(requests)
     .where(eq(requests.orgId, profile.orgId))
-    .orderBy(requests.createdAt)
+    .orderBy(desc(requests.createdAt))
     .limit(40);
 
   try {
