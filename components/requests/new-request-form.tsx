@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -8,10 +8,21 @@ interface Props {
   projects: { id: string; name: string; color: string }[];
 }
 
+interface PreflightResult {
+  qualityScore: number;
+  qualityFlags: string[];
+  suggestions: string[];
+  potentialDuplicates: Array<{ id: string; title: string; reason: string }>;
+}
+
 export function NewRequestForm({ onClose, projects }: Props) {
   const router = useRouter();
+  const formRef = useRef<HTMLFormElement>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [preflight, setPreflight] = useState<PreflightResult | null>(null);
+  const [preflightLoading, setPreflightLoading] = useState(false);
+  const [preflightError, setPreflightError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -48,6 +59,45 @@ export function NewRequestForm({ onClose, projects }: Props) {
     onClose();
   }
 
+  async function handlePreflight() {
+    if (!formRef.current) return;
+    const form = new FormData(formRef.current);
+    const title = (form.get("title") as string) ?? "";
+    const description = (form.get("description") as string) ?? "";
+
+    if (!title.trim() || !description.trim()) {
+      setPreflightError("Add a title and description first");
+      return;
+    }
+
+    setPreflightLoading(true);
+    setPreflightError(null);
+    setPreflight(null);
+
+    try {
+      const res = await fetch("/api/requests/preflight", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          businessContext: (form.get("businessContext") as string) || undefined,
+          successMetrics: (form.get("successMetrics") as string) || undefined,
+          impactMetric: (form.get("impactMetric") as string) || undefined,
+          impactPrediction: (form.get("impactPrediction") as string) || undefined,
+        }),
+      });
+
+      if (!res.ok) throw new Error("preflight_failed");
+      const data: PreflightResult = await res.json();
+      setPreflight(data);
+    } catch {
+      setPreflightError("Quality check failed — you can still submit");
+    } finally {
+      setPreflightLoading(false);
+    }
+  }
+
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <div className="bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl w-full max-w-3xl shadow-2xl">
@@ -66,7 +116,7 @@ export function NewRequestForm({ onClose, projects }: Props) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="px-6 py-5">
+        <form ref={formRef} onSubmit={handleSubmit} className="px-6 py-5">
           <div className="grid grid-cols-2 gap-x-6 gap-y-4">
             {/* Left column */}
             <div className="space-y-4">
@@ -192,13 +242,103 @@ export function NewRequestForm({ onClose, projects }: Props) {
             </div>
           </div>
 
+          {/* Pre-flight results panel */}
+          {(preflight || preflightError) && (
+            <div
+              className="mt-4 rounded-xl border p-4 space-y-3"
+              style={{ background: "var(--bg-subtle)", borderColor: "var(--border)" }}
+            >
+              {preflightError ? (
+                <p className="text-xs text-red-400">{preflightError}</p>
+              ) : preflight && (
+                <>
+                  {/* Score */}
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-medium text-[var(--text-secondary)]">Quality score</span>
+                    <span
+                      className="text-xs font-bold px-2 py-0.5 rounded-full"
+                      style={{
+                        background:
+                          preflight.qualityScore >= 80
+                            ? "rgba(46,83,57,0.12)"
+                            : preflight.qualityScore >= 50
+                            ? "rgba(212,168,75,0.12)"
+                            : "rgba(239,68,68,0.12)",
+                        color:
+                          preflight.qualityScore >= 80
+                            ? "var(--accent)"
+                            : preflight.qualityScore >= 50
+                            ? "#D4A84B"
+                            : "#ef4444",
+                      }}
+                    >
+                      {preflight.qualityScore}/100
+                    </span>
+                    <span className="text-xs text-[var(--text-tertiary)]">
+                      {preflight.qualityScore >= 80
+                        ? "Good to go"
+                        : preflight.qualityScore >= 50
+                        ? "Could be stronger"
+                        : "Needs more detail"}
+                    </span>
+                  </div>
+
+                  {/* Flags */}
+                  {preflight.qualityFlags.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] mb-1">Issues</p>
+                      <ul className="space-y-0.5">
+                        {preflight.qualityFlags.map((flag, i) => (
+                          <li key={i} className="text-xs text-[var(--text-secondary)] flex items-start gap-1.5">
+                            <span className="text-red-400 mt-0.5">·</span>
+                            {flag}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Suggestions */}
+                  {preflight.suggestions.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] mb-1">Suggestions</p>
+                      <ol className="space-y-0.5 list-none">
+                        {preflight.suggestions.map((s, i) => (
+                          <li key={i} className="text-xs text-[var(--text-secondary)] flex items-start gap-1.5">
+                            <span className="font-mono text-[var(--text-tertiary)]">{i + 1}.</span>
+                            {s}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+
+                  {/* Duplicates */}
+                  {preflight.potentialDuplicates.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wide text-[var(--text-tertiary)] mb-1">Possible duplicates</p>
+                      <ul className="space-y-1">
+                        {preflight.potentialDuplicates.map((d) => (
+                          <li key={d.id} className="text-xs text-[var(--text-secondary)]">
+                            <span className="font-medium text-[var(--text-primary)]">{d.title}</span>
+                            <span className="text-[var(--text-tertiary)]"> — {d.reason}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           {error && (
-            <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+            <p className="mt-3 text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
               {error}
             </p>
           )}
 
-          <div className="flex items-center justify-end gap-3 pt-1">
+          <div className="flex items-center justify-end gap-3 pt-3">
             <button
               type="button"
               onClick={onClose}
@@ -207,9 +347,25 @@ export function NewRequestForm({ onClose, projects }: Props) {
               Cancel
             </button>
             <button
+              type="button"
+              onClick={handlePreflight}
+              disabled={preflightLoading}
+              className="px-4 py-2 text-sm font-medium rounded-lg border transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              style={{ borderColor: "var(--border)", color: "var(--text-secondary)", background: "var(--bg-base)" }}
+            >
+              {preflightLoading ? (
+                <>
+                  <span className="inline-block w-3 h-3 border-2 border-[var(--border-strong)] border-t-[var(--accent)] rounded-full animate-spin" />
+                  Checking…
+                </>
+              ) : (
+                "Check quality"
+              )}
+            </button>
+            <button
               type="submit"
               disabled={loading}
-              className="bg-[var(--accent)] text-[var(--accent-text)] rounded-lg px-5 py-2 text-sm font-medium hover:bg-[var(--accent)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="bg-[var(--accent)] text-[var(--accent-text)] rounded-lg px-5 py-2 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {loading ? (
                 <>
