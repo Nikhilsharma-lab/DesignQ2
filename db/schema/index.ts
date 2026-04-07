@@ -13,3 +13,4 @@ export * from "./figma_connections";
 export * from "./weekly_digests";
 export * from "./prediction_confidence";
 export * from "./impact_retrospectives";
+export * from "./proactive_alerts";
