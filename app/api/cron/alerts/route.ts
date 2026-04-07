@@ -18,9 +18,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const allOrgs = await db.select({ id: organizations.id }).from(organizations);
+  let allOrgs: { id: string }[];
+  try {
+    allOrgs = await db.select({ id: organizations.id }).from(organizations);
+  } catch (err) {
+    console.error("[cron/alerts] Failed to fetch orgs:", err);
+    return NextResponse.json({ ok: false, error: "db_unavailable" }, { status: 500 });
+  }
   const results: { orgId: string; generated: number; skipped: number; errors: number }[] = [];
 
+  // Sequential by design: parallel org processing would saturate the Claude API rate limit.
+  // Revisit when org count > 50.
   for (const org of allOrgs) {
     let generated = 0;
     let skipped = 0;
@@ -86,12 +94,13 @@ export async function GET(req: NextRequest) {
           generated++;
         } catch (err) {
           // Likely a unique constraint violation on ruleKey — another process already inserted
-          const message = err instanceof Error ? err.message : String(err);
-          if (!message.includes("unique")) {
+          const pgCode = (err as { cause?: { code?: string }; code?: string })?.cause?.code
+            ?? (err as { code?: string })?.code;
+          if (pgCode !== "23505") {
             console.error(`[cron/alerts] Failed to insert alert ${candidate.ruleKey}:`, err);
             errors++;
           } else {
-            skipped++; // duplicate — expected, skip silently
+            skipped++; // duplicate rule_key — expected, skip silently
           }
         }
       }
