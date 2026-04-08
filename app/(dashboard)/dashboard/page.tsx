@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, requests, assignments, projects } from "@/db/schema";
+import { profiles, requests, assignments, projects, morningBriefings } from "@/db/schema";
 import { eq, inArray, sql, and, isNull } from "drizzle-orm";
 import { RequestList } from "@/components/requests/request-list";
 import { RealtimeDashboard } from "@/components/realtime/realtime-dashboard";
+import { MorningBriefingCard } from "@/components/dashboard/morning-briefing-card";
 
 export default async function DashboardPage({
   searchParams,
@@ -17,6 +18,20 @@ export default async function DashboardPage({
 
   const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
   if (!profile) redirect("/signup");
+
+  const todayString = new Date().toISOString().slice(0, 10);
+  const [briefRow] = await db
+    .select()
+    .from(morningBriefings)
+    .where(
+      and(
+        eq(morningBriefings.userId, user.id),
+        eq(morningBriefings.date, todayString)
+      )
+    )
+    .limit(1);
+
+  const briefForCard = briefRow && !briefRow.dismissedAt ? briefRow : null;
 
   const activeProjects = await db
     .select()
@@ -72,6 +87,7 @@ export default async function DashboardPage({
 
   return (
     <div style={{ padding: "var(--space-6)" }}>
+      <MorningBriefingCard brief={briefForCard} />
       <RealtimeDashboard orgId={profile.orgId} />
       <RequestList
         requests={allRequests}
