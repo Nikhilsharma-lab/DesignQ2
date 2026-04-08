@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { MorningBriefingRow } from "@/db/schema/morning_briefings";
 
 interface Props {
@@ -67,19 +68,38 @@ export function MorningBriefingCard({ brief }: Props) {
         {content.items.map((item, i) => (
           <li key={i} className="flex items-start gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
             <span className="mt-px shrink-0">{item.icon}</span>
-            <span>{item.text}</span>
+            {item.href ? (
+              <Link
+                href={item.href}
+                className="hover:underline underline-offset-2 transition-opacity hover:opacity-80"
+                style={{ color: "var(--text-secondary)" }}
+              >
+                {item.text}
+              </Link>
+            ) : (
+              <span>{item.text}</span>
+            )}
           </li>
         ))}
       </ul>
 
       {/* One Thing */}
       <div
-        className="px-4 py-3 border-t"
+        className="px-4 py-3 border-t flex items-center justify-between gap-3"
         style={{ borderColor: "var(--border)", background: "var(--bg-base)" }}
       >
         <p className="text-xs font-medium" style={{ color: "var(--accent)" }}>
           {content.oneThing}
         </p>
+        {content.oneThingHref && (
+          <Link
+            href={content.oneThingHref}
+            className="shrink-0 text-xs font-medium px-3 py-1.5 rounded-md transition-opacity hover:opacity-80"
+            style={{ background: "var(--accent)", color: "#fff" }}
+          >
+            Go →
+          </Link>
+        )}
       </div>
     </div>
   );

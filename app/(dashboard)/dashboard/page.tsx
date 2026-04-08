@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, requests, assignments, projects, morningBriefings } from "@/db/schema";
-import { eq, inArray, sql, and, isNull } from "drizzle-orm";
+import { profiles, requests, assignments, projects, morningBriefings, proactiveAlerts } from "@/db/schema";
+import { eq, inArray, sql, and, isNull, gte } from "drizzle-orm";
 import { RequestList } from "@/components/requests/request-list";
 import { RealtimeDashboard } from "@/components/realtime/realtime-dashboard";
 import { MorningBriefingCard } from "@/components/dashboard/morning-briefing-card";
+import { AlertsSection } from "@/components/dashboard/alerts-section";
 
 export default async function DashboardPage({
   searchParams,
@@ -32,6 +33,26 @@ export default async function DashboardPage({
     .limit(1);
 
   const briefForCard = briefRow && !briefRow.dismissedAt ? briefRow : null;
+
+  const urgencyOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const inlineAlerts = (await db
+    .select({
+      id: proactiveAlerts.id,
+      type: proactiveAlerts.type,
+      urgency: proactiveAlerts.urgency,
+      title: proactiveAlerts.title,
+      body: proactiveAlerts.body,
+      ctaLabel: proactiveAlerts.ctaLabel,
+      ctaUrl: proactiveAlerts.ctaUrl,
+    })
+    .from(proactiveAlerts)
+    .where(
+      and(
+        eq(proactiveAlerts.recipientId, user.id),
+        eq(proactiveAlerts.dismissed, false),
+        gte(proactiveAlerts.expiresAt, new Date())
+      )
+    )).sort((a, b) => (urgencyOrder[a.urgency] ?? 9) - (urgencyOrder[b.urgency] ?? 9));
 
   const activeProjects = await db
     .select()
@@ -88,6 +109,7 @@ export default async function DashboardPage({
   return (
     <div style={{ padding: "var(--space-6)" }}>
       <MorningBriefingCard brief={briefForCard} />
+      <AlertsSection alerts={inlineAlerts} />
       <RealtimeDashboard orgId={profile.orgId} />
       <RequestList
         requests={allRequests}

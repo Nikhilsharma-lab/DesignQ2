@@ -22,6 +22,7 @@ const briefSchema = z.object({
       z.object({
         icon: z.string().describe("Single emoji: ✅ 💬 🔴 💡 ⏳ 🚀"),
         text: z.string().describe("One specific, conversational sentence"),
+        href: z.string().optional().describe("Link to the relevant request, e.g. /dashboard/requests/{id}. Only include when referencing a specific request from the context."),
       })
     )
     .min(1)
@@ -29,6 +30,10 @@ const briefSchema = z.object({
   oneThing: z
     .string()
     .describe("Single concrete action the user can take in the next hour. Start with 'Today:'"),
+  oneThingHref: z
+    .string()
+    .optional()
+    .describe("Link to the request the oneThing action refers to, e.g. /dashboard/requests/{id}. Only include when the action is about a specific request."),
 });
 
 async function gatherDesignerContext(userId: string, orgId: string) {
@@ -255,13 +260,13 @@ export async function generateMorningBriefing(input: {
     const ctx = await gatherDesignerContext(userId, orgId);
     contextBlock = `
 ACTIVE REQUESTS (${ctx.activeRequests.length} total):
-${ctx.activeRequests.map((r) => `- "${r.title}" — phase: ${r.phase}, design stage: ${r.designStage ?? "n/a"}, last updated: ${r.updatedAt.toISOString().slice(0, 10)}`).join("\n") || "None"}
+${ctx.activeRequests.map((r) => `- id:${r.id} "${r.title}" — phase: ${r.phase}, design stage: ${r.designStage ?? "n/a"}, last updated: ${r.updatedAt.toISOString().slice(0, 10)}`).join("\n") || "None"}
 
 OVERNIGHT COMMENTS (since midnight, ${ctx.overnightComments.length} total):
-${ctx.overnightComments.map((c) => `- On request ${c.requestId}: "${c.body.slice(0, 100)}"`).join("\n") || "None"}
+${ctx.overnightComments.map((c) => `- On request id:${c.requestId}: "${c.body.slice(0, 100)}"`).join("\n") || "None"}
 
 SIGN-OFFS NEEDED (prove stage, awaiting your approval, ${ctx.pendingSignoffs.length} total):
-${ctx.pendingSignoffs.map((r) => `- "${r.title}"`).join("\n") || "None"}
+${ctx.pendingSignoffs.map((r) => `- id:${r.id} "${r.title}"`).join("\n") || "None"}
 
 KF6 PROACTIVE ALERTS FOR YOU (${ctx.alerts.length} total):
 ${ctx.alerts.map((a) => `- [${a.type}] ${a.title}: ${a.body.slice(0, 100)}`).join("\n") || "None"}
@@ -273,13 +278,13 @@ ${ctx.figmaDrifts.length > 0 ? `${ctx.figmaDrifts.length} Figma update(s) on you
     const ctx = await gatherPmContext(userId, orgId);
     contextBlock = `
 YOUR SUBMITTED REQUESTS (${ctx.myRequests.length} total):
-${ctx.myRequests.slice(0, 10).map((r) => `- "${r.title}" — status: ${r.status}, phase: ${r.phase}`).join("\n") || "None"}
+${ctx.myRequests.slice(0, 10).map((r) => `- id:${r.id} "${r.title}" — status: ${r.status}, phase: ${r.phase}`).join("\n") || "None"}
 
 SIGN-OFFS PENDING FROM YOU (prove stage, ${ctx.pendingSignoffs.length} total):
-${ctx.pendingSignoffs.map((r) => `- "${r.title}"`).join("\n") || "None"}
+${ctx.pendingSignoffs.map((r) => `- id:${r.id} "${r.title}"`).join("\n") || "None"}
 
 IMPACT PREDICTIONS TO LOG (in track, no actual logged, ${ctx.needsImpact.length} total):
-${ctx.needsImpact.map((r) => `- "${r.title}"`).join("\n") || "None"}
+${ctx.needsImpact.map((r) => `- id:${r.id} "${r.title}"`).join("\n") || "None"}
 
 KF6 PROACTIVE ALERTS FOR YOU (${ctx.alerts.length} total):
 ${ctx.alerts.map((a) => `- [${a.type}] ${a.title}: ${a.body.slice(0, 100)}`).join("\n") || "None"}
@@ -325,6 +330,7 @@ Write a warm, specific, actionable 30-second brief based on the context below.
 - oneThing must be a single concrete action the user can do in the next hour.
 - If there's nothing notable, generate a motivating observation about the team state.
 - Keep each item under 15 words.
+- LINKS: When an item references a specific request (shown as id:UUID in context), set href to /dashboard/requests/{UUID}. Set oneThingHref when the oneThing action is about a specific request.
 
 ---
 CONTEXT:

@@ -9,14 +9,16 @@ import {
 import { profiles, organizations } from "./users";
 
 export interface BriefItem {
-  icon: string;   // emoji: "🔴" | "✅" | "💬" | "💡" | "⏳" | "🚀"
+  icon: string;    // emoji: "🔴" | "✅" | "💬" | "💡" | "⏳" | "🚀"
   text: string;
+  href?: string;   // e.g. "/dashboard/requests/abc-123"
 }
 
 export interface MorningBriefContent {
-  greeting: string;     // "Good morning, Yash"
-  items: BriefItem[];   // 3–5 role-specific bullets
-  oneThing: string;     // "Today: push checkout redesign to Prove"
+  greeting: string;      // "Good morning, Yash"
+  items: BriefItem[];    // 3–5 role-specific bullets
+  oneThing: string;      // "Today: push checkout redesign to Prove"
+  oneThingHref?: string; // CTA link for oneThing action
 }
 
 export const morningBriefings = pgTable(

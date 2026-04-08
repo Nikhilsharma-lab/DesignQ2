@@ -21,3 +21,5 @@ lane docs/
 UI reference/
 Misc/
 .claude/launch.json
+.vercel
+.env*.local
