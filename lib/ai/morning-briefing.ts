@@ -48,8 +48,7 @@ async function gatherDesignerContext(userId: string, orgId: string) {
       and(
         eq(requests.orgId, orgId),
         eq(requests.designerOwnerId, userId),
-        ne(requests.status, "shipped"),
-        ne(requests.status, "completed")
+        inArray(requests.phase, ["design", "dev"])
       )
     );
 
@@ -207,9 +206,10 @@ async function gatherLeadContext(orgId: string) {
         inArray(proactiveAlerts.type, ["stall_escalation", "signoff_overdue"])
       )
     )
-    .orderBy(proactiveAlerts.generatedAt)
+    .orderBy(desc(proactiveAlerts.generatedAt))
     .limit(2);
 
+  // Note: using updatedAt as proxy for shipped date — no shippedAt column yet
   const recentlyShipped = allOrgRequests.filter(
     (r) => r.status === "shipped" && r.updatedAt >= sevenDaysAgo
   );
