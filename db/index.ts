@@ -1,21 +1,14 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
-import * as schema from "./schema";
+// `db` is the privileged/system DB path — it bypasses all RLS policies.
+//
+// ⚠️  RLS ENFORCEMENT GAP: As of the 0005 migration, RLS policies are defined
+// on all tables but are only enforced for routes that use `withUserDb()` from
+// `db/user.ts`. The ~52 routes that still import from `@/db` run as the system
+// role and bypass RLS entirely — authorization for those routes is enforced only
+// at the application layer.
+//
+// Before migrating a route to `withUserDb()`, read the constraint in db/user.ts:
+// AI-calling routes MUST NOT be migrated until the transaction model is resolved.
+import { systemDb } from "./system";
 
-// Supabase session-pooler (port 5432) with prepare:false.
-// max:10 allows concurrent serverless invocations without exhausting the pool.
-// Singleton via global prevents connection leaks across Next.js HMR hot-reloads.
-const g = global as unknown as { _db?: ReturnType<typeof drizzle<typeof schema>> };
-
-if (!g._db) {
-  const client = postgres(process.env.DATABASE_URL!, {
-    prepare: false,
-    max: 10,
-    idle_timeout: 20,
-    connect_timeout: 10,
-  });
-  g._db = drizzle(client, { schema });
-}
-
-export const db = g._db;
+export const db = systemDb;
 export * from "./schema";

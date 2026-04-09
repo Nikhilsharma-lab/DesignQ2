@@ -3,9 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
-import { organizations, profiles } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { bootstrapOrganizationMembership } from "@/lib/bootstrap-access";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -60,19 +58,22 @@ export async function signup(formData: FormData) {
     }
   }
 
-  // Create org + profile only if missing
-  const [existingProfile] = await db.select().from(profiles).where(eq(profiles.id, userId));
-
-  if (!existingProfile) {
-    const baseSlug = orgName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
-    try {
-      const [org] = await db.insert(organizations).values({ name: orgName, slug }).returning();
-      await db.insert(profiles).values({ id: userId, orgId: org.id, fullName, email, role: "lead" });
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      return { error: `DB error: ${msg}` };
-    }
+  // bootstrap_organization_membership is idempotent — safe to call even if
+  // profile already exists; the SQL function returns early in that case.
+  const baseSlug = orgName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+  const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
+  try {
+    const result = await bootstrapOrganizationMembership({
+      userId,
+      orgName,
+      slug,
+      fullName,
+      email,
+    });
+    if (!result) throw new Error("bootstrap_organization_membership returned no result");
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { error: `DB error: ${msg}` };
   }
 
   revalidatePath("/", "layout");

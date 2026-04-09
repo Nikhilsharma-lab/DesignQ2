@@ -4,83 +4,86 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomBytes } from "crypto";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
-import { invites, profiles, organizations } from "@/db/schema";
+import { invites, organizations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail, APP_URL } from "@/lib/email";
 import { inviteEmail } from "@/lib/email/templates";
+import { acceptInviteMembership, getInviteContext } from "@/lib/bootstrap-access";
+import { withAuthContext } from "@/lib/auth-context";
 
 export async function createInvite(formData: FormData) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Not authenticated" };
+  const result = await withAuthContext(async ({ profile, db }) => {
+    const email = formData.get("email") as string;
+    const role = (formData.get("role") as string) || "designer";
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return { error: "Profile not found" };
+    if (!email) return { error: "Email is required" };
 
-  const email = formData.get("email") as string;
-  const role = (formData.get("role") as string) || "designer";
+    const validRoles = ["pm", "designer", "developer", "lead", "admin"];
+    if (!validRoles.includes(role)) return { error: "Invalid role" };
 
-  if (!email) return { error: "Email is required" };
+    if (profile.role !== "lead" && profile.role !== "admin") {
+      return { error: "Only leads and admins can invite team members" };
+    }
 
-  const validRoles = ["pm", "designer", "developer", "lead", "admin"];
-  if (!validRoles.includes(role)) return { error: "Invalid role" };
+    const privilegedRoles = ["lead", "admin"];
+    if (profile.role === "lead" && privilegedRoles.includes(role)) {
+      return {
+        error:
+          "Leads can only invite designers, PMs, and developers. Contact an admin to invite leads or admins.",
+      };
+    }
 
-  // Only leads and admins can create invites
-  if (profile.role !== "lead" && profile.role !== "admin") {
-    return { error: "Only leads and admins can invite team members" };
-  }
+    const token = randomBytes(32).toString("hex");
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
 
-  // Leads can only invite non-privileged roles — prevents privilege escalation
-  const privilegedRoles = ["lead", "admin"];
-  if (profile.role === "lead" && privilegedRoles.includes(role)) {
-    return { error: "Leads can only invite designers, PMs, and developers. Contact an admin to invite leads or admins." };
-  }
+    try {
+      await db.insert(invites).values({
+        orgId: profile.orgId,
+        email,
+        token,
+        role,
+        invitedBy: profile.id,
+        expiresAt,
+      });
+    } catch {
+      return { error: "Failed to create invite" };
+    }
 
-  const token = randomBytes(32).toString("hex");
-  const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7);
+    const [org] = await db
+      .select()
+      .from(organizations)
+      .where(eq(organizations.id, profile.orgId));
+    const inviteUrl = `${APP_URL}/invite/${token}`;
 
-  try {
-    await db.insert(invites).values({
-      orgId: profile.orgId,
-      email,
-      token,
-      role,
-      invitedBy: profile.id,
-      expiresAt,
+    sendEmail({
+      to: email,
+      subject: `You've been invited to ${org?.name ?? "Lane"}`,
+      html: inviteEmail({
+        invitedByName: profile.fullName ?? "Your team lead",
+        orgName: org?.name ?? "Lane",
+        role,
+        inviteUrl,
+      }),
     });
-  } catch (err) {
-    return { error: "Failed to create invite" };
-  }
 
-  // Look up org name for the email
-  const [org] = await db.select().from(organizations).where(eq(organizations.id, profile.orgId));
-  const inviteUrl = `${APP_URL}/invite/${token}`;
-
-  sendEmail({
-    to: email,
-    subject: `You've been invited to ${org?.name ?? "Lane"}`,
-    html: inviteEmail({
-      invitedByName: profile.fullName ?? "Your team lead",
-      orgName: org?.name ?? "Lane",
-      role,
-      inviteUrl,
-    }),
+    return { success: true, token };
   });
 
-  return { success: true, token };
+  if (result && typeof result === "object" && "status" in result) {
+    return { error: result.error };
+  }
+
+  return result;
 }
 
 export async function acceptInvite(token: string, formData: FormData) {
-  // Validate invite
-  const [invite] = await db.select().from(invites).where(eq(invites.token, token));
+  const invite = await getInviteContext(token);
   if (!invite) return { error: "Invalid invite link" };
   if (invite.acceptedAt) return { error: "This invite has already been used" };
-  if (new Date() > invite.expiresAt) return { error: "This invite has expired. Ask your team lead to send a new one." };
-
-  const [org] = await db.select().from(organizations).where(eq(organizations.id, invite.orgId));
-  if (!org) return { error: "Organization not found" };
+  if (new Date() > invite.expiresAt) {
+    return { error: "This invite has expired. Ask your team lead to send a new one." };
+  }
 
   const supabase = await createClient();
   const email = formData.get("email") as string;
@@ -114,34 +117,22 @@ export async function acceptInvite(token: string, formData: FormData) {
       userId = signInData.user.id;
     } else {
       userId = data.user.id;
-      await supabase.auth.signInWithPassword({ email, password });
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) return { error: "Account created but could not sign in. Try signing in manually." };
     }
   }
 
-  // Check if already in an org
-  const [existing] = await db.select().from(profiles).where(eq(profiles.id, userId));
-  if (existing) {
-    // Already has a profile — mark invite accepted, redirect
-    await db.update(invites).set({ acceptedAt: new Date() }).where(eq(invites.token, token));
-    revalidatePath("/dashboard");
-    redirect("/dashboard");
-  }
-
-  // Create profile in the invited org
   try {
-    await db.insert(profiles).values({
-      id: userId,
-      orgId: invite.orgId,
+    await acceptInviteMembership({
+      token,
+      userId,
       fullName,
       email,
-      role: invite.role as "pm" | "designer" | "developer" | "lead" | "admin",
     });
   } catch (err) {
-    return { error: "Failed to create profile" };
+    const msg = err instanceof Error ? err.message : String(err);
+    return { error: msg || "Failed to accept invite" };
   }
-
-  // Mark invite accepted
-  await db.update(invites).set({ acceptedAt: new Date() }).where(eq(invites.token, token));
 
   revalidatePath("/dashboard");
   redirect("/dashboard");

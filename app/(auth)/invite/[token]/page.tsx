@@ -1,8 +1,6 @@
 import { notFound } from "next/navigation";
-import { db } from "@/db";
-import { invites, profiles, organizations } from "@/db/schema";
-import { eq } from "drizzle-orm";
 import { InviteSignupForm } from "@/components/team/invite-signup-form";
+import { getInviteContext } from "@/lib/bootstrap-access";
 
 export default async function InvitePage({
   params,
@@ -11,15 +9,8 @@ export default async function InvitePage({
 }) {
   const { token } = await params;
 
-  const [invite] = await db.select().from(invites).where(eq(invites.token, token));
+  const invite = await getInviteContext(token);
   if (!invite) notFound();
-
-  const [org] = await db.select().from(organizations).where(eq(organizations.id, invite.orgId));
-  if (!org) notFound();
-
-  const inviter = invite.invitedBy
-    ? (await db.select().from(profiles).where(eq(profiles.id, invite.invitedBy)))[0]
-    : null;
 
   const isExpired = new Date() > invite.expiresAt;
   const isAccepted = !!invite.acceptedAt;
@@ -29,10 +20,10 @@ export default async function InvitePage({
       <div className="w-full max-w-sm">
         <div className="mb-8">
           <p className="text-xs text-[var(--text-tertiary)] uppercase tracking-wide mb-3">You&apos;re invited</p>
-          <h1 className="text-xl font-semibold text-[var(--text-primary)]">{org.name}</h1>
-          {inviter && (
+          <h1 className="text-xl font-semibold text-[var(--text-primary)]">{invite.orgName}</h1>
+          {invite.invitedByName && (
             <p className="text-sm text-[var(--text-secondary)] mt-1">
-              {inviter.fullName} invited you as{" "}
+              {invite.invitedByName} invited you as{" "}
               <span className="capitalize text-[var(--text-primary)]">{invite.role}</span>
             </p>
           )}
@@ -51,7 +42,7 @@ export default async function InvitePage({
             <p className="text-xs text-[var(--text-tertiary)] mt-1">Ask your team lead to send a new invite.</p>
           </div>
         ) : (
-          <InviteSignupForm token={token} defaultEmail={invite.email} orgName={org.name} />
+          <InviteSignupForm token={token} defaultEmail={invite.email} orgName={invite.orgName} />
         )}
       </div>
     </div>
