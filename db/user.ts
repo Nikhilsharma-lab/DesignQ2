@@ -16,6 +16,14 @@ function createUserDb(sql: TransactionSql): UserDb {
   return drizzle(sql as unknown as Sql, { schema });
 }
 
+// ⚠️  TRANSACTION CONSTRAINT: `withDbSession` wraps the entire callback in a
+// single Postgres transaction (via systemSql.begin). This means the DB connection
+// is held open for the full duration of `fn`, including any awaited I/O.
+//
+// DO NOT migrate routes that make external API calls (Claude, Figma, Resend, etc.)
+// to `withUserDb` until this constraint is resolved — a 5-15s AI call would hold
+// a DB transaction open for that entire duration, exhausting the connection pool
+// under load. Those routes should remain on systemDb with application-level auth.
 export async function withDbSession<T>(
   options: SessionOptions,
   fn: (db: SessionDb) => Promise<T>,

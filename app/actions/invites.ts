@@ -117,7 +117,8 @@ export async function acceptInvite(token: string, formData: FormData) {
       userId = signInData.user.id;
     } else {
       userId = data.user.id;
-      await supabase.auth.signInWithPassword({ email, password });
+      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      if (signInError) return { error: "Account created but could not sign in. Try signing in manually." };
     }
   }
 
