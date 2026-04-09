@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
 import { requests, profiles, impactRecords, comments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { canRecordImpact } from "@/lib/request-permissions";
 
 /** Extract the first number (with optional sign/decimal) from a free-text string. */
 function extractNumber(text: string): number | null {
@@ -36,6 +37,15 @@ export async function GET(
   if (!request || request.orgId !== profile.orgId) {
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
   }
+  if (
+    !canRecordImpact({
+      userId: user.id,
+      profileRole: profile.role,
+      requesterId: request.requesterId,
+    })
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const [record] = await db
     .select()
@@ -62,6 +72,15 @@ export async function POST(
   const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
   if (!request || request.orgId !== profile.orgId) {
     return NextResponse.json({ error: "Request not found" }, { status: 404 });
+  }
+  if (
+    !canRecordImpact({
+      userId: user.id,
+      profileRole: profile.role,
+      requesterId: request.requesterId,
+    })
+  ) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   const body = await req.json();
