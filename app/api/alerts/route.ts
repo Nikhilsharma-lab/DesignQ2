@@ -1,16 +1,11 @@
 // app/api/alerts/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
 import { proactiveAlerts } from "@/db/schema";
 import { eq, and, gte } from "drizzle-orm";
+import { isAuthContextError, withAuthContext } from "@/lib/auth-context";
 
 export async function GET() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  try {
+  const result = await withAuthContext(async ({ user, db }) => {
     const alerts = await db
       .select()
       .from(proactiveAlerts)
@@ -43,6 +38,14 @@ export async function GET() {
       })),
       unreadCount: alerts.length,
     });
+  });
+
+  if (isAuthContextError(result)) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  try {
+    return result;
   } catch (err) {
     console.error("[alerts] DB error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -1,9 +1,8 @@
 // app/api/alerts/[id]/dismiss/route.ts
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
 import { proactiveAlerts } from "@/db/schema";
 import { and, eq } from "drizzle-orm";
+import { isAuthContextError, withAuthContext } from "@/lib/auth-context";
 
 export async function POST(
   _req: Request,
@@ -11,11 +10,7 @@ export async function POST(
 ) {
   const { id } = await params;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-  try {
+  const result = await withAuthContext(async ({ user, db }) => {
     const result = await db
       .update(proactiveAlerts)
       .set({ dismissed: true, dismissedAt: new Date() })
@@ -31,6 +26,14 @@ export async function POST(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
     return NextResponse.json({ ok: true });
+  });
+
+  if (isAuthContextError(result)) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  try {
+    return result;
   } catch (err) {
     console.error("[alerts/dismiss] DB error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

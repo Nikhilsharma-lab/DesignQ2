@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { organizations, profiles } from "@/db/schema";
+import { profiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { bootstrapOrganizationMembership } from "@/lib/bootstrap-access";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
@@ -67,8 +68,13 @@ export async function signup(formData: FormData) {
     const baseSlug = orgName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
     const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 6)}`;
     try {
-      const [org] = await db.insert(organizations).values({ name: orgName, slug }).returning();
-      await db.insert(profiles).values({ id: userId, orgId: org.id, fullName, email, role: "lead" });
+      await bootstrapOrganizationMembership({
+        userId,
+        orgName,
+        slug,
+        fullName,
+        email,
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       return { error: `DB error: ${msg}` };
