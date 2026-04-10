@@ -1,5 +1,5 @@
 import { drizzle } from "drizzle-orm/postgres-js";
-import type { Sql, TransactionSql } from "postgres";
+import postgres, { type Sql, type TransactionSql } from "postgres";
 import * as schema from "./schema";
 import { systemSql } from "./system";
 
@@ -20,10 +20,9 @@ function createUserDb(sql: TransactionSql): UserDb {
 // single Postgres transaction (via systemSql.begin). This means the DB connection
 // is held open for the full duration of `fn`, including any awaited I/O.
 //
-// DO NOT migrate routes that make external API calls (Claude, Figma, Resend, etc.)
-// to `withUserDb` until this constraint is resolved — a 5-15s AI call would hold
-// a DB transaction open for that entire duration, exhausting the connection pool
-// under load. Those routes should remain on systemDb with application-level auth.
+// For routes that make external API calls (Claude, Figma, Resend, etc.),
+// use `withUserSession()` instead — it sets session-level RLS config on a
+// dedicated connection without a wrapping transaction.
 export async function withDbSession<T>(
   options: SessionOptions,
   fn: (db: SessionDb) => Promise<T>,
@@ -68,4 +67,49 @@ export async function withUserInviteDb<T>(
   fn: (db: SessionDb) => Promise<T>,
 ): Promise<T> {
   return withDbSession({ userId, inviteToken }, fn);
+}
+
+/**
+ * Session-level RLS identity — no wrapping transaction.
+ * Safe for routes that make external API calls (AI, Figma, Resend).
+ * Creates a dedicated connection, sets session config, runs callback, closes connection.
+ *
+ * Use this instead of `withUserDb` when the callback awaits external I/O that
+ * could hold a connection open for seconds (e.g. Claude API, Figma API, Resend).
+ */
+export async function withUserSession<T>(
+  userId: string,
+  fn: (db: SessionDb) => Promise<T>,
+): Promise<T> {
+  const dedicatedSql = postgres(process.env.DATABASE_URL!, {
+    prepare: false,
+    max: 1,
+    idle_timeout: 5,
+    connect_timeout: 10,
+  });
+
+  try {
+    // set_config(..., false) = session-level (persists for connection lifetime),
+    // unlike set_config(..., true) which is transaction-local.
+    await dedicatedSql`select set_config('app.current_user_id', ${userId}, false)`;
+    const db = drizzle(dedicatedSql as unknown as Sql, { schema });
+    return await fn(db);
+  } finally {
+    await dedicatedSql.end();
+  }
+}
+
+/**
+ * Like `withUserSession`, but falls back to systemDb when no userId is provided.
+ * Useful for routes that may or may not have a user context.
+ */
+export async function withOptionalUserSession<T>(
+  userId: string | null | undefined,
+  fn: (db: SessionDb) => Promise<T>,
+): Promise<T> {
+  if (!userId) {
+    const { systemDb } = await import("./system");
+    return fn(systemDb as unknown as SessionDb);
+  }
+  return withUserSession(userId, fn);
 }
