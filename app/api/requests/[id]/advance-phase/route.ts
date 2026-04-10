@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserSession } from "@/db/user";
 import { requests, comments, profiles, assignments, requestStages } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { sendEmail } from "@/lib/email";
@@ -23,6 +23,7 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
+  return withUserSession(user.id, async (db) => {
   const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
   if (!request) return NextResponse.json({ error: "Request not found" }, { status: 404 });
 
@@ -296,6 +297,7 @@ export async function POST(
   }
 
   return NextResponse.json({ error: "No advancement possible at this phase" }, { status: 422 });
+  }); // end withUserSession
   } catch (err) {
     console.error("[advance-phase] Unhandled error:", err);
     const message = err instanceof Error ? err.message : "Internal server error";

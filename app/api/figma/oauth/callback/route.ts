@@ -1,7 +1,7 @@
 // app/api/figma/oauth/callback/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserSession } from "@/db/user";
 import { profiles, figmaConnections } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { encryptToken } from "@/lib/encrypt";
@@ -27,15 +27,16 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return clearState(NextResponse.redirect(new URL("/login", req.url)));
-  if (profile.role !== "admin" && profile.role !== "lead") {
-    return clearState(
-      NextResponse.redirect(new URL("/settings/integrations?error=forbidden", req.url))
-    );
-  }
+  return withUserSession(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return clearState(NextResponse.redirect(new URL("/login", req.url)));
+    if (profile.role !== "admin" && profile.role !== "lead") {
+      return clearState(
+        NextResponse.redirect(new URL("/settings/integrations?error=forbidden", req.url))
+      );
+    }
 
-  const tokenRes = await fetch("https://api.figma.com/v1/oauth/token", {
+    const tokenRes = await fetch("https://api.figma.com/v1/oauth/token", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
@@ -97,4 +98,5 @@ export async function GET(req: NextRequest) {
   return clearState(
     NextResponse.redirect(new URL("/settings/integrations?connected=true", req.url))
   );
+  });
 }

@@ -2,7 +2,7 @@
 // Returns AI analysis, comments, stage history, context brief for the detail dock.
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserDb } from "@/db/user";
 import {
   profiles,
   requests,
@@ -26,13 +26,14 @@ export async function GET(
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  return withUserDb(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
-  if (!request || request.orgId !== profile.orgId) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+    const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
+    if (!request || request.orgId !== profile.orgId) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
   let aiAnalysis = null;
   try {
@@ -140,5 +141,6 @@ export async function GET(
     requesterName,
     project,
     canEdit,
+  });
   });
 }

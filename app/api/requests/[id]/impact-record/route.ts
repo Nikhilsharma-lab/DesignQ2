@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserDb } from "@/db/user";
 import { requests, profiles, impactRecords, comments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { canRecordImpact } from "@/lib/request-permissions";
@@ -30,21 +30,23 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  return withUserDb(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
-  if (!request || request.orgId !== profile.orgId) {
-    return NextResponse.json({ error: "Request not found" }, { status: 404 });
-  }
+    const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
+    if (!request || request.orgId !== profile.orgId) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
 
-  // All org members can read impact records (CLAUDE.md visibility table: ✅ for every role)
-  const [record] = await db
-    .select()
-    .from(impactRecords)
-    .where(eq(impactRecords.requestId, requestId));
+    // All org members can read impact records (CLAUDE.md visibility table: ✅ for every role)
+    const [record] = await db
+      .select()
+      .from(impactRecords)
+      .where(eq(impactRecords.requestId, requestId));
 
-  return NextResponse.json({ record: record ?? null });
+    return NextResponse.json({ record: record ?? null });
+  });
 }
 
 // POST /api/requests/[id]/impact-record — create or update structured impact record
@@ -58,23 +60,6 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-
-  const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
-  if (!request || request.orgId !== profile.orgId) {
-    return NextResponse.json({ error: "Request not found" }, { status: 404 });
-  }
-  if (
-    !canRecordImpact({
-      userId: user.id,
-      profileRole: profile.role,
-      requesterId: request.requesterId,
-    })
-  ) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
   const body = await req.json();
   const { actualValue, notes } = body as { actualValue: string; notes?: string };
 
@@ -82,59 +67,78 @@ export async function POST(
     return NextResponse.json({ error: "Actual value is required" }, { status: 400 });
   }
 
-  // Use the request's existing prediction fields
-  const predictedMetric = request.impactMetric ?? "Impact";
-  const predictedValue = request.impactPrediction ?? "";
+  return withUserDb(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const variancePercent = predictedValue
-    ? calcVariance(predictedValue, actualValue.trim())
-    : null;
+    const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
+    if (!request || request.orgId !== profile.orgId) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
+    if (
+      !canRecordImpact({
+        userId: user.id,
+        profileRole: profile.role,
+        requesterId: request.requesterId,
+      })
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-  const [existing] = await db
-    .select()
-    .from(impactRecords)
-    .where(eq(impactRecords.requestId, requestId));
+    // Use the request's existing prediction fields
+    const predictedMetric = request.impactMetric ?? "Impact";
+    const predictedValue = request.impactPrediction ?? "";
 
-  if (existing) {
-    await db
-      .update(impactRecords)
-      .set({
+    const variancePercent = predictedValue
+      ? calcVariance(predictedValue, actualValue.trim())
+      : null;
+
+    const [existing] = await db
+      .select()
+      .from(impactRecords)
+      .where(eq(impactRecords.requestId, requestId));
+
+    if (existing) {
+      await db
+        .update(impactRecords)
+        .set({
+          actualValue: actualValue.trim(),
+          variancePercent: variancePercent !== null ? String(variancePercent.toFixed(1)) : null,
+          notes: notes ?? null,
+          measuredAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(eq(impactRecords.id, existing.id));
+    } else {
+      await db.insert(impactRecords).values({
+        requestId,
+        pmId: user.id,
+        predictedMetric,
+        predictedValue,
         actualValue: actualValue.trim(),
         variancePercent: variancePercent !== null ? String(variancePercent.toFixed(1)) : null,
         notes: notes ?? null,
         measuredAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(eq(impactRecords.id, existing.id));
-  } else {
-    await db.insert(impactRecords).values({
+      });
+    }
+
+    // Also sync back to requests table
+    await db
+      .update(requests)
+      .set({ impactActual: actualValue.trim(), impactLoggedAt: new Date(), updatedAt: new Date() })
+      .where(eq(requests.id, requestId));
+
+    const varianceNote = variancePercent !== null
+      ? ` (${variancePercent > 0 ? "+" : ""}${variancePercent.toFixed(1)}% vs prediction)`
+      : "";
+
+    await db.insert(comments).values({
       requestId,
-      pmId: user.id,
-      predictedMetric,
-      predictedValue,
-      actualValue: actualValue.trim(),
-      variancePercent: variancePercent !== null ? String(variancePercent.toFixed(1)) : null,
-      notes: notes ?? null,
-      measuredAt: new Date(),
+      authorId: user.id,
+      body: `📊 Impact logged: ${actualValue.trim()}${varianceNote}`,
+      isSystem: true,
     });
-  }
 
-  // Also sync back to requests table
-  await db
-    .update(requests)
-    .set({ impactActual: actualValue.trim(), impactLoggedAt: new Date(), updatedAt: new Date() })
-    .where(eq(requests.id, requestId));
-
-  const varianceNote = variancePercent !== null
-    ? ` (${variancePercent > 0 ? "+" : ""}${variancePercent.toFixed(1)}% vs prediction)`
-    : "";
-
-  await db.insert(comments).values({
-    requestId,
-    authorId: user.id,
-    body: `📊 Impact logged: ${actualValue.trim()}${varianceNote}`,
-    isSystem: true,
+    return NextResponse.json({ success: true, variancePercent });
   });
-
-  return NextResponse.json({ success: true, variancePercent });
 }

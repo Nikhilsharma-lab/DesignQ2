@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserSession } from "@/db/user";
 import { requests, profiles } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { triageRequest } from "@/lib/ai/triage";
@@ -14,9 +14,6 @@ export async function POST(req: NextRequest) {
   const rateLimited = await checkAiRateLimit(user.id);
   if (rateLimited) return rateLimited;
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-
   const body = await req.json();
   const { title, description, businessContext, successMetrics, impactMetric, impactPrediction } = body;
 
@@ -24,33 +21,38 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
   }
 
-  // Fetch existing org requests for duplicate detection
-  const existing = await db
-    .select({ id: requests.id, title: requests.title, description: requests.description })
-    .from(requests)
-    .where(eq(requests.orgId, profile.orgId))
-    .orderBy(desc(requests.createdAt))
-    .limit(40);
+  return withUserSession(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  try {
-    const result = await triageRequest({
-      title: title.trim(),
-      description: description.trim(),
-      businessContext: businessContext?.trim() || null,
-      successMetrics: successMetrics?.trim() || null,
-      impactMetric: impactMetric?.trim() || null,
-      impactPrediction: impactPrediction?.trim() || null,
-      existingRequests: existing,
-    });
+    // Fetch existing org requests for duplicate detection
+    const existing = await db
+      .select({ id: requests.id, title: requests.title, description: requests.description })
+      .from(requests)
+      .where(eq(requests.orgId, profile.orgId))
+      .orderBy(desc(requests.createdAt))
+      .limit(40);
 
-    return NextResponse.json({
-      qualityScore: result.qualityScore,
-      qualityFlags: result.qualityFlags,
-      suggestions: result.suggestions,
-      potentialDuplicates: result.potentialDuplicates,
-    });
-  } catch (err) {
-    console.error("[preflight] triage failed:", err);
-    return NextResponse.json({ error: "preflight_failed" }, { status: 500 });
-  }
+    try {
+      const result = await triageRequest({
+        title: title.trim(),
+        description: description.trim(),
+        businessContext: businessContext?.trim() || null,
+        successMetrics: successMetrics?.trim() || null,
+        impactMetric: impactMetric?.trim() || null,
+        impactPrediction: impactPrediction?.trim() || null,
+        existingRequests: existing,
+      });
+
+      return NextResponse.json({
+        qualityScore: result.qualityScore,
+        qualityFlags: result.qualityFlags,
+        suggestions: result.suggestions,
+        potentialDuplicates: result.potentialDuplicates,
+      });
+    } catch (err) {
+      console.error("[preflight] triage failed:", err);
+      return NextResponse.json({ error: "preflight_failed" }, { status: 500 });
+    }
+  });
 }

@@ -1,7 +1,7 @@
 // app/api/digest/route.ts
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserSession } from "@/db/user";
 import { profiles } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { generateDigestForOrg } from "@/lib/digest";
@@ -20,9 +20,11 @@ export async function GET() {
   const rateLimited = await checkAiRateLimit(user.id);
   if (rateLimited) return rateLimited;
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  return withUserSession(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const result = await generateDigestForOrg(profile.orgId);
-  return NextResponse.json(result);
+    const result = await generateDigestForOrg(profile.orgId);
+    return NextResponse.json(result);
+  });
 }

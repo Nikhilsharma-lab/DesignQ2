@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserDb } from "@/db/user";
 import { profiles, requests, assignments, comments } from "@/db/schema";
 import { eq, inArray, desc } from "drizzle-orm";
 
@@ -9,10 +9,11 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return withUserDb(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
-  const orgRequests = await db
+    const orgRequests = await db
     .select({ id: requests.id, title: requests.title, requesterId: requests.requesterId })
     .from(requests)
     .where(eq(requests.orgId, profile.orgId));
@@ -96,4 +97,5 @@ export async function GET() {
   events.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return NextResponse.json({ items: events.slice(0, 20) });
+  });
 }

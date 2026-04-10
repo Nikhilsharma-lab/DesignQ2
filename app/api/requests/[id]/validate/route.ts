@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserDb, withUserSession } from "@/db/user";
 import { requests, profiles, validationSignoffs, comments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendEmail } from "@/lib/email";
@@ -25,25 +25,27 @@ export async function GET(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  return withUserDb(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
-  if (!request || request.orgId !== profile.orgId) {
-    return NextResponse.json({ error: "Request not found" }, { status: 404 });
-  }
+    const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
+    if (!request || request.orgId !== profile.orgId) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
 
-  const signoffs = await db
-    .select()
-    .from(validationSignoffs)
-    .where(eq(validationSignoffs.requestId, requestId));
+    const signoffs = await db
+      .select()
+      .from(validationSignoffs)
+      .where(eq(validationSignoffs.requestId, requestId));
 
-  const mySignerRole = signerRoleFromProfile(profile.role ?? "");
+    const mySignerRole = signerRoleFromProfile(profile.role ?? "");
 
-  return NextResponse.json({
-    signoffs,
-    mySignerRole,
-    myProfileRole: profile.role,
+    return NextResponse.json({
+      signoffs,
+      mySignerRole,
+      myProfileRole: profile.role,
+    });
   });
 }
 
@@ -58,13 +60,14 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
+  return withUserSession(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
-  if (!request || request.orgId !== profile.orgId) {
-    return NextResponse.json({ error: "Request not found" }, { status: 404 });
-  }
+    const [request] = await db.select().from(requests).where(eq(requests.id, requestId));
+    if (!request || request.orgId !== profile.orgId) {
+      return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
 
   if (request.designStage !== "prove") {
     return NextResponse.json({ error: "Request is not in the Prove stage" }, { status: 422 });
@@ -229,4 +232,5 @@ export async function POST(
   }
 
   return NextResponse.json({ success: true, autoAdvanced: false });
+  });
 }

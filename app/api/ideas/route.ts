@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { db } from "@/db";
+import { withUserDb } from "@/db/user";
 import { ideas, ideaVotes, profiles } from "@/db/schema";
 import { eq, sql, desc, asc } from "drizzle-orm";
 
@@ -10,7 +10,8 @@ export async function GET(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+  return withUserDb(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
   if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
   const { searchParams } = new URL(req.url);
@@ -57,6 +58,7 @@ export async function GET(req: Request) {
     );
 
   return NextResponse.json(rows);
+  });
 }
 
 // POST /api/ideas — create a new idea
@@ -65,9 +67,6 @@ export async function POST(req: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
 
-  const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
-  if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
-
   const body = await req.json();
   const { title, problem, proposedSolution, category, impactEstimate, effortEstimateWeeks, targetUsers, isAnonymous } = body;
 
@@ -75,24 +74,29 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "title, problem, proposedSolution, and category are required" }, { status: 400 });
   }
 
-  const votingEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // +7 days
+  return withUserDb(user.id, async (db) => {
+    const [profile] = await db.select().from(profiles).where(eq(profiles.id, user.id));
+    if (!profile) return NextResponse.json({ error: "Profile not found" }, { status: 404 });
 
-  const [idea] = await db
-    .insert(ideas)
-    .values({
-      orgId: profile.orgId,
-      authorId: user.id,
-      isAnonymous: isAnonymous ?? false,
-      title,
-      problem,
-      proposedSolution,
-      category,
-      impactEstimate: impactEstimate ?? null,
-      effortEstimateWeeks: effortEstimateWeeks ?? null,
-      targetUsers: targetUsers ?? null,
-      votingEndsAt,
-    })
-    .returning();
+    const votingEndsAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // +7 days
 
-  return NextResponse.json(idea, { status: 201 });
+    const [idea] = await db
+      .insert(ideas)
+      .values({
+        orgId: profile.orgId,
+        authorId: user.id,
+        isAnonymous: isAnonymous ?? false,
+        title,
+        problem,
+        proposedSolution,
+        category,
+        impactEstimate: impactEstimate ?? null,
+        effortEstimateWeeks: effortEstimateWeeks ?? null,
+        targetUsers: targetUsers ?? null,
+        votingEndsAt,
+      })
+      .returning();
+
+    return NextResponse.json(idea, { status: 201 });
+  });
 }
