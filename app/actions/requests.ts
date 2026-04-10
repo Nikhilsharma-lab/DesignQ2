@@ -212,6 +212,64 @@ export async function toggleBlocked(requestId: string, currentStatus: string) {
   return { success: true };
 }
 
+export async function advanceToContext(requestId: string) {
+  const { user, profile } = await getAuthedProfile();
+  if (!user || !profile) return { error: "Not authenticated" };
+
+  await db
+    .update(requests)
+    .set({
+      predesignStage: "context",
+      status: "triaged",
+      updatedAt: new Date(),
+    })
+    .where(and(eq(requests.id, requestId), eq(requests.orgId, profile.orgId)));
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/intake");
+  return { success: true };
+}
+
+export async function declineRequest(requestId: string, reason: string) {
+  const { user, profile } = await getAuthedProfile();
+  if (!user || !profile) return { error: "Not authenticated" };
+
+  await db
+    .update(requests)
+    .set({ status: "blocked", updatedAt: new Date() })
+    .where(and(eq(requests.id, requestId), eq(requests.orgId, profile.orgId)));
+
+  // Add system comment with decline reason
+  await db.insert(comments).values({
+    requestId,
+    authorId: user.id,
+    body: `Request declined: ${reason}`,
+    isSystem: true,
+  });
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/intake");
+  return { success: true };
+}
+
+export async function snoozeRequest(requestId: string, untilIso: string) {
+  const { user, profile } = await getAuthedProfile();
+  if (!user || !profile) return { error: "Not authenticated" };
+
+  await db
+    .update(requests)
+    .set({
+      snoozedUntil: new Date(untilIso),
+      snoozedById: user.id,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(requests.id, requestId), eq(requests.orgId, profile.orgId)));
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/intake");
+  return { success: true };
+}
+
 export async function nudgeRequest(requestId: string) {
   const { user, profile } = await getAuthedProfile();
   if (!user || !profile) return { error: "Not authenticated" };
