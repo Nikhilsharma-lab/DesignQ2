@@ -2,12 +2,17 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // Generate nonce for CSP
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+
   // Guard: if env vars aren't set (e.g. first Vercel deploy), fail safe
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     if (request.nextUrl.pathname.startsWith("/dashboard")) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    return NextResponse.next({ request });
+    const response = NextResponse.next({ request });
+    applyCSP(response, nonce);
+    return response;
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -54,9 +59,50 @@ export async function middleware(request: NextRequest) {
     }
   }
 
+  applyCSP(supabaseResponse, nonce);
   return supabaseResponse;
 }
 
+function applyCSP(response: NextResponse, nonce: string) {
+  const isDev = process.env.NODE_ENV === "development";
+
+  const csp = [
+    "default-src 'self'",
+    // nonce for CSP3 browsers, unsafe-inline as fallback for older browsers
+    // unsafe-eval only in dev for Next.js HMR
+    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+    `style-src 'self' 'unsafe-inline'`,
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.figma.com",
+    "img-src 'self' data: blob: https://*.supabase.co",
+    "font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://api.fontshare.com",
+    "frame-ancestors 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+  ].join("; ");
+
+  response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("x-nonce", nonce);
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+}
+
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/signup"],
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization)
+     * - favicon.ico (favicon)
+     * - public files (images etc)
+     */
+    {
+      source: "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+      missing: [
+        { type: "header", key: "next-router-prefetch" },
+        { type: "header", key: "purpose", value: "prefetch" },
+      ],
+    },
+  ],
 };
