@@ -12,6 +12,7 @@ const BASE_NAV = [
   { href: "/settings/workspace", label: "Workspace" },
   { href: "/settings/members", label: "Members" },
   { href: "/settings/projects", label: "Projects" },
+  { href: "/settings/notifications", label: "Notifications" },
   { href: "/settings/integrations", label: "Integrations" },
 ];
 
