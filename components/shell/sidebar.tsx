@@ -145,7 +145,13 @@ function NavItemLink({ href, icon: Icon, label, badge, badgeStyle, trailing }: N
       </span>
       {badge !== undefined && (
         <span
-          className="rounded-full text-center"
+          className={`rounded-full text-center ${
+            badgeStyle === "accent"
+              ? "bg-primary text-primary-foreground"
+              : badgeStyle === "warn"
+              ? "bg-yellow-100 text-yellow-700"
+              : "bg-muted text-muted-foreground border"
+          }`}
           style={{
             fontFamily: "'Geist Mono', monospace",
             fontSize: 10,
@@ -153,11 +159,6 @@ function NavItemLink({ href, icon: Icon, label, badge, badgeStyle, trailing }: N
             padding: "1px 6px",
             minWidth: 16,
             lineHeight: "16px",
-            ...(badgeStyle === "accent"
-              ? { background: "var(--primary)", color: "#fff" }
-              : badgeStyle === "warn"
-              ? { background: "rgba(212,168,75,0.12)", color: "#D4A84B" }
-              : { background: "var(--accent)", color: "var(--accent-foreground)", border: "1px solid var(--border)" }),
           }}
         >
           {badge}
