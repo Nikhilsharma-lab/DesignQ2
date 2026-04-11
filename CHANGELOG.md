@@ -7,6 +7,12 @@ All notable changes are documented here. Update this file with every PR before m
 
 ---
 
+## 2026-04-11
+
+### Changed
+- Navigation redesign: Linear-style object-first nav + shadcn migration (PR #24)
+
+
 ## 2026-04-09
 
 ### Changed
