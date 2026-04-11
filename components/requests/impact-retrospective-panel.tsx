@@ -25,17 +25,17 @@ export function ImpactRetrospectivePanel({ requestId, existingRetrospective }: P
 
   if (loading) {
     return (
-      <div className="border border-[var(--border)] rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-subtle)]">
-          <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+      <div className="border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b bg-muted">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             What We Learned
           </span>
         </div>
         <div className="p-4 space-y-3 animate-pulse">
-          <div className="h-4 bg-[var(--bg-hover)] rounded w-1/2" />
-          <div className="h-3 bg-[var(--bg-hover)] rounded w-full" />
-          <div className="h-3 bg-[var(--bg-hover)] rounded w-3/4" />
-          <div className="h-3 bg-[var(--bg-hover)] rounded w-5/6" />
+          <div className="h-4 bg-accent rounded w-1/2" />
+          <div className="h-3 bg-accent rounded w-full" />
+          <div className="h-3 bg-accent rounded w-3/4" />
+          <div className="h-3 bg-accent rounded w-5/6" />
         </div>
       </div>
     );
@@ -44,12 +44,12 @@ export function ImpactRetrospectivePanel({ requestId, existingRetrospective }: P
   if (!retro) return null;
 
   return (
-    <div className="border border-[var(--border)] rounded-xl overflow-hidden">
-      <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-subtle)] flex items-center justify-between">
-        <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+    <div className="border rounded-xl overflow-hidden">
+      <div className="px-4 py-3 border-b bg-muted flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           What We Learned
         </span>
-        <span className="text-[10px] text-[var(--text-tertiary)] font-mono">{retro.aiModel}</span>
+        <span className="text-[10px] text-muted-foreground/60 font-mono">{retro.aiModel}</span>
       </div>
 
       <div className="p-4 space-y-4">
@@ -62,19 +62,19 @@ export function ImpactRetrospectivePanel({ requestId, existingRetrospective }: P
         )}
 
         {/* Headline */}
-        <p className="text-sm font-medium text-[var(--text-primary)]">{retro.headline}</p>
+        <p className="text-sm font-medium text-foreground">{retro.headline}</p>
 
         {/* What happened */}
-        <p className="text-xs text-[var(--text-secondary)] leading-relaxed">{retro.whatHappened}</p>
+        <p className="text-xs text-muted-foreground leading-relaxed">{retro.whatHappened}</p>
 
         {/* Likely reasons */}
         {retro.likelyReasons.length > 0 && (
           <div>
-            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wide mb-2">Likely reasons</div>
+            <div className="text-[10px] text-muted-foreground/60 uppercase tracking-wide mb-2">Likely reasons</div>
             <ul className="space-y-1.5">
               {retro.likelyReasons.map((reason, i) => (
-                <li key={i} className="text-xs text-[var(--text-secondary)] flex gap-2">
-                  <span className="text-[var(--text-tertiary)] shrink-0">—</span>
+                <li key={i} className="text-xs text-muted-foreground flex gap-2">
+                  <span className="text-muted-foreground/60 shrink-0">—</span>
                   {reason}
                 </li>
               ))}
@@ -83,8 +83,8 @@ export function ImpactRetrospectivePanel({ requestId, existingRetrospective }: P
         )}
 
         {/* Next time suggestion */}
-        <p className="text-xs text-[var(--text-tertiary)] border-t border-[var(--border)] pt-3 leading-relaxed">
-          <span className="text-[var(--accent)] font-medium">Next time:</span>{" "}
+        <p className="text-xs text-muted-foreground/60 border-t pt-3 leading-relaxed">
+          <span className="text-primary font-medium">Next time:</span>{" "}
           {retro.nextTimeSuggestion}
         </p>
       </div>

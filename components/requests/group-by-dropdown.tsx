@@ -57,10 +57,10 @@ export function GroupByDropdown({ value, onChange }: GroupByDropdownProps) {
           gap: 4,
           height: 28,
           padding: "0 10px",
-          border: "1px solid var(--border)",
+          border: "1px solid hsl(var(--border))",
           borderRadius: 6,
-          background: open ? "var(--bg-hover)" : "var(--bg-surface)",
-          color: "var(--text-secondary)",
+          background: open ? "hsl(hsl(var(--primary)))" : "hsl(var(--card))",
+          color: "hsl(var(--muted-foreground))",
           fontFamily: "'Geist Mono', monospace",
           fontSize: 11,
           fontWeight: 500,
@@ -68,17 +68,17 @@ export function GroupByDropdown({ value, onChange }: GroupByDropdownProps) {
           whiteSpace: "nowrap",
           transition: "background 0.1s",
         }}
-        className="hover:bg-[var(--bg-hover)]"
+        className="hover:bg-[hsl(hsl(var(--primary)))]"
       >
-        <span style={{ color: "var(--text-tertiary)" }}>Group:</span>
-        <span style={{ color: "var(--text-primary)", marginLeft: 3 }}>
+        <span style={{ color: "hsl(var(--muted-foreground) / 0.6)" }}>Group:</span>
+        <span style={{ color: "hsl(var(--foreground))", marginLeft: 3 }}>
           {selectedLabel}
         </span>
         <ChevronDown
           size={12}
           style={{
             marginLeft: 2,
-            color: "var(--text-tertiary)",
+            color: "hsl(var(--muted-foreground) / 0.6)",
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
             transition: "transform 0.15s",
           }}
@@ -92,8 +92,8 @@ export function GroupByDropdown({ value, onChange }: GroupByDropdownProps) {
             top: "calc(100% + 4px)",
             left: 0,
             zIndex: 50,
-            background: "var(--bg-surface)",
-            border: "1px solid var(--border)",
+            background: "hsl(var(--card))",
+            border: "1px solid hsl(var(--border))",
             borderRadius: 8,
             boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
             minWidth: 140,
@@ -117,17 +117,17 @@ export function GroupByDropdown({ value, onChange }: GroupByDropdownProps) {
                 fontWeight: value === option.value ? 600 : 400,
                 color:
                   value === option.value
-                    ? "var(--accent)"
-                    : "var(--text-primary)",
+                    ? "hsl(var(--primary))"
+                    : "hsl(var(--foreground))",
                 background:
                   value === option.value
-                    ? "var(--bg-subtle)"
+                    ? "hsl(var(--muted))"
                     : "transparent",
                 border: "none",
                 cursor: "pointer",
                 transition: "background 0.1s",
               }}
-              className="hover:bg-[var(--bg-hover)]"
+              className="hover:bg-[hsl(hsl(var(--primary)))]"
             >
               {option.label}
             </button>

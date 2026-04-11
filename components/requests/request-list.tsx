@@ -164,14 +164,14 @@ function DesignerInitials({ name }: { name: string }) {
         width: 20,
         height: 20,
         borderRadius: "50%",
-        background: "var(--bg-hover)",
+        background: "hsl(var(--accent))",
         border: "1px solid var(--border)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         fontSize: 9,
         fontWeight: 600,
-        color: "var(--text-secondary)",
+        color: "hsl(var(--muted-foreground))",
         flexShrink: 0,
       }}
     >
@@ -360,7 +360,7 @@ export function RequestList({
           height: 52,
           borderBottom: "1px solid var(--border)",
           flexShrink: 0,
-          background: "var(--bg-surface)",
+          background: "hsl(var(--card))",
         }}
       >
         {/* Left: title + phase tabs */}
@@ -370,7 +370,7 @@ export function RequestList({
               fontFamily: "'Geist', sans-serif",
               fontSize: 14,
               fontWeight: 600,
-              color: "var(--text-primary)",
+              color: "hsl(var(--foreground))",
             }}
           >
             My Work
@@ -390,8 +390,8 @@ export function RequestList({
                     fontWeight: active ? 600 : 400,
                     cursor: "pointer",
                     border: "none",
-                    background: active ? "var(--text-primary)" : "transparent",
-                    color: active ? "#ffffff" : "var(--text-tertiary)",
+                    background: active ? "hsl(var(--foreground))" : "transparent",
+                    color: active ? "#ffffff" : "hsl(var(--muted-foreground) / 0.6)",
                     transition: "background 0.1s, color 0.1s",
                   }}
                 >
@@ -415,22 +415,22 @@ export function RequestList({
               padding: "0 8px",
               borderRadius: 4,
               border: "1px solid var(--border)",
-              background: search ? "var(--bg-surface)" : "var(--bg-subtle)",
+              background: search ? "hsl(var(--card))" : "hsl(var(--muted))",
               fontSize: 11,
               fontFamily: "'Geist Mono', monospace",
-              color: "var(--text-primary)",
+              color: "hsl(var(--foreground))",
               outline: "none",
               width: search ? 160 : 100,
               transition: "width 0.2s, border-color 0.15s",
             }}
-            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--border-strong)")}
-            onBlur={(e)  => (e.currentTarget.style.borderColor = "var(--border)")}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "hsl(var(--border) / 0.8)")}
+            onBlur={(e)  => (e.currentTarget.style.borderColor = "hsl(var(--border))")}
           />
           <span
             style={{
               fontFamily: "'Geist Mono', monospace",
               fontSize: 10,
-              color: "var(--text-tertiary)",
+              color: "hsl(var(--muted-foreground) / 0.6)",
             }}
           >
             {sorted.length}
@@ -444,7 +444,7 @@ export function RequestList({
               fontSize: 11,
               fontFamily: "'Geist Mono', monospace",
               fontWeight: 600,
-              background: "var(--accent)",
+              background: "hsl(var(--primary))",
               color: "#fff",
               border: "none",
               cursor: "pointer",
@@ -483,8 +483,8 @@ export function RequestList({
         <TableHeader>
           <TableRow
             style={{
-              borderColor: "var(--border)",
-              background: "var(--bg-surface)",
+              borderColor: "hsl(var(--border))",
+              background: "hsl(var(--card))",
             }}
           >
             <TableHead
@@ -494,7 +494,7 @@ export function RequestList({
                 fontFamily: "'Geist Mono', monospace",
                 fontSize: 10,
                 fontWeight: 500,
-                color: "var(--text-tertiary)",
+                color: "hsl(var(--muted-foreground) / 0.6)",
                 letterSpacing: "0.06em",
               }}
             >
@@ -505,7 +505,7 @@ export function RequestList({
                 fontFamily: "'Geist Mono', monospace",
                 fontSize: 10,
                 fontWeight: 500,
-                color: "var(--text-tertiary)",
+                color: "hsl(var(--muted-foreground) / 0.6)",
                 letterSpacing: "0.06em",
               }}
             >
@@ -517,7 +517,7 @@ export function RequestList({
                 fontFamily: "'Geist Mono', monospace",
                 fontSize: 10,
                 fontWeight: 500,
-                color: "var(--text-tertiary)",
+                color: "hsl(var(--muted-foreground) / 0.6)",
                 letterSpacing: "0.06em",
               }}
             >
@@ -529,7 +529,7 @@ export function RequestList({
                 fontFamily: "'Geist Mono', monospace",
                 fontSize: 10,
                 fontWeight: 500,
-                color: "var(--text-tertiary)",
+                color: "hsl(var(--muted-foreground) / 0.6)",
                 letterSpacing: "0.06em",
               }}
             >
@@ -541,7 +541,7 @@ export function RequestList({
                 fontFamily: "'Geist Mono', monospace",
                 fontSize: 10,
                 fontWeight: 500,
-                color: "var(--text-tertiary)",
+                color: "hsl(var(--muted-foreground) / 0.6)",
                 letterSpacing: "0.06em",
               }}
             >
@@ -561,7 +561,7 @@ export function RequestList({
                   style={{
                     fontFamily: "'Geist Mono', monospace",
                     fontSize: 12,
-                    color: "var(--text-tertiary)",
+                    color: "hsl(var(--muted-foreground) / 0.6)",
                     marginBottom: 8,
                   }}
                 >
@@ -577,8 +577,8 @@ export function RequestList({
                     style={{
                       fontFamily: "'Geist Mono', monospace",
                       fontSize: 11,
-                      color: "var(--text-secondary)",
-                      background: "var(--bg-subtle)",
+                      color: "hsl(var(--muted-foreground))",
+                      background: "hsl(var(--muted))",
                       border: "1px solid var(--border)",
                       borderRadius: 4,
                       padding: "5px 12px",
@@ -612,18 +612,18 @@ export function RequestList({
                   }}
                   style={{
                     cursor: "pointer",
-                    borderColor: "var(--border-subtle)",
+                    borderColor: "hsl(var(--border))",
                     borderLeft: isActive
                       ? "2px solid var(--accent)"
                       : "2px solid transparent",
                     background: isActive
-                      ? "var(--accent-soft)"
+                      ? "hsl(var(--primary) / 0.05)"
                       : isFocused
-                      ? "var(--bg-subtle)"
+                      ? "hsl(var(--muted))"
                       : "transparent",
                     outline: "none",
                   }}
-                  className="transition-colors hover:bg-[var(--bg-subtle)]"
+                  className="transition-colors hover:bg-muted"
                 >
                   {/* ID */}
                   <TableCell
@@ -631,7 +631,7 @@ export function RequestList({
                       paddingLeft: 18,
                       fontFamily: "'Geist Mono', monospace",
                       fontSize: 11,
-                      color: "var(--text-tertiary)",
+                      color: "hsl(var(--muted-foreground) / 0.6)",
                       letterSpacing: "0.03em",
                     }}
                   >
@@ -646,7 +646,7 @@ export function RequestList({
                           fontFamily: "'Geist', sans-serif",
                           fontSize: 12,
                           fontWeight: 500,
-                          color: "var(--text-primary)",
+                          color: "hsl(var(--foreground))",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
                           whiteSpace: "nowrap",
@@ -661,7 +661,7 @@ export function RequestList({
                           style={{
                             fontFamily: "'Geist Mono', monospace",
                             fontSize: 10,
-                            color: "var(--text-tertiary)",
+                            color: "hsl(var(--muted-foreground) / 0.6)",
                           }}
                         >
                           {projectMap[r.projectId].name}
@@ -685,7 +685,7 @@ export function RequestList({
                         <span
                           style={{
                             fontSize: 9,
-                            color: "var(--text-tertiary)",
+                            color: "hsl(var(--muted-foreground) / 0.6)",
                             fontFamily: "'Geist Mono', monospace",
                           }}
                         >
@@ -713,7 +713,7 @@ export function RequestList({
         style={{
           padding: "6px 20px",
           borderTop: "1px solid var(--border)",
-          background: "var(--bg-surface)",
+          background: "hsl(var(--card))",
         }}
       >
         {(["J/K navigate", "↵ open", "/ search", "⌘K command"] as const).map((hint) => (
@@ -722,7 +722,7 @@ export function RequestList({
             style={{
               fontFamily: "'Geist Mono', monospace",
               fontSize: 10,
-              color: "var(--text-tertiary)",
+              color: "hsl(var(--muted-foreground) / 0.6)",
             }}
           >
             {hint}

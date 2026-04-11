@@ -36,7 +36,7 @@ export function ViewModeToggle({
       style={{
         display: "flex",
         alignItems: "center",
-        border: "1px solid var(--border)",
+        border: "1px solid hsl(var(--border))",
         borderRadius: 6,
         overflow: "hidden",
         height: 28,
@@ -58,13 +58,13 @@ export function ViewModeToggle({
               width: 30,
               height: "100%",
               border: "none",
-              borderRight: "1px solid var(--border)",
-              background: isActive ? "var(--bg-hover)" : "var(--bg-surface)",
-              color: isActive ? "var(--text-primary)" : "var(--text-tertiary)",
+              borderRight: "1px solid hsl(var(--border))",
+              background: isActive ? "hsl(var(--accent))" : "hsl(var(--card))",
+              color: isActive ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground) / 0.6)",
               cursor: "pointer",
               transition: "background 0.1s, color 0.1s",
             }}
-            className="hover:bg-[var(--bg-hover)]"
+            className="hover:bg-accent"
           >
             <Icon size={13} />
           </button>

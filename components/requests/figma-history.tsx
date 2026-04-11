@@ -88,8 +88,8 @@ export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props)
   if (loading) {
     return (
       <div className="flex items-center gap-2 py-2">
-        <div className="w-3 h-3 border border-[var(--border-strong)] border-t-transparent rounded-full animate-spin" />
-        <span className="text-xs text-[var(--text-tertiary)]">Loading Figma history...</span>
+        <div className="w-3 h-3 border border-border/80 border-t-transparent rounded-full animate-spin" />
+        <span className="text-xs text-muted-foreground/60">Loading Figma history...</span>
       </div>
     );
   }
@@ -98,7 +98,7 @@ export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props)
 
   return (
     <section>
-      <h2 className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide mb-3">
+      <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-3">
         Figma Updates ({updates.length})
       </h2>
 
@@ -121,14 +121,14 @@ export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props)
             className={`border rounded-lg overflow-hidden ${
               u.postHandoff && !u.devReviewed
                 ? "border-amber-500/25 bg-amber-500/3"
-                : "border-[var(--border)]"
+                : "border"
             }`}
           >
             <div className="px-4 py-3">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-[var(--text-primary)]">
+                    <span className="text-xs text-foreground">
                       {u.figmaUserHandle ? `${u.figmaUserHandle}` : "Designer"}
                     </span>
                     {u.postHandoff && (
@@ -140,10 +140,10 @@ export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props)
                         {u.devReviewed ? "reviewed" : "post-handoff"}
                       </span>
                     )}
-                    <span className="text-[10px] text-[var(--text-tertiary)] ml-auto shrink-0">{timeAgo(u.updatedAt)}</span>
+                    <span className="text-[10px] text-muted-foreground/60 ml-auto shrink-0">{timeAgo(u.updatedAt)}</span>
                   </div>
                   {u.changeDescription && (
-                    <p className="text-[11px] text-[var(--text-secondary)] mt-0.5">{u.changeDescription}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{u.changeDescription}</p>
                   )}
                 </div>
 
@@ -151,7 +151,7 @@ export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props)
                   href={u.figmaFileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="shrink-0 text-[11px] text-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+                  className="shrink-0 text-[11px] text-primary hover:text-primary transition-colors"
                 >
                   Open ↗
                 </a>
@@ -167,7 +167,7 @@ export function FigmaHistory({ requestId, phase, isConnected, figmaUrl }: Props)
                       setReviewNotes((prev) => ({ ...prev, [u.id]: e.target.value }))
                     }
                     placeholder="Review notes (optional)..."
-                    className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-strong)] transition-colors"
+                    className="w-full bg-muted border border rounded-lg px-3 py-1.5 text-xs text-foreground placeholder-muted-foreground/60 focus:outline-none focus:border-border/80 transition-colors"
                   />
                   <button
                     onClick={() => markReviewed(u.id)}

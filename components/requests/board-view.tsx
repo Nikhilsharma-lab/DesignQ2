@@ -97,7 +97,7 @@ export function BoardView({
                   fontWeight: 600,
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
-                  color: "var(--muted-foreground)",
+                  color: "hsl(var(--muted-foreground))",
                 }}
               >
                 {col.label}

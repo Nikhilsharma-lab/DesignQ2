@@ -52,10 +52,10 @@ export function SaveViewButton({ onSave, hasActiveFilters }: SaveViewButtonProps
           alignItems: "center",
           gap: 4,
           height: 28,
-          border: "1px solid var(--border-strong)",
+          border: "1px solid hsl(var(--border) / 0.8)",
           borderRadius: 6,
           overflow: "hidden",
-          background: "var(--bg-surface)",
+          background: "hsl(var(--card))",
         }}
       >
         <input
@@ -73,7 +73,7 @@ export function SaveViewButton({ onSave, hasActiveFilters }: SaveViewButtonProps
             background: "transparent",
             fontFamily: "'Geist Mono', monospace",
             fontSize: 11,
-            color: "var(--text-primary)",
+            color: "hsl(var(--foreground))",
             width: 140,
           }}
         />
@@ -87,9 +87,9 @@ export function SaveViewButton({ onSave, hasActiveFilters }: SaveViewButtonProps
             width: 28,
             height: "100%",
             border: "none",
-            borderLeft: "1px solid var(--border)",
-            background: name.trim() ? "var(--accent)" : "var(--bg-subtle)",
-            color: name.trim() ? "#fff" : "var(--text-tertiary)",
+            borderLeft: "1px solid hsl(var(--border))",
+            background: name.trim() ? "hsl(var(--primary))" : "hsl(var(--muted))",
+            color: name.trim() ? "#fff" : "hsl(var(--muted-foreground) / 0.6)",
             cursor: name.trim() ? "pointer" : "default",
             transition: "background 0.1s",
           }}
@@ -109,10 +109,10 @@ export function SaveViewButton({ onSave, hasActiveFilters }: SaveViewButtonProps
         gap: 5,
         height: 28,
         padding: "0 10px",
-        border: "1px solid var(--border)",
+        border: "1px solid hsl(var(--border))",
         borderRadius: 6,
-        background: "var(--bg-surface)",
-        color: "var(--text-secondary)",
+        background: "hsl(var(--card))",
+        color: "hsl(var(--muted-foreground))",
         fontFamily: "'Geist Mono', monospace",
         fontSize: 11,
         fontWeight: 500,
@@ -120,7 +120,7 @@ export function SaveViewButton({ onSave, hasActiveFilters }: SaveViewButtonProps
         whiteSpace: "nowrap",
         transition: "background 0.1s",
       }}
-      className="hover:bg-[var(--bg-hover)]"
+      className="hover:bg-accent"
     >
       <Star size={11} />
       Save View

@@ -28,7 +28,7 @@ function ScoreRing({ score, label }: { score: number; label: string }) {
   return (
     <div className="flex items-center gap-3 shrink-0">
       <svg width="52" height="52" viewBox="0 0 52 52" className="-rotate-90">
-        <circle cx="26" cy="26" r={r} fill="none" stroke="var(--bg-hover)" strokeWidth="4" />
+        <circle cx="26" cy="26" r={r} fill="none" stroke="hsl(var(--accent))" strokeWidth="4" />
         <circle
           cx="26" cy="26" r={r} fill="none"
           className={cfg.ringColor}
@@ -39,7 +39,7 @@ function ScoreRing({ score, label }: { score: number; label: string }) {
       </svg>
       <div>
         <p className={`text-lg font-semibold font-mono leading-none ${cfg.textColor}`}>{score}</p>
-        <p className="text-[10px] text-[var(--text-tertiary)] mt-0.5">/ 100</p>
+        <p className="text-[10px] text-muted-foreground/60 mt-0.5">/ 100</p>
       </div>
     </div>
   );
@@ -61,18 +61,18 @@ export function PredictionConfidencePanel({ requestId, existingConfidence }: Pro
 
   if (loading) {
     return (
-      <div className="border border-[var(--border)] rounded-xl overflow-hidden">
-        <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-subtle)]">
-          <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+      <div className="border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b bg-muted">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
             Prediction Confidence
           </span>
         </div>
         <div className="p-4 space-y-3 animate-pulse">
           <div className="flex gap-3">
-            <div className="w-13 h-13 rounded-full bg-[var(--bg-hover)]" />
+            <div className="w-13 h-13 rounded-full bg-accent" />
             <div className="flex-1 space-y-2 pt-1">
-              <div className="h-3 bg-[var(--bg-hover)] rounded w-1/2" />
-              <div className="h-3 bg-[var(--bg-hover)] rounded w-3/4" />
+              <div className="h-3 bg-accent rounded w-1/2" />
+              <div className="h-3 bg-accent rounded w-3/4" />
             </div>
           </div>
         </div>
@@ -85,12 +85,12 @@ export function PredictionConfidencePanel({ requestId, existingConfidence }: Pro
   const cfg = LABEL_CONFIG[confidence.label] ?? LABEL_CONFIG.vague;
 
   return (
-    <div className="border border-[var(--border)] rounded-xl overflow-hidden">
-      <div className="px-4 py-3 border-b border-[var(--border)] bg-[var(--bg-subtle)] flex items-center justify-between">
-        <span className="text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wide">
+    <div className="border rounded-xl overflow-hidden">
+      <div className="px-4 py-3 border-b bg-muted flex items-center justify-between">
+        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Prediction Confidence
         </span>
-        <span className="text-[10px] text-[var(--text-tertiary)] font-mono">{confidence.aiModel}</span>
+        <span className="text-[10px] text-muted-foreground/60 font-mono">{confidence.aiModel}</span>
       </div>
 
       <div className="p-4 space-y-4">
@@ -101,17 +101,17 @@ export function PredictionConfidencePanel({ requestId, existingConfidence }: Pro
             <span className={`text-xs font-medium px-2 py-0.5 rounded border ${cfg.bgColor} ${cfg.textColor}`}>
               {cfg.text}
             </span>
-            <p className="text-xs text-[var(--text-secondary)] mt-2 leading-relaxed">{confidence.rationale}</p>
+            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">{confidence.rationale}</p>
           </div>
         </div>
 
         {/* Red flags */}
         {confidence.redFlags.length > 0 && (
           <div>
-            <div className="text-[10px] text-[var(--text-tertiary)] uppercase tracking-wide mb-2">Issues</div>
+            <div className="text-[10px] text-muted-foreground/60 uppercase tracking-wide mb-2">Issues</div>
             <ul className="space-y-1.5">
               {confidence.redFlags.map((flag, i) => (
-                <li key={i} className="text-xs text-[var(--text-secondary)] flex gap-2">
+                <li key={i} className="text-xs text-muted-foreground flex gap-2">
                   <span className="text-red-400 shrink-0">!</span>
                   {flag}
                 </li>
@@ -122,7 +122,7 @@ export function PredictionConfidencePanel({ requestId, existingConfidence }: Pro
 
         {/* Suggestion */}
         {confidence.suggestion && (
-          <p className="text-xs text-[var(--text-tertiary)] border-t border-[var(--border)] pt-3">
+          <p className="text-xs text-muted-foreground/60 border-t pt-3">
             {confidence.suggestion}
           </p>
         )}

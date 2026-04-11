@@ -150,13 +150,13 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
 
       {loading ? (
         <div className="flex items-center gap-2 py-2">
-          <div className="w-3 h-3 border border-[var(--border-strong)] border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs text-[var(--text-tertiary)]">Loading sign-offs...</span>
+          <div className="w-3 h-3 border border-border/80 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-muted-foreground/60">Loading sign-offs...</span>
         </div>
       ) : (
         <>
           {/* 3-row sign-off table */}
-          <div className="border border-[var(--border)] rounded-xl overflow-hidden divide-y divide-[var(--border)]">
+          <div className="border border rounded-xl overflow-hidden divide-y ">
             {ROLES.map((role) => {
               const signoff = optimisticSignoffs.find((s) => s.signerRole === role.key);
               const isMyRole = mySignerRole === role.key;
@@ -169,12 +169,12 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
                   <div className="flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium text-[var(--text-primary)]">{role.label}</span>
+                        <span className="text-xs font-medium text-foreground">{role.label}</span>
                         {isMyRole && (
                           <span className="text-[10px] text-[#D4A84B] bg-[#D4A84B]/10 border border-[#D4A84B]/20 rounded px-1.5 py-0.5">you</span>
                         )}
                       </div>
-                      <p className="text-[11px] text-[var(--text-tertiary)] mt-0.5">{role.desc}</p>
+                      <p className="text-[11px] text-muted-foreground/60 mt-0.5">{role.desc}</p>
                       {signoff?.conditions && (
                         <p className="text-[11px] text-amber-400/80 mt-1 italic">Conditions: {signoff.conditions}</p>
                       )}
@@ -187,7 +187,7 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
                           {decisionLabels[signoff.decision]}
                         </span>
                       ) : (
-                        <span className="text-[10px] text-[var(--text-tertiary)] bg-[var(--bg-subtle)] border border-[var(--border)] rounded px-2 py-0.5">Pending</span>
+                        <span className="text-[10px] text-muted-foreground/60 bg-muted border border rounded px-2 py-0.5">Pending</span>
                       )}
                     </div>
                   </div>
@@ -211,7 +211,7 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
                                   : d === "approved_with_conditions"
                                   ? "bg-amber-500/15 border-amber-500/30 text-amber-400"
                                   : "bg-red-500/15 border-red-500/30 text-red-400"
-                                : "border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)]"
+                                : "border text-muted-foreground hover:text-foreground hover:border-border/80"
                             }`}
                           >
                             {d === "approved" ? "Approve" : d === "approved_with_conditions" ? "Approve with conditions" : "Reject"}
@@ -226,7 +226,7 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
                           value={conditions}
                           onChange={(e) => setConditions(e.target.value)}
                           placeholder="Describe the conditions..."
-                          className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-strong)] transition-colors"
+                          className="w-full bg-muted border border rounded-lg px-3 py-1.5 text-xs text-foreground placeholder-muted-foreground/60 focus:outline-none focus:border-border/80 transition-colors"
                         />
                       )}
 
@@ -237,7 +237,7 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
                           value={commentText}
                           onChange={(e) => setCommentText(e.target.value)}
                           placeholder="Reason for rejection..."
-                          className="w-full bg-[var(--bg-subtle)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:border-[var(--border-strong)] transition-colors"
+                          className="w-full bg-muted border border rounded-lg px-3 py-1.5 text-xs text-foreground placeholder-muted-foreground/60 focus:outline-none focus:border-border/80 transition-colors"
                         />
                       )}
 
@@ -249,7 +249,7 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
                           className={`text-[11px] px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
                             activeDecision === "rejected"
                               ? "bg-red-600 hover:bg-red-500 text-white"
-                              : "bg-[var(--accent)] hover:opacity-90 text-[var(--accent-text)]"
+                              : "bg-primary hover:opacity-90 text-primary-foreground"
                           }`}
                         >
                           Confirm
@@ -263,7 +263,7 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
           </div>
 
           {/* Progress summary */}
-          <p className="text-[10px] text-[var(--text-tertiary)] text-center">
+          <p className="text-[10px] text-muted-foreground/60 text-center">
             {signoffs.filter((s) => s.decision !== "rejected").length} / 3 approvals received
           </p>
         </>
