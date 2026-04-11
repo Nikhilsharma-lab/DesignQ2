@@ -2,17 +2,11 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { getStageLabel } from "@/lib/workflow";
 
 const STAGES = [
-  { id: "intake", label: "Intake" },
-  { id: "context", label: "Context" },
-  { id: "shape", label: "Shape" },
-  { id: "bet", label: "Bet" },
-  { id: "explore", label: "Explore" },
-  { id: "validate", label: "Validate" },
-  { id: "handoff", label: "Handoff" },
-  { id: "build", label: "Build" },
-  { id: "impact", label: "Impact" },
+  "intake", "context", "shape", "bet",
+  "explore", "validate", "handoff", "build", "impact",
 ] as const;
 
 const STALL_EXEMPT = new Set(["draft", "completed", "shipped", "blocked"]);
@@ -37,7 +31,7 @@ export function StageControls({
   const daysSinceUpdate = (Date.now() - new Date(updatedAt).getTime()) / 86_400_000;
   const isStalled = !STALL_EXEMPT.has(currentStatus) && daysSinceUpdate >= 5;
 
-  const currentIndex = STAGES.findIndex((s) => s.id === currentStage);
+  const currentIndex = STAGES.indexOf(currentStage as (typeof STAGES)[number]);
   const isLast = currentIndex >= STAGES.length - 1;
   const nextStage = !isLast ? STAGES[currentIndex + 1] : null;
 
@@ -86,7 +80,7 @@ export function StageControls({
           const isCurrent = index === currentIndex;
           return (
             <span
-              key={stage.id}
+              key={stage}
               className={`text-[10px] px-1.5 py-0.5 rounded font-medium transition-colors ${
                 isCurrent
                   ? isBlocked
@@ -97,7 +91,7 @@ export function StageControls({
                   : "text-muted-foreground/40"
               }`}
             >
-              {stage.label}
+              {getStageLabel(stage)}
             </span>
           );
         })}
@@ -110,7 +104,7 @@ export function StageControls({
           disabled={isPending}
           className="w-full text-left text-xs text-muted-foreground hover:text-foreground border hover:border-border/80 rounded-lg px-3 py-2 transition-colors disabled:opacity-40"
         >
-          {isPending ? "Moving..." : `→ Move to ${nextStage.label}`}
+          {isPending ? "Moving..." : `→ Move to ${getStageLabel(nextStage)}`}
         </button>
       )}
 

@@ -9,8 +9,6 @@ import { canAdvanceRequestPhase } from "@/lib/request-permissions";
 import { notifyMany, getRequestRecipients } from "@/lib/notifications";
 import { PREDESIGN_STAGES, DESIGN_STAGES, getStageLabel } from "@/lib/workflow";
 import type { PredesignStage, DesignStage } from "@/db/schema";
-type PredesignStage = (typeof PREDESIGN_STAGES)[number];
-type DesignStage = (typeof DESIGN_STAGES)[number];
 
 export async function POST(
   _req: Request,
