@@ -10,8 +10,8 @@ interface ChecklistItem {
 }
 
 const categoryColors: Record<string, string> = {
-  spec: "text-[#7DA5C4]",
-  accessibility: "text-[#A394C7]",
+  spec: "text-[var(--phase-dev)]",
+  accessibility: "text-[var(--phase-design)]",
   responsive: "text-cyan-400",
   edge_case: "text-yellow-400",
   assets: "text-orange-400",
@@ -93,7 +93,7 @@ export function HandoffChecklist({ requestId, stage }: Props) {
         <div className="border-t">
           {loading ? (
             <div className="flex items-center gap-2.5 px-5 py-6">
-              <span className="w-3 h-3 border-2 border-border/80 border-t-[#D4A84B] rounded-full animate-spin" />
+              <span className="w-3 h-3 border-2 border-border/80 border-t-[var(--accent-active)] rounded-full animate-spin" />
               <span className="text-sm text-muted-foreground">Checking handoff readiness…</span>
             </div>
           ) : items ? (

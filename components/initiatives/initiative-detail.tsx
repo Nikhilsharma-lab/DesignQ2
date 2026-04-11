@@ -10,15 +10,15 @@ import {
 
 const statusStyles: Record<string, string> = {
   active: "bg-green-500/10 text-green-600 border-green-500/20",
-  completed: "bg-[#7DA5C4]/10 text-[#7DA5C4] border-[#7DA5C4]/20",
+  completed: "bg-[var(--phase-dev)]/10 text-[var(--phase-dev)] border-[var(--phase-dev)]/20",
   archived: "bg-accent text-muted-foreground/60 border",
 };
 
 const phaseColors: Record<string, string> = {
-  predesign: "bg-[#D4A84B]/10 text-[#D4A84B] border-[#D4A84B]/20",
-  design: "bg-[#A394C7]/10 text-[#A394C7] border-[#A394C7]/20",
-  dev: "bg-[#7DA5C4]/10 text-[#7DA5C4] border-[#7DA5C4]/20",
-  track: "bg-[#86A87A]/10 text-[#86A87A] border-[#86A87A]/20",
+  predesign: "bg-[var(--phase-predesign)]/10 text-[var(--phase-predesign)] border-[var(--phase-predesign)]/20",
+  design: "bg-[var(--phase-design)]/10 text-[var(--phase-design)] border-[var(--phase-design)]/20",
+  dev: "bg-[var(--phase-dev)]/10 text-[var(--phase-dev)] border-[var(--phase-dev)]/20",
+  track: "bg-[var(--phase-track)]/10 text-[var(--phase-track)] border-[var(--phase-track)]/20",
 };
 
 interface InitiativeRequest {
@@ -130,7 +130,7 @@ export function InitiativeDetail({
             <button
               onClick={() => handleStatusChange("completed")}
               disabled={isUpdating}
-              className="text-xs px-3 py-1.5 rounded-lg border border-[#7DA5C4]/30 text-[#7DA5C4] bg-[#7DA5C4]/5 hover:bg-[#7DA5C4]/10 transition-colors disabled:opacity-50"
+              className="text-xs px-3 py-1.5 rounded-lg border border-[var(--phase-dev)]/30 text-[var(--phase-dev)] bg-[var(--phase-dev)]/5 hover:bg-[var(--phase-dev)]/10 transition-colors disabled:opacity-50"
             >
               Complete
             </button>

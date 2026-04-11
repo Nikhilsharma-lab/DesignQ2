@@ -17,17 +17,17 @@ import {
 } from "@/components/ui/chart";
 
 const PHASE_COLORS: Record<string, string> = {
-  predesign: "#D4A84B",
-  design: "#A394C7",
-  dev: "#7DA5C4",
-  track: "#86A87A",
+  predesign: "var(--phase-predesign)",
+  design: "var(--phase-design)",
+  dev: "var(--phase-dev)",
+  track: "var(--phase-track)",
 };
 
 const chartConfig: ChartConfig = {
-  predesign: { label: "Predesign", color: "#D4A84B" },
-  design: { label: "Design", color: "#A394C7" },
-  dev: { label: "Dev", color: "#7DA5C4" },
-  track: { label: "Track", color: "#86A87A" },
+  predesign: { label: "Predesign", color: "var(--phase-predesign)" },
+  design: { label: "Design", color: "var(--phase-design)" },
+  dev: { label: "Dev", color: "var(--phase-dev)" },
+  track: { label: "Track", color: "var(--phase-track)" },
 };
 
 interface PipelineChartProps {
@@ -67,7 +67,7 @@ export function PipelineChart({ data }: PipelineChartProps) {
           {data.map((entry) => (
             <Cell
               key={entry.phase}
-              fill={PHASE_COLORS[entry.phase] ?? "#71717a"}
+              fill={PHASE_COLORS[entry.phase] ?? "var(--muted-foreground)"}
             />
           ))}
         </Bar>

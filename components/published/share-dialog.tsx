@@ -171,7 +171,7 @@ export function ShareDialog({ currentFilters, viewType, onClose }: Props) {
                           : "hsl(var(--muted))",
                       color:
                         accessMode === "authenticated"
-                          ? "#fff"
+                          ? "var(--primary-foreground)"
                           : "hsl(var(--muted-foreground))",
                       border: `1px solid ${
                         accessMode === "authenticated"
@@ -196,7 +196,7 @@ export function ShareDialog({ currentFilters, viewType, onClose }: Props) {
                           : "hsl(var(--muted))",
                       color:
                         accessMode === "public"
-                          ? "#fff"
+                          ? "var(--primary-foreground)"
                           : "hsl(var(--muted-foreground))",
                       border: `1px solid ${
                         accessMode === "public"
@@ -241,7 +241,7 @@ export function ShareDialog({ currentFilters, viewType, onClose }: Props) {
                     style={{
                       width: 14,
                       height: 14,
-                      background: "#fff",
+                      background: "var(--primary-foreground)",
                       position: "absolute",
                       top: 3,
                       left: allowComments ? 19 : 3,
@@ -254,8 +254,8 @@ export function ShareDialog({ currentFilters, viewType, onClose }: Props) {
                 <p
                   style={{
                     fontSize: 12,
-                    color: "#DC2626",
-                    background: "#FEE2E2",
+                    color: "var(--accent-danger)",
+                    background: "color-mix(in oklch, var(--accent-danger) 10%, transparent)",
                     borderRadius: 8,
                     padding: "8px 12px",
                   }}
@@ -272,7 +272,7 @@ export function ShareDialog({ currentFilters, viewType, onClose }: Props) {
                   fontSize: 13,
                   fontWeight: 600,
                   background: "hsl(var(--primary))",
-                  color: "#fff",
+                  color: "var(--primary-foreground)",
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -286,15 +286,15 @@ export function ShareDialog({ currentFilters, viewType, onClose }: Props) {
               <div
                 className="rounded-lg px-4 py-3"
                 style={{
-                  background: "#EAF2EC",
-                  border: "1px solid #C6DCC9",
+                  background: "color-mix(in oklch, var(--accent-success) 10%, transparent)",
+                  border: "1px solid color-mix(in oklch, var(--accent-success) 20%, transparent)",
                 }}
               >
                 <p
                   style={{
                     fontSize: 12,
                     fontWeight: 600,
-                    color: "#166534",
+                    color: "var(--accent-success)",
                     marginBottom: 4,
                   }}
                 >
@@ -303,7 +303,7 @@ export function ShareDialog({ currentFilters, viewType, onClose }: Props) {
                 <p
                   style={{
                     fontSize: 11,
-                    color: "#2E5339",
+                    color: "var(--accent-success)",
                     lineHeight: 1.5,
                   }}
                 >
@@ -334,11 +334,11 @@ export function ShareDialog({ currentFilters, viewType, onClose }: Props) {
                   style={{
                     fontSize: 12,
                     fontWeight: 500,
-                    background: copied ? "#EAF2EC" : "hsl(var(--muted))",
+                    background: copied ? "color-mix(in oklch, var(--accent-success) 10%, transparent)" : "hsl(var(--muted))",
                     border: `1px solid ${
-                      copied ? "#C6DCC9" : "hsl(var(--border))"
+                      copied ? "color-mix(in oklch, var(--accent-success) 20%, transparent)" : "hsl(var(--border))"
                     }`,
-                    color: copied ? "#166534" : "hsl(var(--foreground))",
+                    color: copied ? "var(--accent-success)" : "hsl(var(--foreground))",
                     cursor: "pointer",
                   }}
                 >

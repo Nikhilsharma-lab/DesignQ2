@@ -70,19 +70,19 @@ function formatTime(dateStr: string): string {
 }
 
 const typeConfig: Record<string, { icon: typeof Bell; color: string; label: string }> = {
-  assigned: { icon: UserPlus, color: "#22c55e", label: "Assignment" },
-  comment: { icon: MessageSquare, color: "#3b82f6", label: "Comment" },
-  mention: { icon: AtSign, color: "#8b5cf6", label: "Mention" },
-  stage_change: { icon: ArrowRight, color: "#f59e0b", label: "Stage Change" },
-  signoff_requested: { icon: Shield, color: "#ef4444", label: "Sign-off Request" },
-  signoff_submitted: { icon: CheckCircle2, color: "#22c55e", label: "Sign-off Submitted" },
-  request_approved: { icon: CheckCircle2, color: "#22c55e", label: "Request Approved" },
-  request_rejected: { icon: XCircle, color: "#ef4444", label: "Request Rejected" },
-  figma_update: { icon: FileWarning, color: "#f97316", label: "Figma Update" },
-  idea_vote: { icon: ThumbsUp, color: "#6366f1", label: "Idea Vote" },
-  idea_approved: { icon: Sparkles, color: "#22c55e", label: "Idea Approved" },
-  nudge: { icon: Bell, color: "#7DA5C4", label: "Nudge" },
-  project_update: { icon: FolderOpen, color: "#71717a", label: "Project Update" },
+  assigned: { icon: UserPlus, color: "var(--notif-assigned)", label: "Assignment" },
+  comment: { icon: MessageSquare, color: "var(--notif-comment)", label: "Comment" },
+  mention: { icon: AtSign, color: "var(--notif-mention)", label: "Mention" },
+  stage_change: { icon: ArrowRight, color: "var(--notif-stage-change)", label: "Stage Change" },
+  signoff_requested: { icon: Shield, color: "var(--notif-signoff-requested)", label: "Sign-off Request" },
+  signoff_submitted: { icon: CheckCircle2, color: "var(--notif-signoff-submitted)", label: "Sign-off Submitted" },
+  request_approved: { icon: CheckCircle2, color: "var(--notif-request-approved)", label: "Request Approved" },
+  request_rejected: { icon: XCircle, color: "var(--notif-request-rejected)", label: "Request Rejected" },
+  figma_update: { icon: FileWarning, color: "var(--notif-figma-update)", label: "Figma Update" },
+  idea_vote: { icon: ThumbsUp, color: "var(--notif-idea-vote)", label: "Idea Vote" },
+  idea_approved: { icon: Sparkles, color: "var(--notif-idea-approved)", label: "Idea Approved" },
+  nudge: { icon: Bell, color: "var(--notif-nudge)", label: "Nudge" },
+  project_update: { icon: FolderOpen, color: "var(--notif-project-update)", label: "Project Update" },
 };
 
 // ── Sub-panels ──────────────────────────────────────────────────────────────
@@ -431,7 +431,7 @@ function GenericPanel({ notification, onArchive }: { notification: InboxNotifica
 // ── Main Action Panel ───────────────────────────────────────────────────────
 
 export function InboxActionPanel({ notification, onArchive, onToggleRead }: ActionPanelProps) {
-  const config = typeConfig[notification.type] || { icon: Bell, color: "#71717a", label: notification.type };
+  const config = typeConfig[notification.type] || { icon: Bell, color: "var(--notif-project-update)", label: notification.type };
   const Icon = config.icon;
   const isUnread = !notification.readAt;
 

@@ -85,7 +85,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
             style={{
               fontSize: 13,
               fontWeight: 500,
-              color: "#fff",
+              color: "var(--primary-foreground)",
               background: "var(--primary)",
               border: "none",
               borderRadius: 6,
@@ -119,7 +119,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
 
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
             <label style={{ fontSize: 12, fontWeight: 500, color: "var(--muted-foreground)" }}>
-              Name <span style={{ color: "#ef4444" }}>*</span>
+              Name <span style={{ color: "var(--accent-danger)" }}>*</span>
             </label>
             <input
               name="name"
@@ -183,7 +183,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
           </div>
 
           {error && (
-            <p style={{ fontSize: 12, color: "#ef4444", margin: 0 }}>{error}</p>
+            <p style={{ fontSize: 12, color: "var(--accent-danger)", margin: 0 }}>{error}</p>
           )}
 
           <div style={{ display: "flex", gap: 8 }}>
@@ -193,7 +193,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
               style={{
                 fontSize: 13,
                 fontWeight: 500,
-                color: "#fff",
+                color: "var(--primary-foreground)",
                 background: "var(--primary)",
                 border: "none",
                 borderRadius: 6,
@@ -312,7 +312,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
                       style={{
                         fontSize: 11,
                         fontWeight: 500,
-                        color: appetite.exceeded ? "#ef4444" : "color-mix(in oklch, var(--muted-foreground) 60%, transparent)",
+                        color: appetite.exceeded ? "var(--accent-danger)" : "color-mix(in oklch, var(--muted-foreground) 60%, transparent)",
                         marginTop: 2,
                       }}
                     >

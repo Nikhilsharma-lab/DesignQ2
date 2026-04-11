@@ -68,20 +68,20 @@ const typeIconMap: Record<string, typeof Bell> = {
 };
 
 const typeColorMap: Record<string, string> = {
-  assigned: "#22c55e",
-  unassigned: "#71717a",
-  comment: "#3b82f6",
-  mention: "#8b5cf6",
-  stage_change: "#f59e0b",
-  signoff_requested: "#ef4444",
-  signoff_submitted: "#22c55e",
-  request_approved: "#22c55e",
-  request_rejected: "#ef4444",
-  figma_update: "#f97316",
-  idea_vote: "#6366f1",
-  idea_approved: "#22c55e",
-  nudge: "#7DA5C4",
-  project_update: "#71717a",
+  assigned: "var(--notif-assigned)",
+  unassigned: "var(--notif-project-update)",
+  comment: "var(--notif-comment)",
+  mention: "var(--notif-mention)",
+  stage_change: "var(--notif-stage-change)",
+  signoff_requested: "var(--notif-signoff-requested)",
+  signoff_submitted: "var(--notif-signoff-submitted)",
+  request_approved: "var(--notif-request-approved)",
+  request_rejected: "var(--notif-request-rejected)",
+  figma_update: "var(--notif-figma-update)",
+  idea_vote: "var(--notif-idea-vote)",
+  idea_approved: "var(--notif-idea-approved)",
+  nudge: "var(--notif-nudge)",
+  project_update: "var(--notif-project-update)",
 };
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -458,7 +458,7 @@ export function InboxClient({
               <div className="flex flex-col">
                 {group.items.map((notif) => {
                   const Icon = typeIconMap[notif.type] || Bell;
-                  const color = typeColorMap[notif.type] || "#71717a";
+                  const color = typeColorMap[notif.type] || "var(--notif-project-update)";
                   const isUnread = !notif.readAt;
                   const isSelected = notif._flatIndex === selectedIndex;
                   const snoozeOptions = getSnoozeOptions();

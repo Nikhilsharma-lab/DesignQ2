@@ -32,7 +32,7 @@ export function buildFocusSections({
     sections.push({
       key: "attention",
       label: "Needs Your Attention",
-      color: "#EF4444",
+      color: "var(--accent-danger)",
       requests: needsAttention,
     });
   }
@@ -49,7 +49,7 @@ export function buildFocusSections({
     sections.push({
       key: "active",
       label: "Active Work",
-      color: "#2E5339",
+      color: "var(--accent-success)",
       requests: activeWork,
     });
   }
@@ -68,7 +68,7 @@ export function buildFocusSections({
     sections.push({
       key: "recent",
       label: "Recently Updated",
-      color: "#6B7280",
+      color: "var(--muted-foreground)",
       requests: recentlyUpdated.slice(0, 10),
     });
   }
@@ -84,7 +84,7 @@ export function buildFocusSections({
     sections.push({
       key: "completed",
       label: "Completed",
-      color: "#9CA3AF",
+      color: "var(--muted-foreground)",
       requests: completed.slice(0, 5),
     });
   }

@@ -85,7 +85,7 @@ export function StageControls({
                 isCurrent
                   ? isBlocked
                     ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                    : "bg-[#D4A84B]/10 text-[#D4A84B] border border-[#D4A84B]/20"
+                    : "bg-[var(--accent-active)]/10 text-[var(--accent-active)] border border-[var(--accent-active)]/20"
                   : isCompleted
                   ? "text-muted-foreground/60 line-through"
                   : "text-muted-foreground/40"

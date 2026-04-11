@@ -18,7 +18,7 @@ function varianceConfig(v: number): { label: string; style: string } {
   if (abs <= 10)
     return {
       label: "Well-calibrated",
-      style: "text-[#2E5339] bg-[#2E5339]/10 border-[#2E5339]/20",
+      style: "text-[var(--accent-success)] bg-[var(--accent-success)]/10 border-[var(--accent-success)]/20",
     };
   if (v < -10)
     return {
@@ -104,7 +104,7 @@ export function TrackPhasePanel({
         <span
           className={`text-[10px] px-2 py-0.5 rounded border font-medium ${
             isComplete
-              ? "text-[#2E5339] bg-[#2E5339]/10 border-[#2E5339]/20"
+              ? "text-[var(--accent-success)] bg-[var(--accent-success)]/10 border-[var(--accent-success)]/20"
               : "text-amber-600 bg-amber-500/10 border-amber-500/20"
           }`}
         >
@@ -195,9 +195,9 @@ export function TrackPhasePanel({
         )}
 
         {isComplete && (
-          <div className="bg-[#2E5339]/5 border border-[#2E5339]/15 rounded-lg px-3 py-2 flex items-center gap-2">
-            <span className="text-[#2E5339] text-xs">✓</span>
-            <p className="text-[11px] text-[#2E5339]/80">Impact recorded — request complete</p>
+          <div className="bg-[var(--accent-success)]/5 border border-[var(--accent-success)]/15 rounded-lg px-3 py-2 flex items-center gap-2">
+            <span className="text-[var(--accent-success)] text-xs">✓</span>
+            <p className="text-[11px] text-[var(--accent-success)]/80">Impact recorded — request complete</p>
           </div>
         )}
 

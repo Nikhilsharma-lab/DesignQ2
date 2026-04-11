@@ -127,7 +127,7 @@ export function PredesignPanel({
                       isDone
                         ? "bg-green-500/15 border-green-500/30 text-green-400"
                         : isCurrent
-                        ? "bg-[#D4A84B]/10 border-[#D4A84B]/20 text-[#D4A84B]"
+                        ? "bg-[var(--accent-active)]/10 border-[var(--accent-active)]/20 text-[var(--accent-active)]"
                         : "bg-accent border text-muted-foreground/60"
                     }`}
                   >
@@ -136,7 +136,7 @@ export function PredesignPanel({
                   <span
                     className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center ${
                       isCurrent
-                        ? "text-[#D4A84B]"
+                        ? "text-[var(--accent-active)]"
                         : isDone
                         ? "text-green-500/80"
                         : "text-muted-foreground/60"

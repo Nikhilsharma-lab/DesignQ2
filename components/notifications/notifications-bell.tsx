@@ -43,9 +43,9 @@ const notifTypeIcon: Record<string, string> = {
 };
 
 const urgencyColor: Record<string, string> = {
-  high: "var(--color-red, #ef4444)",
-  medium: "var(--color-amber, #f59e0b)",
-  low: "var(--color-green, #22c55e)",
+  high: "var(--accent-danger)",
+  medium: "var(--accent-warning)",
+  low: "var(--accent-success)",
 };
 
 // ── Component ──────────────────────────────────────────────────────────────

@@ -50,7 +50,7 @@ const sectionStyle: React.CSSProperties = {
 function QualityBar({ score }: { score: number }) {
   const clampedScore = Math.max(0, Math.min(100, score));
   const color =
-    clampedScore >= 70 ? "hsl(var(--primary))" : clampedScore >= 40 ? "#dd6b20" : "#c53030";
+    clampedScore >= 70 ? "hsl(var(--primary))" : clampedScore >= 40 ? "var(--accent-warning)" : "var(--accent-danger)";
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>

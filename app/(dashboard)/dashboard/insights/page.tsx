@@ -192,10 +192,10 @@ export default async function InsightsPage() {
   ];
   const STATUS_COLORS: Record<string, string> = {
     submitted: "bg-blue-500/60",
-    triaged: "bg-[#A394C7]/60",
-    assigned: "bg-[#D4A84B]/60",
-    in_progress: "bg-[#2E5339]/60",
-    in_review: "bg-[#7DA5C4]/60",
+    triaged: "bg-[var(--phase-design)]/60",
+    assigned: "bg-[var(--phase-predesign)]/60",
+    in_progress: "bg-[var(--accent-success)]/60",
+    in_review: "bg-[var(--phase-dev)]/60",
     blocked: "bg-red-500/60",
     completed: "bg-border/80",
     shipped: "bg-primary/40",
@@ -223,7 +223,7 @@ export default async function InsightsPage() {
             value={stalledCount}
             color={stalledCount > 0 ? "text-amber-600" : undefined}
           />
-          <Metric label="Shipped" value={shippedCount} color="text-[#2E5339]" />
+          <Metric label="Shipped" value={shippedCount} color="text-[var(--accent-success)]" />
         </div>
       </section>
 
@@ -289,9 +289,9 @@ export default async function InsightsPage() {
                         <div
                           className={`h-full rounded-full ${
                             avg >= 80
-                              ? "bg-[#2E5339]/70"
+                              ? "bg-[var(--accent-success)]/70"
                               : avg >= 50
-                              ? "bg-[#D4A84B]/70"
+                              ? "bg-[var(--accent-active)]/70"
                               : "bg-red-500/70"
                           }`}
                           style={{ width: `${avg}%` }}
@@ -300,9 +300,9 @@ export default async function InsightsPage() {
                       <span
                         className={`text-xs font-mono w-14 text-right ${
                           avg >= 80
-                            ? "text-[#2E5339]"
+                            ? "text-[var(--accent-success)]"
                             : avg >= 50
-                            ? "text-[#D4A84B]"
+                            ? "text-[var(--accent-active)]"
                             : "text-red-600"
                         }`}
                       >
@@ -352,7 +352,7 @@ export default async function InsightsPage() {
                       <div className="w-24 bg-accent rounded-full h-1.5">
                         <div
                           className={`h-full rounded-full ${
-                            isOverloaded ? "bg-red-500/70" : "bg-[#D4A84B]/60"
+                            isOverloaded ? "bg-red-500/70" : "bg-[var(--accent-active)]/60"
                           }`}
                           style={{ width: `${Math.min((load / maxLoad) * 100, 100)}%` }}
                         />

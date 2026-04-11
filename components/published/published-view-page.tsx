@@ -27,14 +27,14 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
     <div
       style={{
         minHeight: "100vh",
-        background: "#F8F6F1",
+        background: "var(--background)",
         fontFamily: "Satoshi, system-ui, sans-serif",
       }}
     >
       {/* Header */}
       <header
         style={{
-          borderBottom: "1px solid #E8E4DB",
+          borderBottom: "1px solid var(--border)",
           padding: "24px 32px",
         }}
       >
@@ -42,7 +42,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
           style={{
             fontSize: 20,
             fontWeight: 700,
-            color: "#1A1A1A",
+            color: "var(--foreground)",
             marginBottom: 4,
           }}
         >
@@ -52,7 +52,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
           <p
             style={{
               fontSize: 14,
-              color: "#6B6560",
+              color: "var(--muted-foreground)",
               lineHeight: 1.5,
             }}
           >
@@ -65,7 +65,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
             fontSize: 10,
             letterSpacing: "0.06em",
             textTransform: "uppercase",
-            color: "#A09A93",
+            color: "var(--muted-foreground)",
             marginTop: 8,
           }}
         >
@@ -81,7 +81,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
             style={{
               textAlign: "center",
               padding: "64px 0",
-              color: "#A09A93",
+              color: "var(--muted-foreground)",
               fontSize: 14,
             }}
           >
@@ -90,10 +90,10 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
         ) : (
           <div
             style={{
-              border: "1px solid #E8E4DB",
+              border: "1px solid var(--border)",
               borderRadius: 12,
               overflow: "hidden",
-              background: "#FFFFFF",
+              background: "var(--card)",
             }}
           >
             {/* Table header */}
@@ -104,14 +104,14 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
                   ? "1fr 120px 120px 80px"
                   : "1fr 120px 120px 80px",
                 padding: "10px 16px",
-                background: "#FAF9F6",
-                borderBottom: "1px solid #E8E4DB",
+                background: "var(--muted)",
+                borderBottom: "1px solid var(--border)",
                 fontFamily: "'Geist Mono', monospace",
                 fontSize: 9,
                 fontWeight: 500,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                color: "#A09A93",
+                color: "var(--muted-foreground)",
               }}
             >
               <span>Title</span>
@@ -130,7 +130,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
                     ? "1fr 120px 120px 80px"
                     : "1fr 120px 120px 80px",
                   padding: "12px 16px",
-                  borderBottom: "1px solid #F0EDE6",
+                  borderBottom: "1px solid var(--border)",
                   alignItems: "center",
                 }}
               >
@@ -138,7 +138,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
                   style={{
                     fontSize: 13,
                     fontWeight: 500,
-                    color: "#1A1A1A",
+                    color: "var(--foreground)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
                     whiteSpace: "nowrap",
@@ -149,7 +149,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
                 <span
                   style={{
                     fontSize: 11,
-                    color: "#6B6560",
+                    color: "var(--muted-foreground)",
                   }}
                 >
                   {r.phase ? getPhaseLabel(r.phase as Phase) : ""} · {getStage(r)}
@@ -159,7 +159,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
                     fontFamily: "'Geist Mono', monospace",
                     fontSize: 10,
                     fontWeight: 600,
-                    color: "#6B6560",
+                    color: "var(--muted-foreground)",
                   }}
                 >
                   {r.priority ? PRIORITY_LABELS[r.priority] : "\u2014"}
@@ -169,7 +169,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
                     fontFamily: "'Geist Mono', monospace",
                     fontSize: 9,
                     textTransform: "uppercase",
-                    color: "#A09A93",
+                    color: "var(--muted-foreground)",
                   }}
                 >
                   {r.status.replace(/_/g, " ")}
@@ -185,9 +185,9 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
             style={{
               marginTop: 24,
               padding: "16px 20px",
-              border: "1px solid #E8E4DB",
+              border: "1px solid var(--border)",
               borderRadius: 12,
-              background: "#FFFFFF",
+              background: "var(--card)",
             }}
           >
             <p
@@ -197,13 +197,13 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
                 fontWeight: 500,
                 letterSpacing: "0.07em",
                 textTransform: "uppercase",
-                color: "#A09A93",
+                color: "var(--muted-foreground)",
                 marginBottom: 8,
               }}
             >
               Comments
             </p>
-            <p style={{ fontSize: 12, color: "#A09A93" }}>
+            <p style={{ fontSize: 12, color: "var(--muted-foreground)" }}>
               Comments will appear here. This feature is coming soon.
             </p>
           </div>
@@ -218,7 +218,7 @@ export function PublishedViewPage({ view, requests, isPublic }: Props) {
           fontFamily: "'Geist Mono', monospace",
           fontSize: 10,
           letterSpacing: "0.06em",
-          color: "#A09A93",
+          color: "var(--muted-foreground)",
         }}
       >
         Powered by Lane

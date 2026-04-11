@@ -2,7 +2,7 @@ import Link from "next/link";
 
 const statusStyles: Record<string, string> = {
   active: "bg-green-500/10 text-green-600 border-green-500/20",
-  completed: "bg-[#7DA5C4]/10 text-[#7DA5C4] border-[#7DA5C4]/20",
+  completed: "bg-[var(--phase-dev)]/10 text-[var(--phase-dev)] border-[var(--phase-dev)]/20",
   archived: "bg-accent text-muted-foreground/60 border",
 };
 

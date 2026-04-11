@@ -70,7 +70,7 @@ export function DigestPanel({ initialDigest, onCoachingGenerated }: Props) {
 
       <div className="divide-y divide-border">
         <div className="px-5 py-4">
-          <p className="text-[10px] text-[#2E5339] uppercase tracking-wide font-medium mb-2">
+          <p className="text-[10px] text-[var(--accent-success)] uppercase tracking-wide font-medium mb-2">
             🚢 Shipped this week
           </p>
           <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">
@@ -86,7 +86,7 @@ export function DigestPanel({ initialDigest, onCoachingGenerated }: Props) {
         </div>
 
         <div className="px-5 py-4">
-          <p className="text-[10px] text-[#D4A84B] uppercase tracking-wide font-medium mb-2">
+          <p className="text-[10px] text-[var(--accent-active)] uppercase tracking-wide font-medium mb-2">
             ⭐ Standout
           </p>
           <p className="text-sm text-muted-foreground leading-relaxed">{digest.standout}</p>

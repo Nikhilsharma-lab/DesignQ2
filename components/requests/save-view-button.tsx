@@ -89,7 +89,7 @@ export function SaveViewButton({ onSave, hasActiveFilters }: SaveViewButtonProps
             border: "none",
             borderLeft: "1px solid hsl(var(--border))",
             background: name.trim() ? "hsl(var(--primary))" : "hsl(var(--muted))",
-            color: name.trim() ? "#fff" : "hsl(var(--muted-foreground) / 0.6)",
+            color: name.trim() ? "var(--primary-foreground)" : "hsl(var(--muted-foreground) / 0.6)",
             cursor: name.trim() ? "pointer" : "default",
             transition: "background 0.1s",
           }}

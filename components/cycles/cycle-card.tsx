@@ -4,7 +4,7 @@ import { AppetiteBar } from "@/components/ui/appetite-bar";
 const statusStyles: Record<string, string> = {
   draft: "bg-accent text-muted-foreground border",
   active: "bg-green-500/10 text-green-600 border-green-500/20",
-  completed: "bg-[#7DA5C4]/10 text-[#7DA5C4] border-[#7DA5C4]/20",
+  completed: "bg-[var(--phase-dev)]/10 text-[var(--phase-dev)] border-[var(--phase-dev)]/20",
   cancelled: "bg-red-500/10 text-red-500 border-red-500/20",
 };
 
@@ -59,7 +59,7 @@ export function CycleCard({
               <span className="flex items-center gap-1 text-[10px] text-muted-foreground/60">
                 <span
                   className="inline-block w-2 h-2 rounded-full shrink-0"
-                  style={{ background: projectColor ?? "#71717a" }}
+                  style={{ background: projectColor ?? "var(--muted-foreground)" }}
                 />
                 {projectName}
               </span>

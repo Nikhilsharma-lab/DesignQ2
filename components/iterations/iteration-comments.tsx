@@ -226,7 +226,7 @@ export function IterationComments({
                   fontSize: 11,
                   fontWeight: 500,
                   background: "hsl(var(--primary))",
-                  color: "#fff",
+                  color: "var(--primary-foreground)",
                   border: "none",
                   cursor: "pointer",
                 }}
@@ -262,7 +262,7 @@ export function IterationComments({
             fontSize: 11,
             fontWeight: 500,
             background: "hsl(var(--primary))",
-            color: "#fff",
+            color: "var(--primary-foreground)",
             border: "none",
             cursor: "pointer",
           }}

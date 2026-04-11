@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/chart";
 
 const chartConfig: ChartConfig = {
-  completed: { label: "Completed", color: "#2E5339" },
+  completed: { label: "Completed", color: "var(--accent-success)" },
   total: { label: "Total", color: "hsl(var(--accent))" },
 };
 

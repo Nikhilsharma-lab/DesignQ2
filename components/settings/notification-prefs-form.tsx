@@ -92,7 +92,7 @@ function Toggle({
           width: 16,
           height: 16,
           borderRadius: "50%",
-          background: "#fff",
+          background: "var(--background)",
           transition: "left 0.15s ease",
           boxShadow: "0 1px 3px rgba(0,0,0,0.15)",
         }}

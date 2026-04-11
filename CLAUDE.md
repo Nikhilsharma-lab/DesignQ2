@@ -505,7 +505,7 @@ lib/
 - **Third-party > custom:** Lean on Supabase, Vercel, Figma API
 - **Ship 70%:** Iterate on customer feedback
 - **Specs matter:** AI builds to spec; vague specs = vague code
-- **Warm cream design system** — `#F8F6F1` base, `#2E5339` forest green accent, Satoshi + Geist Mono fonts
+- **Design system** — shadcn/ui preset `b3bZBz3KVM` (base-mira, neutral, hugeicons). All colors use CSS custom properties from `globals.css` — never hardcode hex values. Semantic tokens: `--phase-*`, `--status-*`, `--priority-*`, `--accent-*`, `--notif-*`
 - **Type safety:** Let TypeScript catch errors
 - **Server components by default**, client only for interactivity
 - **Secrets in .env.local** (gitignored)

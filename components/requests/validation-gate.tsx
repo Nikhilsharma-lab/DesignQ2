@@ -171,7 +171,7 @@ export function ValidationGate({ requestId, myProfileRole, isTestUser = false }:
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-medium text-foreground">{role.label}</span>
                         {isMyRole && (
-                          <span className="text-[10px] text-[#D4A84B] bg-[#D4A84B]/10 border border-[#D4A84B]/20 rounded px-1.5 py-0.5">you</span>
+                          <span className="text-[10px] text-[var(--accent-active)] bg-[var(--accent-active)]/10 border border-[var(--accent-active)]/20 rounded px-1.5 py-0.5">you</span>
                         )}
                       </div>
                       <p className="text-[11px] text-muted-foreground/60 mt-0.5">{role.desc}</p>

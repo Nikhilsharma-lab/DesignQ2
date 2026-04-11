@@ -59,7 +59,55 @@ body {
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+
+    /* ── App semantic colors ─────────────────────────── */
+
+    /* Phase colors */
+    --phase-predesign: #b89230;
+    --phase-design: #8b7bb5;
+    --phase-dev: #5b8fad;
+    --phase-track: #6b946b;
+
+    /* Status colors */
+    --status-draft: var(--muted-foreground);
+    --status-submitted: #6b946b;
+    --status-triaged: #5b8fad;
+    --status-assigned: #6b946b;
+    --status-in-progress: #5b8fad;
+    --status-in-review: #b89230;
+    --status-blocked: #d45050;
+    --status-completed: #6b946b;
+    --status-shipped: #4a7a4a;
+
+    /* Priority colors */
+    --priority-p0: #d45050;
+    --priority-p1: #c47a30;
+    --priority-p2: #b89230;
+    --priority-p3: #6b946b;
+
+    /* Notification type accent */
+    --notif-assigned: #6b946b;
+    --notif-comment: #5b8fad;
+    --notif-mention: #8b7bb5;
+    --notif-stage-change: #b89230;
+    --notif-signoff-requested: #d45050;
+    --notif-signoff-submitted: #6b946b;
+    --notif-request-approved: #6b946b;
+    --notif-request-rejected: #d45050;
+    --notif-figma-update: #c47a30;
+    --notif-idea-vote: #8b7bb5;
+    --notif-idea-approved: #6b946b;
+    --notif-nudge: #5b8fad;
+    --notif-project-update: var(--muted-foreground);
+
+    /* Accent — used for current stage, active indicators */
+    --accent-active: #b89230;
+    --accent-success: #6b946b;
+    --accent-warning: #c47a30;
+    --accent-danger: #d45050;
+    --accent-info: #5b8fad;
   }
+
   .dark {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
@@ -92,20 +140,56 @@ body {
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+
+    /* ── App semantic colors (dark) ─────────────────── */
+
+    --phase-predesign: #d4a84b;
+    --phase-design: #a394c7;
+    --phase-dev: #7da5c4;
+    --phase-track: #86a87a;
+
+    --status-draft: var(--muted-foreground);
+    --status-submitted: #86a87a;
+    --status-triaged: #7da5c4;
+    --status-assigned: #86a87a;
+    --status-in-progress: #7da5c4;
+    --status-in-review: #d4a84b;
+    --status-blocked: #ef4444;
+    --status-completed: #86a87a;
+    --status-shipped: #6b946b;
+
+    --priority-p0: #ef4444;
+    --priority-p1: #e5873a;
+    --priority-p2: #d4a84b;
+    --priority-p3: #86a87a;
+
+    --notif-assigned: #86a87a;
+    --notif-comment: #7da5c4;
+    --notif-mention: #a394c7;
+    --notif-stage-change: #d4a84b;
+    --notif-signoff-requested: #ef4444;
+    --notif-signoff-submitted: #86a87a;
+    --notif-request-approved: #86a87a;
+    --notif-request-rejected: #ef4444;
+    --notif-figma-update: #e5873a;
+    --notif-idea-vote: #a394c7;
+    --notif-idea-approved: #86a87a;
+    --notif-nudge: #7da5c4;
+    --notif-project-update: var(--muted-foreground);
+
+    --accent-active: #d4a84b;
+    --accent-success: #86a87a;
+    --accent-warning: #e5873a;
+    --accent-danger: #ef4444;
+    --accent-info: #7da5c4;
   }
-  .theme {
-    --font-mono: var(--font-mono);
-    --font-heading: var(--font-heading);
-  }
+
   * {
     border-color: var(--border);
     outline-color: var(--ring);
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-mono;
   }
 }

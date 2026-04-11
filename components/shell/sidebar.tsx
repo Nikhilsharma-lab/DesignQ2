@@ -187,7 +187,7 @@ export function Sidebar({ user, userRole, orgName, orgPlan, activeCount, inboxUn
               boxShadow: "0 1px 4px rgba(46,83,57,0.15)",
             }}
           >
-            <span style={{ fontSize: 12, fontWeight: 700, color: "#fff" }}>L</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: "var(--primary-foreground)" }}>L</span>
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-foreground" style={{ fontSize: 13.5, fontWeight: 620, letterSpacing: "-0.02em" }}>

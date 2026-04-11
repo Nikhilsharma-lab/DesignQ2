@@ -140,13 +140,13 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
                     isDone
                       ? "bg-green-500/15 border-green-500/30 text-green-400"
                       : isCurrent
-                      ? "bg-[#D4A84B]/10 border-[#D4A84B]/20 text-[#D4A84B]"
+                      ? "bg-[var(--accent-active)]/10 border-[var(--accent-active)]/20 text-[var(--accent-active)]"
                       : "bg-accent border text-muted-foreground/60"
                   }`}>
                     {isDone ? "✓" : i + 1}
                   </div>
                   <span className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center ${
-                    isCurrent ? "text-[#D4A84B]" : isDone ? "text-green-500/80" : "text-muted-foreground/60"
+                    isCurrent ? "text-[var(--accent-active)]" : isDone ? "text-green-500/80" : "text-muted-foreground/60"
                   }`}>
                     {getStageLabel(s.key)}
                   </span>

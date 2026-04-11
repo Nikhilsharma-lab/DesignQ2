@@ -365,8 +365,8 @@ export function NewRequestForm({ onClose, projects }: Props) {
                           preflight.qualityScore >= 80
                             ? "hsl(var(--primary))"
                             : preflight.qualityScore >= 50
-                            ? "#D4A84B"
-                            : "#ef4444",
+                            ? "var(--accent-warning)"
+                            : "var(--accent-danger)",
                       }}
                     >
                       {preflight.qualityScore}/100

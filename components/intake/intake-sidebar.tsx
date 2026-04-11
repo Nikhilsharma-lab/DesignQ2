@@ -20,10 +20,10 @@ interface IntakeSidebarProps {
 }
 
 const PRIORITY_COLORS: Record<string, { bg: string; text: string }> = {
-  p0: { bg: "rgba(197,48,48,0.12)", text: "#c53030" },
-  p1: { bg: "rgba(221,107,32,0.12)", text: "#dd6b20" },
-  p2: { bg: "rgba(212,168,75,0.12)", text: "#9a6b12" },
-  p3: { bg: "rgba(134,168,122,0.12)", text: "#4a7a40" },
+  p0: { bg: "color-mix(in oklch, var(--priority-p0) 12%, transparent)", text: "var(--priority-p0)" },
+  p1: { bg: "color-mix(in oklch, var(--priority-p1) 12%, transparent)", text: "var(--priority-p1)" },
+  p2: { bg: "color-mix(in oklch, var(--priority-p2) 12%, transparent)", text: "var(--priority-p2)" },
+  p3: { bg: "color-mix(in oklch, var(--priority-p3) 12%, transparent)", text: "var(--priority-p3)" },
 };
 
 type Tab = "pending" | "reviewed";

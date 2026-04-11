@@ -18,8 +18,8 @@ interface Props {
 }
 
 const urgencyBorder: Record<string, string> = {
-  high: "#ef4444",
-  medium: "#f59e0b",
+  high: "var(--accent-danger)",
+  medium: "var(--accent-warning)",
   low: "hsl(var(--border) / 0.8)",
 };
 

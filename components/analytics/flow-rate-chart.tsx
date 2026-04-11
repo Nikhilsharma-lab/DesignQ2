@@ -11,8 +11,8 @@ import {
 } from "@/components/ui/chart";
 
 const chartConfig: ChartConfig = {
-  entered: { label: "Entered Design", color: "#A394C7" },
-  completed: { label: "Completed", color: "#86A87A" },
+  entered: { label: "Entered Design", color: "var(--phase-design)" },
+  completed: { label: "Completed", color: "var(--phase-track)" },
 };
 
 interface FlowRateChartProps {

@@ -371,7 +371,7 @@ export function MorningBriefingCard({ brief, alertCount = 0 }: Props) {
                     padding: "4px 10px",
                     borderRadius: 4,
                     background: "hsl(var(--primary))",
-                    color: "#fff",
+                    color: "var(--primary-foreground)",
                   }}
                 >
                   Go →

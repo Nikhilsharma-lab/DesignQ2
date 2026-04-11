@@ -46,15 +46,15 @@ const DOCK_WIDTH = 520;
 
 
 const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  draft:       { bg: "#F0EDE6", color: "#78716C" },
-  submitted:   { bg: "#EAF2EC", color: "#2E5339" },
-  triaged:     { bg: "#E0ECF8", color: "#1E6091" },
-  assigned:    { bg: "#EAF2EC", color: "#2E5339" },
-  in_progress: { bg: "#DBEAFE", color: "#1D4ED8" },
-  in_review:   { bg: "#FEF3C7", color: "#B45309" },
-  blocked:     { bg: "#FEE2E2", color: "#DC2626" },
-  completed:   { bg: "#EAF2EC", color: "#2E5339" },
-  shipped:     { bg: "#EAF2EC", color: "#166534" },
+  draft:       { bg: "color-mix(in oklch, var(--status-draft) 10%, transparent)", color: "var(--status-draft)" },
+  submitted:   { bg: "color-mix(in oklch, var(--status-submitted) 10%, transparent)", color: "var(--status-submitted)" },
+  triaged:     { bg: "color-mix(in oklch, var(--status-triaged) 10%, transparent)", color: "var(--status-triaged)" },
+  assigned:    { bg: "color-mix(in oklch, var(--status-assigned) 10%, transparent)", color: "var(--status-assigned)" },
+  in_progress: { bg: "color-mix(in oklch, var(--status-in-progress) 10%, transparent)", color: "var(--status-in-progress)" },
+  in_review:   { bg: "color-mix(in oklch, var(--status-in-review) 10%, transparent)", color: "var(--status-in-review)" },
+  blocked:     { bg: "color-mix(in oklch, var(--status-blocked) 10%, transparent)", color: "var(--status-blocked)" },
+  completed:   { bg: "color-mix(in oklch, var(--status-completed) 10%, transparent)", color: "var(--status-completed)" },
+  shipped:     { bg: "color-mix(in oklch, var(--status-shipped) 10%, transparent)", color: "var(--status-shipped)" },
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -141,7 +141,7 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
     request.phase === "dev"       ? (request.kanbanState ?? "todo") :
                                     (request.trackStage ?? "measuring");
   const stageLabel = getStageLabel(stageKey);
-  const statusStyle = STATUS_COLORS[request.status] ?? { bg: "#F0EDE6", color: "#78716C" };
+  const statusStyle = STATUS_COLORS[request.status] ?? { bg: "color-mix(in oklch, var(--status-draft) 10%, transparent)", color: "var(--status-draft)" };
 
   return (
     <aside
@@ -377,7 +377,7 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
                   <p style={labelStyle} className="text-muted-foreground/60">Request quality</p>
                   <span style={{
                     fontFamily: "'Geist Mono', monospace", fontSize: 11, fontWeight: 600,
-                    color: enriched.aiAnalysis.qualityScore >= 70 ? "#166534" : enriched.aiAnalysis.qualityScore >= 40 ? "#B45309" : "#DC2626",
+                    color: enriched.aiAnalysis.qualityScore >= 70 ? "var(--accent-success)" : enriched.aiAnalysis.qualityScore >= 40 ? "var(--accent-warning)" : "var(--accent-danger)",
                   }}>
                     {enriched.aiAnalysis.qualityScore}/100
                   </span>
@@ -385,7 +385,7 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
                 <div className="bg-accent" style={{ width: "100%", height: 4, borderRadius: 2, overflow: "hidden" }}>
                   <div style={{
                     height: "100%", width: `${enriched.aiAnalysis.qualityScore}%`, borderRadius: 2,
-                    background: enriched.aiAnalysis.qualityScore >= 70 ? "#86A87A" : enriched.aiAnalysis.qualityScore >= 40 ? "#D4A84B" : "#E07070",
+                    background: enriched.aiAnalysis.qualityScore >= 70 ? "var(--accent-success)" : enriched.aiAnalysis.qualityScore >= 40 ? "var(--accent-warning)" : "var(--accent-danger)",
                   }} />
                 </div>
               </div>
@@ -394,7 +394,7 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
                   <p style={{ ...labelStyle, marginBottom: 6 }} className="text-muted-foreground/60">Issues</p>
                   <div className="flex flex-wrap gap-1">
                     {enriched.aiAnalysis.qualityFlags.map((flag, i) => (
-                      <span key={i} className="rounded-sm" style={{ fontSize: 11, color: "#B45309", background: "#FEF3C7", border: "1px solid #FDE68A", padding: "2px 6px" }}>
+                      <span key={i} className="rounded-sm" style={{ fontSize: 11, color: "var(--accent-warning)", background: "color-mix(in oklch, var(--accent-warning) 10%, transparent)", border: "1px solid color-mix(in oklch, var(--accent-warning) 20%, transparent)", padding: "2px 6px" }}>
                         {flag}
                       </span>
                     ))}

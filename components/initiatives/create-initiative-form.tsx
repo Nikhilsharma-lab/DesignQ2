@@ -5,12 +5,12 @@ import { useRouter } from "next/navigation";
 import { createInitiative } from "@/app/actions/initiatives";
 
 const INITIATIVE_COLORS = [
-  "#2E5339",
-  "#A394C7",
-  "#7DA5C4",
-  "#D4A84B",
-  "#86A87A",
-  "#E07070",
+  "var(--accent-success)",
+  "var(--phase-design)",
+  "var(--phase-dev)",
+  "var(--phase-predesign)",
+  "var(--phase-track)",
+  "var(--accent-danger)",
   "#71717a",
 ];
 

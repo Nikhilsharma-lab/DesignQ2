@@ -57,9 +57,9 @@ export function AppetiteBar({
             borderRadius: 3,
             background:
               elapsed > 0.9
-                ? "#E07070"
+                ? "var(--accent-danger)"
                 : elapsed > 0.7
-                  ? "#D4A84B"
+                  ? "var(--accent-warning)"
                   : "var(--primary)",
             transition: "width 300ms ease",
           }}
