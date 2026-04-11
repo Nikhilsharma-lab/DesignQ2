@@ -2,16 +2,13 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  // Generate nonce for CSP
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
-
   // Guard: if env vars aren't set (e.g. first Vercel deploy), fail safe
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
     if (request.nextUrl.pathname.startsWith("/dashboard")) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
     const response = NextResponse.next({ request });
-    applyCSP(response, nonce);
+    applyCSP(response);
     return response;
   }
 
@@ -59,18 +56,16 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  applyCSP(supabaseResponse, nonce);
+  applyCSP(supabaseResponse);
   return supabaseResponse;
 }
 
-function applyCSP(response: NextResponse, nonce: string) {
+function applyCSP(response: NextResponse) {
   const isDev = process.env.NODE_ENV === "development";
 
   const csp = [
     "default-src 'self'",
-    // nonce for CSP3 browsers, unsafe-inline as fallback for older browsers
-    // unsafe-eval only in dev for Next.js HMR
-    `script-src 'self' 'nonce-${nonce}' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
+    `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
     `style-src 'self' 'unsafe-inline'`,
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.figma.com",
     "img-src 'self' data: blob: https://*.supabase.co",
@@ -81,7 +76,6 @@ function applyCSP(response: NextResponse, nonce: string) {
   ].join("; ");
 
   response.headers.set("Content-Security-Policy", csp);
-  response.headers.set("x-nonce", nonce);
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
