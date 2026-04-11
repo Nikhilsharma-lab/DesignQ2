@@ -50,12 +50,18 @@ export async function POST(_req: NextRequest) {
 
     // withUserSession has no wrapping transaction, so holding the connection
     // during this Claude call is safe (no locks held)
-    const content = await generateMorningBriefing({
-      userId: user.id,
-      orgId: profile.orgId,
-      role: profile.role,
-      userName: profile.fullName || "there",
-    });
+    let content;
+    try {
+      content = await generateMorningBriefing({
+        userId: user.id,
+        orgId: profile.orgId,
+        role: profile.role,
+        userName: profile.fullName || "there",
+      });
+    } catch (err) {
+      console.error("[morning-briefing] generation failed:", err);
+      return NextResponse.json({ error: "unavailable" }, { status: 503 });
+    }
 
     // Delete any existing row for today (handles dismissed + re-generate case)
     await db

@@ -27,8 +27,12 @@ export function MorningBriefingCard({ brief, alertCount = 0 }: Props) {
     if (refreshing) return;
     setRefreshing(true);
     try {
-      await fetch("/api/morning-briefing", { method: "POST" });
-      window.location.reload();
+      const res = await fetch("/api/morning-briefing", { method: "POST" });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        setRefreshing(false);
+      }
     } catch {
       setRefreshing(false);
     }
