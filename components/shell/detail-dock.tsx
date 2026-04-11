@@ -153,8 +153,7 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
 
   return (
     <aside
-      className="flex flex-col shrink-0 overflow-y-auto"
-      className="bg-card border-l border-border"
+      className="flex flex-col shrink-0 overflow-y-auto bg-card border-l border-border"
       style={{
         width: DOCK_WIDTH,
         height: "100vh",

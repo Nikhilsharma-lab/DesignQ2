@@ -248,7 +248,7 @@ export function IterationComments({
           className="flex-1 rounded-md px-2.5 py-1.5"
           style={{
             fontSize: 11,
-            background: "var(--bg-surface)",
+            background: "var(--card)",
             border: "1px solid var(--border)",
             color: "hsl(var(--foreground))",
             outline: "none",

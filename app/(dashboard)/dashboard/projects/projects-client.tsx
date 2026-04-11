@@ -76,7 +76,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
     <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 24, padding: "24px 32px" }}>
       {/* Toolbar */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
+        <h1 style={{ fontSize: 18, fontWeight: 700, color: "var(--foreground)", margin: 0 }}>
           Projects
         </h1>
         {canCreate && (
@@ -86,7 +86,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
               fontSize: 13,
               fontWeight: 500,
               color: "#fff",
-              background: "var(--accent, #2E5339)",
+              background: "var(--primary)",
               border: "none",
               borderRadius: 6,
               padding: "6px 14px",
@@ -103,7 +103,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
         <form
           onSubmit={handleSubmit}
           style={{
-            background: "var(--surface, #fff)",
+            background: "var(--card)",
             border: "1px solid var(--border)",
             borderRadius: 10,
             padding: "20px 24px",
@@ -113,12 +113,12 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
             maxWidth: 480,
           }}
         >
-          <h2 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: "var(--text-primary)" }}>
+          <h2 style={{ fontSize: 14, fontWeight: 600, margin: 0, color: "var(--foreground)" }}>
             New Project
           </h2>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)" }}>
+            <label style={{ fontSize: 12, fontWeight: 500, color: "var(--muted-foreground)" }}>
               Name <span style={{ color: "#ef4444" }}>*</span>
             </label>
             <input
@@ -130,15 +130,15 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
                 padding: "7px 10px",
                 borderRadius: 6,
                 border: "1px solid var(--border)",
-                background: "var(--bg, #F8F6F1)",
-                color: "var(--text-primary)",
+                background: "var(--background)",
+                color: "var(--foreground)",
                 outline: "none",
               }}
             />
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            <label style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)" }}>
+            <label style={{ fontSize: 12, fontWeight: 500, color: "var(--muted-foreground)" }}>
               Color
             </label>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -152,7 +152,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
                     height: 22,
                     borderRadius: "50%",
                     background: c,
-                    border: selectedColor === c ? "2px solid var(--text-primary)" : "2px solid transparent",
+                    border: selectedColor === c ? "2px solid var(--foreground)" : "2px solid transparent",
                     cursor: "pointer",
                     padding: 0,
                   }}
@@ -163,7 +163,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-            <label style={{ fontSize: 12, fontWeight: 500, color: "var(--text-secondary)" }}>
+            <label style={{ fontSize: 12, fontWeight: 500, color: "var(--muted-foreground)" }}>
               Target date (appetite)
             </label>
             <input
@@ -174,8 +174,8 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
                 padding: "7px 10px",
                 borderRadius: 6,
                 border: "1px solid var(--border)",
-                background: "var(--bg, #F8F6F1)",
-                color: "var(--text-primary)",
+                background: "var(--background)",
+                color: "var(--foreground)",
                 outline: "none",
                 width: "fit-content",
               }}
@@ -194,7 +194,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
                 fontSize: 13,
                 fontWeight: 500,
                 color: "#fff",
-                background: "var(--accent, #2E5339)",
+                background: "var(--primary)",
                 border: "none",
                 borderRadius: 6,
                 padding: "6px 16px",
@@ -210,7 +210,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
               style={{
                 fontSize: 13,
                 fontWeight: 500,
-                color: "var(--text-secondary)",
+                color: "var(--muted-foreground)",
                 background: "transparent",
                 border: "1px solid var(--border)",
                 borderRadius: 6,
@@ -233,7 +233,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
             textAlign: "center",
             borderRadius: 12,
             border: "1px dashed var(--border)",
-            color: "var(--text-tertiary)",
+            color: "color-mix(in oklch, var(--muted-foreground) 60%, transparent)",
             fontSize: 13,
           }}
         >
@@ -254,7 +254,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
                 key={project.id}
                 onClick={() => router.push(`/dashboard/requests?project=${project.id}`)}
                 style={{
-                  background: "var(--surface, #fff)",
+                  background: "var(--card)",
                   border: "1px solid var(--border)",
                   borderRadius: 10,
                   padding: "16px 18px",
@@ -287,7 +287,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
                     style={{
                       fontSize: 14,
                       fontWeight: 600,
-                      color: "var(--text-primary)",
+                      color: "var(--foreground)",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap",
@@ -299,11 +299,11 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
 
                 {/* Meta row */}
                 <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                  <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                  <span style={{ fontSize: 12, color: "color-mix(in oklch, var(--muted-foreground) 60%, transparent)" }}>
                     {project.requestCount} request{project.requestCount === 1 ? "" : "s"}
                   </span>
                   {project.leadName && (
-                    <span style={{ fontSize: 12, color: "var(--text-tertiary)" }}>
+                    <span style={{ fontSize: 12, color: "color-mix(in oklch, var(--muted-foreground) 60%, transparent)" }}>
                       Lead: {project.leadName}
                     </span>
                   )}
@@ -312,7 +312,7 @@ export function ProjectsClient({ projects, canCreate }: ProjectsClientProps) {
                       style={{
                         fontSize: 11,
                         fontWeight: 500,
-                        color: appetite.exceeded ? "#ef4444" : "var(--text-tertiary)",
+                        color: appetite.exceeded ? "#ef4444" : "color-mix(in oklch, var(--muted-foreground) 60%, transparent)",
                         marginTop: 2,
                       }}
                     >

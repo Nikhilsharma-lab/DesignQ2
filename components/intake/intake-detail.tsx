@@ -161,8 +161,8 @@ export function IntakeDetail({ request, aiAnalysis }: IntakeDetailProps) {
               fontWeight: 600,
               padding: "1px 5px",
               borderRadius: 3,
-              background: `var(--priority-${request.priority}-bg, var(--bg-hover))`,
-              color: `var(--priority-${request.priority}-text, var(--text-secondary))`,
+              background: `var(--priority-${request.priority}-bg, var(--accent))`,
+              color: `var(--priority-${request.priority}-text, var(--muted-foreground))`,
             }}
           >
             {request.priority.toUpperCase()}

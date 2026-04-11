@@ -19,6 +19,8 @@ import { SearchX } from "lucide-react";
 
 // ── Phase definitions ────────────────────────────────────────────────────────
 
+const PRIORITY_LABELS: Record<string, string> = { p0: "P0", p1: "P1", p2: "P2", p3: "P3" };
+
 const PHASES = [
   {
     key: "predesign",
@@ -229,8 +231,6 @@ export function RequestList({
       setPhaseFilter(urlPhase as PhaseFilter);
     }
   }, [urlPhase]);
-
-  const PRIORITY_LABELS: Record<string, string> = { p0: "P0", p1: "P1", p2: "P2", p3: "P3" };
 
   const filterChips = useMemo<FilterChip[]>(() => {
     const chips: FilterChip[] = [];

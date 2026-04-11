@@ -84,7 +84,7 @@ export function CreateInitiativeForm() {
               name="description"
               rows={3}
               placeholder="What is this initiative about?"
-              className="w-full text-sm bg-[var(--bg-surface)] border border-[var(--border)] rounded-lg px-3 py-2 text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--accent)] resize-none"
+              className="w-full text-sm bg-card border border-border rounded-lg px-3 py-2 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-primary resize-none"
             />
           </div>
 
