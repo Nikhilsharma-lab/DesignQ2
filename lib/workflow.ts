@@ -71,25 +71,25 @@ export function getActiveStageLabel(request: Pick<Request, "phase" | "stage" | "
   if (request.phase) {
     switch (request.phase) {
       case "predesign":
-        return stageLabel(request.predesignStage ?? "intake");
+        return getStageLabel(request.predesignStage ?? "intake");
       case "design":
-        return stageLabel(request.designStage ?? "sense");
+        return getStageLabel(request.designStage ?? "sense");
       case "dev":
-        return stageLabel(request.kanbanState ?? "todo");
+        return getStageLabel(request.kanbanState ?? "todo");
       case "track":
-        return stageLabel(request.trackStage ?? "measuring");
+        return getStageLabel(request.trackStage ?? "measuring");
     }
   }
-  return stageLabel(request.stage);
+  return getStageLabel(request.stage);
 }
 
-function stageLabel(stage: string | null | undefined): string {
+export function getStageLabel(stage: string | null | undefined): string {
   const labels: Record<string, string> = {
     // Predesign
     intake: "Intake",
     context: "Context",
     shape: "Shape",
-    bet: "Betting",
+    bet: "Prioritize",
     // Design
     sense: "Sense",
     frame: "Frame",

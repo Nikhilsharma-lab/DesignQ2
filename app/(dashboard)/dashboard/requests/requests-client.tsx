@@ -10,7 +10,7 @@ import {
   useSensors,
   closestCorners,
 } from "@dnd-kit/core";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, Share2 } from "lucide-react";
 import {
   KANBAN_STATES,
   KANBAN_STATE_LABELS,
@@ -25,6 +25,8 @@ import { SaveViewButton } from "@/components/requests/save-view-button";
 import { FilterChips, type FilterChip } from "@/components/ui/filter-chips";
 import { EmptyState } from "@/components/ui/empty-state";
 import { NewRequestForm } from "@/components/requests/new-request-form";
+import { ProjectSwitcher } from "@/components/projects/project-switcher";
+import { ShareDialog } from "@/components/published/share-dialog";
 import { DESIGN_STAGES, getActiveStageLabel, getPhaseLabel } from "@/lib/workflow";
 import type { Request, Project } from "@/db/schema";
 import { InboxIcon } from "lucide-react";
@@ -156,6 +158,7 @@ export function RequestsClient({
   // ── Local state ─────────────────────────────────────────────────────────────
   const [localRequests, setLocalRequests] = useState(initialRequests);
   const [showNewForm, setShowNewForm] = useState(false);
+  const [showShareDialog, setShowShareDialog] = useState(false);
   const [focusedCardId, setFocusedCardId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -455,6 +458,8 @@ export function RequestsClient({
             />
           </div>
 
+          <ProjectSwitcher projects={projects.map((p) => ({ id: p.id, name: p.name, color: p.color }))} />
+
           <GroupByDropdown
             value={groupBy}
             onChange={(v) => updateParams({ group: v })}
@@ -470,6 +475,30 @@ export function RequestsClient({
             hasActiveFilters={hasActiveFilters}
             onSave={handleSaveView}
           />
+
+          <button
+            onClick={() => setShowShareDialog(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 5,
+              height: 28,
+              padding: "0 10px",
+              border: "1px solid hsl(var(--border))",
+              borderRadius: 6,
+              background: "transparent",
+              color: "hsl(var(--muted-foreground))",
+              fontFamily: "'Geist Mono', monospace",
+              fontSize: 11,
+              fontWeight: 500,
+              cursor: "pointer",
+              flexShrink: 0,
+            }}
+            className="hover:bg-accent"
+          >
+            <Share2 size={11} />
+            Share
+          </button>
 
           {/* New request */}
           <button
@@ -638,6 +667,19 @@ export function RequestsClient({
             />
           </div>
         </div>
+      )}
+
+      {/* ── Share / publish dialog ────────────────────────────────────────── */}
+      {showShareDialog && (
+        <ShareDialog
+          viewType="requests"
+          currentFilters={{
+            phase: phaseFilter !== "all" ? [phaseFilter] : [],
+            priority: priorityFilter ? [priorityFilter] : [],
+            projectId: projectFilter ? [projectFilter] : [],
+          }}
+          onClose={() => setShowShareDialog(false)}
+        />
       )}
     </div>
   );

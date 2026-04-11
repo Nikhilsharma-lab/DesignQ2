@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { withUserDb } from "@/db/user";
 import { comments, profiles, requests } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { notifyMany, getRequestRecipients } from "@/lib/notifications";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -39,6 +40,19 @@ export async function POST(
       body: body.trim(),
       isSystem: false,
       isDevQuestion: Boolean(isDevQuestion),
+    });
+
+    // In-app notifications to requester + all assignees
+    const recipients = await getRequestRecipients(db, requestId, request.requesterId);
+    await notifyMany(db, {
+      orgId: profile.orgId,
+      recipientIds: recipients,
+      actorId: user.id,
+      type: "comment",
+      requestId,
+      title: `${profile.fullName ?? "Someone"} commented on ${request.title}`,
+      body: body.trim().slice(0, 120),
+      url: `/dashboard/requests/${requestId}`,
     });
 
     return NextResponse.json({ success: true });

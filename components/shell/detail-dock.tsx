@@ -11,6 +11,7 @@ import { PredesignPanel } from "@/components/requests/predesign-panel";
 import { DesignPhasePanel } from "@/components/requests/design-phase-panel";
 import { DevPhasePanel } from "@/components/requests/dev-phase-panel";
 import { TrackPhasePanel } from "@/components/requests/track-phase-panel";
+import { ImpactRetrospectivePanel } from "@/components/requests/impact-retrospective-panel";
 import { AssignPanel } from "@/components/requests/assign-panel";
 import { CommentBox } from "@/components/requests/comment-box";
 import { HandoffChecklist } from "@/components/requests/handoff-checklist";
@@ -25,6 +26,7 @@ import type {
   Comment,
   RequestStage,
   RequestContextBrief,
+  ImpactRetrospective,
 } from "@/db/schema";
 
 interface EnrichedData {
@@ -33,6 +35,7 @@ interface EnrichedData {
   authorMap: Record<string, { fullName: string | null }>;
   stageHistory: RequestStage[];
   existingBrief: RequestContextBrief | null;
+  existingRetrospective: ImpactRetrospective | null;
   requesterName: string;
   project: { id: string; name: string; color: string } | null;
   canEdit: boolean;
@@ -298,6 +301,14 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
               impactPrediction={request.impactPrediction}
               impactActual={request.impactActual}
               initialVariancePercent={null}
+            />
+          </div>
+        )}
+        {request.phase === "track" && enriched && (
+          <div style={divider}>
+            <ImpactRetrospectivePanel
+              requestId={request.id}
+              existingRetrospective={enriched.existingRetrospective}
             />
           </div>
         )}

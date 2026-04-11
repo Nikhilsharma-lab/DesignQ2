@@ -5,6 +5,7 @@ import { profiles, requests, assignments } from "@/db/schema";
 import { eq, and, count, inArray } from "drizzle-orm";
 import { sendEmail } from "@/lib/email";
 import { assignmentEmail } from "@/lib/email/templates";
+import { createNotification } from "@/lib/notifications";
 
 export async function GET(
   _req: NextRequest,
@@ -125,6 +126,18 @@ export async function POST(
         }),
       });
     }
+
+    // In-app notification
+    await createNotification(db, {
+      orgId: profile.orgId,
+      recipientId: assigneeId,
+      actorId: profile.id,
+      type: "assigned",
+      requestId: id,
+      title: `${profile.fullName ?? "Someone"} assigned you to ${request.title}`,
+      body: `You were assigned as ${role}.`,
+      url: `/dashboard/requests/${id}`,
+    });
 
     return NextResponse.json({ assignment }, { status: 201 });
   });

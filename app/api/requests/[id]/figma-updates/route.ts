@@ -5,6 +5,7 @@ import { requests, profiles, figmaUpdates } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { sendFigmaDriftEmail, APP_URL } from "@/lib/email";
 import { NewFigmaUpdate } from "@/db/schema/figma_updates";
+import { createNotification } from "@/lib/notifications";
 
 // GET /api/requests/[id]/figma-updates — fetch all Figma updates for a request
 export async function GET(
@@ -111,8 +112,20 @@ export async function POST(
             requestUrl,
             designerName,
           });
+
+          // In-app notification for figma drift
+          await createNotification(db, {
+            orgId: request.orgId,
+            recipientId: request.devOwnerId!,
+            actorId: profile.id,
+            type: "figma_update",
+            requestId,
+            title: `${designerName} updated Figma for ${request.title}`,
+            body: "Post-handoff change detected. Please review before continuing.",
+            url: `/dashboard/requests/${requestId}`,
+          });
         } catch (err) {
-          console.error("[figma-drift] Failed to send drift email:", err);
+          console.error("[figma-drift] Failed to send drift notification:", err);
         }
       })();
     }

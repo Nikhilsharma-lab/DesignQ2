@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { withUserDb } from "@/db/user";
 import { ideas, ideaVotes, profiles } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
+import { createNotification } from "@/lib/notifications";
 
 // POST /api/ideas/[id]/vote — upvote or downvote; toggle off if same vote
 export async function POST(
@@ -54,6 +55,20 @@ export async function POST(
 
     // New vote
     await db.insert(ideaVotes).values({ ideaId, voterId: user.id, voteType });
+
+    // Notify idea author
+    if (voteType === "upvote") {
+      await createNotification(db, {
+        orgId: profile.orgId,
+        recipientId: idea.authorId,
+        actorId: user.id,
+        type: "idea_vote",
+        title: `${profile.fullName ?? "Someone"} voted on your idea`,
+        body: `Upvoted "${idea.title}"`,
+        url: "/dashboard/ideas",
+      });
+    }
+
     return NextResponse.json({ action: "added", voteType });
   });
 }

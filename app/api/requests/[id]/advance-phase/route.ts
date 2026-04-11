@@ -6,9 +6,9 @@ import { eq } from "drizzle-orm";
 import { sendEmail } from "@/lib/email";
 import { validationNeededEmail, handoffEmail } from "@/lib/email/templates";
 import { canAdvanceRequestPhase } from "@/lib/request-permissions";
-
-const PREDESIGN_STAGES = ["intake", "context", "shape", "bet"] as const;
-const DESIGN_STAGES = ["sense", "frame", "diverge", "converge", "prove"] as const;
+import { notifyMany, getRequestRecipients } from "@/lib/notifications";
+import { PREDESIGN_STAGES, DESIGN_STAGES, getStageLabel } from "@/lib/workflow";
+import type { PredesignStage, DesignStage } from "@/db/schema";
 type PredesignStage = (typeof PREDESIGN_STAGES)[number];
 type DesignStage = (typeof DESIGN_STAGES)[number];
 
@@ -99,6 +99,19 @@ export async function POST(
         });
         await tx.insert(comments).values({ requestId, authorId: null, body: "⭢ Bet approved — Design Phase started (Sense)", isSystem: true });
       });
+
+      // Notify assignees about design phase start
+      const recipients = await getRequestRecipients(db, requestId, request.requesterId);
+      await notifyMany(db, {
+        orgId: request.orgId,
+        recipientIds: recipients,
+        actorId: user.id,
+        type: "stage_change",
+        requestId,
+        title: `${request.title} moved to Design Phase`,
+        body: "Bet approved — starting with Sense stage.",
+        url: `/dashboard/requests/${requestId}`,
+      });
     } else {
       const next = PREDESIGN_STAGES[currentIdx + 1];
       await db.transaction(async (tx) => {
@@ -116,7 +129,20 @@ export async function POST(
           enteredAt: new Date(),
           completedById: user.id,
         });
-        await tx.insert(comments).values({ requestId, authorId: null, body: `⭢ Moved to ${next.charAt(0).toUpperCase() + next.slice(1)} stage`, isSystem: true });
+        await tx.insert(comments).values({ requestId, authorId: null, body: `⭢ Moved to ${getStageLabel(next)} stage`, isSystem: true });
+      });
+
+      // Notify assignees about stage change
+      const recipients = await getRequestRecipients(db, requestId, request.requesterId);
+      await notifyMany(db, {
+        orgId: request.orgId,
+        recipientIds: recipients,
+        actorId: user.id,
+        type: "stage_change",
+        requestId,
+        title: `${request.title} moved to ${getStageLabel(next)}`,
+        body: `Predesign stage advanced to ${getStageLabel(next)}.`,
+        url: `/dashboard/requests/${requestId}`,
       });
     }
 
@@ -185,6 +211,18 @@ export async function POST(
           });
         }
       }
+
+      // In-app notifications for handoff
+      await notifyMany(db, {
+        orgId: request.orgId,
+        recipientIds: assignedRows.map((r) => r.assigneeId),
+        actorId: user.id,
+        type: "stage_change",
+        requestId,
+        title: `${request.title} handed off to Dev`,
+        body: "Design is locked. Dev kanban is open.",
+        url: `/dashboard/requests/${requestId}`,
+      });
     } else {
       const next = DESIGN_STAGES[currentIdx + 1];
       await db.transaction(async (tx) => {
@@ -202,7 +240,20 @@ export async function POST(
           enteredAt: new Date(),
           completedById: user.id,
         });
-        await tx.insert(comments).values({ requestId, authorId: null, body: `⭢ Moved to ${next.charAt(0).toUpperCase() + next.slice(1)} stage`, isSystem: true });
+        await tx.insert(comments).values({ requestId, authorId: null, body: `⭢ Moved to ${getStageLabel(next)} stage`, isSystem: true });
+      });
+
+      // Notify assignees about design stage change
+      const stageRecipients = await getRequestRecipients(db, requestId, request.requesterId);
+      await notifyMany(db, {
+        orgId: request.orgId,
+        recipientIds: stageRecipients,
+        actorId: user.id,
+        type: "stage_change",
+        requestId,
+        title: `${request.title} moved to ${getStageLabel(next)}`,
+        body: `Design stage advanced to ${getStageLabel(next)}.`,
+        url: `/dashboard/requests/${requestId}`,
       });
 
       // When entering prove stage, notify all signers
@@ -221,9 +272,11 @@ export async function POST(
           admin: "design_head",
         };
 
+        const signerIds: string[] = [];
         for (const member of orgMembers) {
           const signerRole = SIGNER_ROLES[member.role ?? ""];
           if (!signerRole || !member.email) continue;
+          signerIds.push(member.id);
           sendEmail({
             to: member.email,
             subject: `Sign-off needed: ${request.title}`,
@@ -236,6 +289,18 @@ export async function POST(
             }),
           });
         }
+
+        // In-app notifications for signoff request
+        await notifyMany(db, {
+          orgId: request.orgId,
+          recipientIds: signerIds,
+          actorId: user.id,
+          type: "signoff_requested",
+          requestId,
+          title: `Your sign-off is needed on ${request.title}`,
+          body: `${requester?.fullName ?? "Someone"} submitted the design for review.`,
+          url: `/dashboard/requests/${requestId}`,
+        });
       }
     }
 

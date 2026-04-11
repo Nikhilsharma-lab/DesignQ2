@@ -92,7 +92,7 @@ function future(days) {
 const ORG_SLUG = "acme-demo";
 
 const USERS = [
-  { email: "priya@acme-demo.io",  fullName: "Priya Sharma",    role: "lead"     },
+  { email: "priya@acme-demo.io",  fullName: "Priya Sharma",    role: "admin"    },
   { email: "marcus@acme-demo.io", fullName: "Marcus Johnson",  role: "pm"       },
   { email: "sarah@acme-demo.io",  fullName: "Sarah Chen",      role: "pm"       },
   { email: "alex@acme-demo.io",   fullName: "Alex Rivera",     role: "designer" },

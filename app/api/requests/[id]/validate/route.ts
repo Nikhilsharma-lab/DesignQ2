@@ -5,6 +5,7 @@ import { requests, profiles, validationSignoffs, comments } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { sendEmail } from "@/lib/email";
 import { signoffSubmittedEmail, allSignoffsEmail } from "@/lib/email/templates";
+import { createNotification, notifyMany } from "@/lib/notifications";
 
 // Map profile role → signer_role enum
 function signerRoleFromProfile(role: string): "designer" | "pm" | "design_head" | null {
@@ -191,16 +192,42 @@ export async function POST(
       });
     }
 
+    // In-app notification: request approved
+    await createNotification(db, {
+      orgId: profile.orgId,
+      recipientId: request.requesterId,
+      actorId: user.id,
+      type: "request_approved",
+      requestId,
+      title: `All sign-offs received for ${request.title}`,
+      body: "Design approved! Moving to Dev phase.",
+      url: `/dashboard/requests/${requestId}`,
+    });
+
     return NextResponse.json({ success: true, autoAdvanced: true });
   }
 
-  // If anyone rejected, add a note
+  // If anyone rejected, add a note and notify
   if (decision === "rejected") {
     await db.insert(comments).values({
       requestId,
       authorId: null,
       body: `⭠ Validation rejected by ${roleLabel} — design sent back for revision`,
       isSystem: true,
+    });
+
+    // In-app notification: request rejected
+    const rejectRecipients = [request.requesterId];
+    if (request.designerOwnerId) rejectRecipients.push(request.designerOwnerId);
+    await notifyMany(db, {
+      orgId: profile.orgId,
+      recipientIds: rejectRecipients,
+      actorId: user.id,
+      type: "request_rejected",
+      requestId,
+      title: `${roleLabel} requested changes on ${request.title}`,
+      body: commentText ? commentText.slice(0, 120) : "Design sent back for revision.",
+      url: `/dashboard/requests/${requestId}`,
     });
   }
 
@@ -230,6 +257,18 @@ export async function POST(
       }),
     });
   }
+
+  // In-app notification: signoff submitted
+  await notifyMany(db, {
+    orgId: profile.orgId,
+    recipientIds: orgMembers.map((m) => m.id),
+    actorId: user.id,
+    type: "signoff_submitted",
+    requestId,
+    title: `${profile.fullName ?? "Someone"} signed off on ${request.title}`,
+    body: `${roleLabel} ${decisionLabel}. ${approvalCount} of 3 approvals received.`,
+    url: `/dashboard/requests/${requestId}`,
+  });
 
   return NextResponse.json({ success: true, autoAdvanced: false });
   });

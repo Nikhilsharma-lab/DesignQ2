@@ -10,6 +10,7 @@ import {
   requestAiAnalysis,
   requestStages,
   requestContextBriefs,
+  impactRetrospectives,
   projects,
 } from "@/db/schema";
 import { eq, inArray } from "drizzle-orm";
@@ -126,6 +127,20 @@ export async function GET(
     }
   }
 
+  // Impact retrospective (track phase only)
+  let existingRetrospective = null;
+  if (request.phase === "track") {
+    try {
+      const [retroRow] = await db
+        .select()
+        .from(impactRetrospectives)
+        .where(eq(impactRetrospectives.requestId, requestId));
+      existingRetrospective = retroRow ?? null;
+    } catch {
+      // silent fail
+    }
+  }
+
   // canEdit
   const canEdit =
     profile.id === request.requesterId ||
@@ -138,6 +153,7 @@ export async function GET(
     authorMap,
     stageHistory,
     existingBrief,
+    existingRetrospective,
     requesterName,
     project,
     canEdit,

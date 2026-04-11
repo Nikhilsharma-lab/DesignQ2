@@ -5,6 +5,7 @@ import { ideas, ideaValidations, ideaVotes, profiles, requests } from "@/db/sche
 import { eq } from "drizzle-orm";
 import { validateIdea } from "@/lib/ai/idea-validator";
 import { checkAiRateLimit } from "@/lib/rate-limit";
+import { createNotification } from "@/lib/notifications";
 
 // POST /api/ideas/[id]/validate — run AI validation, Design Head submits decision
 export async function POST(
@@ -97,6 +98,24 @@ export async function POST(
         .update(ideas)
         .set({ status: "rejected", updatedAt: new Date() })
         .where(eq(ideas.id, ideaId));
+    }
+
+    // Notify idea author
+    if (idea.authorId !== user.id) {
+      const isApproved = decision === "approved" || decision === "approved_with_conditions";
+      await createNotification(db, {
+        orgId: profile.orgId,
+        recipientId: idea.authorId,
+        actorId: user.id,
+        type: isApproved ? "idea_approved" : "idea_vote",
+        title: isApproved
+          ? `Your idea "${idea.title}" was approved!`
+          : `Your idea "${idea.title}" was not approved`,
+        body: isApproved
+          ? "A new request has been created from your idea."
+          : notes ?? "The idea was reviewed and not approved at this time.",
+        url: "/dashboard/ideas",
+      });
     }
 
     // Save validation record

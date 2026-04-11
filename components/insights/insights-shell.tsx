@@ -4,6 +4,7 @@
 import { useState } from "react";
 import { DigestPanel } from "./digest-panel";
 import { PmCalibration } from "./pm-calibration";
+import { DesignRoi } from "./design-roi";
 import type { WeeklyDigest, PmCoachingNote } from "@/lib/digest";
 
 interface Props {
@@ -35,6 +36,14 @@ export function InsightsShell({ initialDigest, initialPmCoaching }: Props) {
           PM calibration
         </h2>
         <PmCalibration coaching={pmCoaching ?? undefined} />
+      </section>
+
+      {/* Design ROI */}
+      <section>
+        <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">
+          Design ROI
+        </h2>
+        <DesignRoi />
       </section>
     </>
   );
