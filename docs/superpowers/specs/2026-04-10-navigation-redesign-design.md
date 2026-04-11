@@ -25,7 +25,7 @@ The current sidebar has 14 links organized into 3 arbitrary groups (Personal, Wo
 
 ## 1. Sidebar Structure
 
-### New sidebar: 8 core links + Pinned Views section
+### New sidebar: 9 core links + Pinned Views section
 
 ```
 ┌──────────────────────────┐
@@ -37,6 +37,7 @@ The current sidebar has 14 links organized into 3 arbitrary groups (Personal, Wo
 │ ─────────────────────    │
 │                          │
 │ ⚡ Requests               │  ← THE main work view
+│ 📁 Projects               │  ← Org-level project containers
 │ 💡 Ideas                  │  ← Idea board + voting
 │ 🎯 Cycles                 │  ← Time-boxed planning
 │                          │
@@ -254,7 +255,9 @@ Each request has an optional `project_id` foreign key. A request belongs to zero
 - **Request detail dock:** Project badge shown in metadata
 - **Smart assignment:** AI considers project membership when recommending designers
 - **Insights page:** Filter insights by project
-- **Settings → Projects:** CRUD for projects (create, edit members, archive)
+- **Projects page (`/dashboard/projects`):** All active projects with request counts, phase breakdown, target date status, lead
+- **Settings → Projects:** Full CRUD for projects (create, edit members, archive)
+- **Inline creation:** "+ Create new project" option in project dropdown during request creation
 
 ### Target date behavior
 
@@ -263,6 +266,15 @@ Each request has an optional `project_id` foreign key. A request belongs to zero
 - No automatic escalation, no red warnings to leads
 - AI may include in morning briefing: "The Partner Portal target was May 15 — still 2 open requests in Design."
 - Purely informational accountability, not a gate or blocker
+
+### Who can create/manage projects
+
+| Role | Create | Edit | Archive | Add members |
+|---|---|---|---|---|
+| Admin | Yes | All projects | All projects | All projects |
+| Lead | Yes | Their projects | Their projects | Their projects |
+| PM | Yes (inline during request creation) | Description only | No | No |
+| Designer | No | No | No | No |
 
 ### What Projects are NOT
 
@@ -357,6 +369,7 @@ This redesign doesn't require new database tables (except Projects enhancement).
 | `/dashboard/journey` | `/dashboard/requests?group=phase` | Grouping on Requests |
 | `/dashboard/betting` | `/dashboard/requests?stage=bet` | Filter on Requests |
 | `/dashboard/dev` | `/dashboard/requests?phase=dev&view=kanban` | Contextual kanban |
+| — | `/dashboard/projects` | New: project overview page |
 | `/dashboard/ideas` | `/dashboard/ideas` | Unchanged |
 | `/dashboard/cycles` | `/dashboard/cycles` | Unchanged |
 | `/dashboard/initiatives` | `/dashboard/cycles` | Merged into Cycles |
@@ -382,10 +395,10 @@ All changes verified against CLAUDE.md anti-surveillance principles:
 
 ---
 
-## Open Questions
+## Resolved Questions
 
-1. **Should the Design phase board view allow drag-drop between stages?** Current decision: No, because design stages are non-linear. Designer moves stages from request detail. Open to revisiting if designers find this frustrating.
+1. **Design phase board: no drag-drop.** Design stages are non-linear — designers jump freely between Sense/Frame/Diverge/Converge. Drag-drop implies linear progression, which contradicts Lane's design philosophy. Stage changes happen inside the request detail, where the designer adds a reflection on why they're moving. The board view is a read-only spatial visualization, not a workflow tool.
 
-2. **Should Projects have a dedicated page or just live in Settings?** Current decision: Settings for CRUD. Projects surface through filters/grouping everywhere else. A dedicated `/dashboard/projects` page showing all projects with their request counts and health could be valuable but is not MVP.
+2. **Projects are workspace-level and shared (Figma/Linear style).** Not personal — the whole org sees the same projects. This is required for Group by Project, smart assignment, and org-level Insights to work. Projects are created by Admins, Leads, and PMs (inline during request creation: "This is for: [+ Create new project]"). Full CRUD lives in Settings → Projects, but the primary creation path is inline. Projects also get a dedicated page at `/dashboard/projects` showing all active projects with request counts, phase breakdown, target date status, and lead.
 
-3. **How many default pinned views should Lane ship?** Current decision: 1-2 per role as templates. Users can delete them. Don't over-prescribe.
+3. **Pinned views: unlimited, fully user-controlled.** No cap on saved views. Lane ships deletable default starter views per role. Users create unlimited additional views, private or shared with the workspace.
