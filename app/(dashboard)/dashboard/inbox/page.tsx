@@ -1,15 +1,118 @@
-export default function InboxPage() {
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { db } from "@/db";
+import { profiles, notifications } from "@/db/schema";
+import { eq, and, isNull, lte, or, desc, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
+import { InboxClient } from "./inbox-client";
+
+export default async function InboxPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const [profile] = await db
+    .select()
+    .from(profiles)
+    .where(eq(profiles.id, user.id));
+  if (!profile) redirect("/login");
+
+  const actor = alias(profiles, "actor");
+  const now = new Date();
+
+  // Active inbox notifications (not archived, not snoozed into the future)
+  const activeNotifs = await db
+    .select({
+      id: notifications.id,
+      type: notifications.type,
+      title: notifications.title,
+      body: notifications.body,
+      url: notifications.url,
+      readAt: notifications.readAt,
+      archivedAt: notifications.archivedAt,
+      snoozedUntil: notifications.snoozedUntil,
+      createdAt: notifications.createdAt,
+      requestId: notifications.requestId,
+      actorName: actor.fullName,
+    })
+    .from(notifications)
+    .leftJoin(actor, eq(notifications.actorId, actor.id))
+    .where(
+      and(
+        eq(notifications.recipientId, user.id),
+        isNull(notifications.archivedAt),
+        or(
+          isNull(notifications.snoozedUntil),
+          lte(notifications.snoozedUntil, now)
+        )
+      )
+    )
+    .orderBy(desc(notifications.createdAt))
+    .limit(100);
+
+  // Archived notifications (Done tab)
+  const archivedNotifs = await db
+    .select({
+      id: notifications.id,
+      type: notifications.type,
+      title: notifications.title,
+      body: notifications.body,
+      url: notifications.url,
+      readAt: notifications.readAt,
+      archivedAt: notifications.archivedAt,
+      snoozedUntil: notifications.snoozedUntil,
+      createdAt: notifications.createdAt,
+      requestId: notifications.requestId,
+      actorName: actor.fullName,
+    })
+    .from(notifications)
+    .leftJoin(actor, eq(notifications.actorId, actor.id))
+    .where(
+      and(
+        eq(notifications.recipientId, user.id),
+        sql`${notifications.archivedAt} IS NOT NULL`
+      )
+    )
+    .orderBy(desc(notifications.archivedAt))
+    .limit(50);
+
+  // Unread count
+  const [{ value: unreadCount }] = await db
+    .select({ value: sql<number>`count(*)::int` })
+    .from(notifications)
+    .where(
+      and(
+        eq(notifications.recipientId, user.id),
+        isNull(notifications.archivedAt),
+        isNull(notifications.readAt),
+        or(
+          isNull(notifications.snoozedUntil),
+          lte(notifications.snoozedUntil, now)
+        )
+      )
+    );
+
+  const serialize = (n: (typeof activeNotifs)[number]) => ({
+    id: n.id,
+    type: n.type,
+    title: n.title,
+    body: n.body,
+    url: n.url,
+    readAt: n.readAt?.toISOString() ?? null,
+    archivedAt: n.archivedAt?.toISOString() ?? null,
+    snoozedUntil: n.snoozedUntil?.toISOString() ?? null,
+    createdAt: n.createdAt.toISOString(),
+    requestId: n.requestId,
+    actorName: n.actorName,
+  });
+
   return (
-    <div style={{ padding: "var(--space-6)" }}>
-      <h1 className="text-[22px] font-bold text-foreground">Inbox</h1>
-      <p className="text-[13px] text-muted-foreground/60 mt-2">
-        Notifications and updates will appear here.
-      </p>
-      <div
-        className="mt-10 text-center text-[13px] text-muted-foreground/60 border border-dashed rounded-xl px-6 py-12"
-      >
-        All clear. Nothing needs your attention right now.
-      </div>
-    </div>
+    <InboxClient
+      activeNotifications={activeNotifs.map(serialize)}
+      archivedNotifications={archivedNotifs.map(serialize)}
+      unreadCount={unreadCount}
+    />
   );
 }

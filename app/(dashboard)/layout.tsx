@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
-import { profiles, requests, organizations, publishedViews } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { profiles, requests, organizations, publishedViews, notifications } from "@/db/schema";
+import { eq, and, sql, isNull, lte, or } from "drizzle-orm";
 import { RequestsProvider } from "@/context/requests-context";
 import { GlobalShortcutsProvider } from "@/components/ui/global-shortcuts-provider";
 import { HotkeysProvider } from "@/components/shell/hotkeys-provider";
@@ -18,6 +18,7 @@ export default async function DashboardLayout({
 }) {
   let orgRequests: Request[] = [];
   let userPinnedViews: any[] = [];
+  let inboxUnreadCount = 0;
   let userId = "";
   let profileRole = "member";
   let isTestUser = false;
@@ -79,6 +80,24 @@ export default async function DashboardLayout({
               sql`${publishedViews.pinnedBy} @> ${JSON.stringify([user.id])}::jsonb`
             )
           );
+
+        // Inbox unread count
+        const now = new Date();
+        const [{ value }] = await db
+          .select({ value: sql<number>`count(*)::int` })
+          .from(notifications)
+          .where(
+            and(
+              eq(notifications.recipientId, user.id),
+              isNull(notifications.archivedAt),
+              isNull(notifications.readAt),
+              or(
+                isNull(notifications.snoozedUntil),
+                lte(notifications.snoozedUntil, now)
+              )
+            )
+          );
+        inboxUnreadCount = value;
       }
     }
   } catch {
@@ -106,6 +125,7 @@ export default async function DashboardLayout({
               ctaLabel: "Check it out",
               ctaHref: "/dashboard/ideas",
             }}
+            inboxUnreadCount={inboxUnreadCount}
             pinnedViews={userPinnedViews}
           />
           <main className="flex-1 min-w-0 overflow-y-auto">
