@@ -23,3 +23,4 @@ export * from "./cycles";
 export * from "./initiatives";
 export * from "./iterations";
 export * from "./published_views";
+export * from "./notifications";

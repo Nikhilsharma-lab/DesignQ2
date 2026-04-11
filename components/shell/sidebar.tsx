@@ -60,6 +60,7 @@ interface Props {
   orgName: string;
   orgPlan: string;
   activeCount: number;
+  inboxUnreadCount?: number;
   banner?: SidebarBanner;
   pinnedViews?: PinnedView[];
 }
@@ -161,7 +162,7 @@ function SectionLabel({ label }: { label: string }) {
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
 
-export function Sidebar({ user, userRole, orgName, orgPlan, activeCount, banner, pinnedViews }: Props) {
+export function Sidebar({ user, userRole, orgName, orgPlan, activeCount, inboxUnreadCount, banner, pinnedViews }: Props) {
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
   const hasPinnedViews = pinnedViews && pinnedViews.length > 0;
@@ -244,7 +245,7 @@ export function Sidebar({ user, userRole, orgName, orgPlan, activeCount, banner,
         {/* Group 1: Personal */}
         <div className="py-0.5 px-1">
           <NavItemLink href="/dashboard" icon={Home} label="Home" />
-          <NavItemLink href="/dashboard/inbox" icon={Inbox} label="Inbox" badge={3} badgeStyle="accent" />
+          <NavItemLink href="/dashboard/inbox" icon={Inbox} label="Inbox" badge={inboxUnreadCount || undefined} badgeStyle="accent" />
         </div>
 
         <NavDivider />
