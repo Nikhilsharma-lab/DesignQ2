@@ -4,6 +4,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTheme } from "next-themes";
 import { X } from "lucide-react";
 import {
   Home,
@@ -19,6 +20,8 @@ import {
   Zap,
   FolderOpen,
   Users,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { NotificationsBell } from "@/components/notifications/notifications-bell";
@@ -160,6 +163,7 @@ function SectionLabel({ label }: { label: string }) {
 
 export function Sidebar({ user, userRole, orgName, orgPlan, activeCount, banner, pinnedViews }: Props) {
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const { resolvedTheme, setTheme } = useTheme();
   const hasPinnedViews = pinnedViews && pinnedViews.length > 0;
 
   return (
@@ -350,6 +354,14 @@ export function Sidebar({ user, userRole, orgName, orgPlan, activeCount, banner,
           </div>
           <div className="flex gap-1 items-center">
             <NotificationsBell userRole={userRole} />
+            <button
+              onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+              className="p-1 rounded opacity-40 hover:opacity-70 hover:bg-accent transition-all"
+              style={{ background: "none", border: "none", cursor: "pointer" }}
+              aria-label="Toggle theme"
+            >
+              {resolvedTheme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+            </button>
             <Link
               href="/settings"
               className="p-1 rounded opacity-40 hover:opacity-70 hover:bg-accent transition-all"

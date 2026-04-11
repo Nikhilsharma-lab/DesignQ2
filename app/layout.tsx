@@ -4,6 +4,7 @@ import './globals.css'
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import { cn } from "@/lib/utils";
+import { ThemeProvider } from "next-themes";
 
 const sans = GeistSans;
 const mono = GeistMono;
@@ -19,8 +20,13 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={cn(sans.variable, mono.variable, "font-mono")}>
-      <body>{children}<SpeedInsights /></body>
+    <html lang="en" suppressHydrationWarning className={cn(sans.variable, mono.variable, "font-mono")}>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+          <SpeedInsights />
+        </ThemeProvider>
+      </body>
     </html>
   )
 }
