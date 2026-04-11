@@ -76,12 +76,17 @@ export default async function RequestDetailPage({
   if (!request || request.orgId !== profile.orgId) notFound();
 
   // Fetch impact record for variance display in track phase
-  const [impactRecord] = request.phase === "track"
-    ? await db.select().from(impactRecords).where(eq(impactRecords.requestId, id))
-    : [undefined];
-  const initialVariancePercent = impactRecord?.variancePercent
-    ? parseFloat(impactRecord.variancePercent as string)
-    : null;
+  let initialVariancePercent: number | null = null;
+  if (request.phase === "track") {
+    try {
+      const [impactRecord] = await db.select().from(impactRecords).where(eq(impactRecords.requestId, id));
+      initialVariancePercent = impactRecord?.variancePercent
+        ? parseFloat(impactRecord.variancePercent as string)
+        : null;
+    } catch {
+      // impact record query failed silently
+    }
+  }
 
   // Figma connection check
   let isConnected = false;
@@ -128,9 +133,14 @@ export default async function RequestDetailPage({
     }
   }
 
-  const project = request.projectId
-    ? await db.select().from(projects).where(eq(projects.id, request.projectId)).then(([p]) => p ?? null)
-    : null;
+  let project: (typeof projects.$inferSelect) | null = null;
+  try {
+    project = request.projectId
+      ? await db.select().from(projects).where(eq(projects.id, request.projectId)).then(([p]) => p ?? null)
+      : null;
+  } catch {
+    // project query failed silently
+  }
 
   /* ---- secondary queries (each wrapped) ---- */
   let requesterName = "Unknown";
