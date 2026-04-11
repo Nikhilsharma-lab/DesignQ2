@@ -23,7 +23,75 @@ export function MorningBriefingCard({ brief, alertCount = 0 }: Props) {
   const [expanded, setExpanded] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
-  if (!brief || brief.dismissedAt || dismissed) return null;
+  async function handleGenerate() {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await fetch("/api/morning-briefing", { method: "POST" });
+      window.location.reload();
+    } catch {
+      setRefreshing(false);
+    }
+  }
+
+  // No briefing yet — show a placeholder so the feature is discoverable
+  if (!brief || brief.dismissedAt || dismissed) {
+    if (brief?.dismissedAt || dismissed) return null;
+    return (
+      <div
+        style={{
+          borderBottom: "1px solid hsl(var(--border))",
+          background: "hsl(var(--card))",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "0 20px",
+          height: 36,
+        }}
+      >
+        <span
+          aria-hidden
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "hsl(var(--border))",
+            flexShrink: 0,
+          }}
+        />
+        <span
+          style={{
+            fontFamily: "'Geist', sans-serif",
+            fontSize: 12,
+            fontWeight: 600,
+            color: "hsl(var(--muted-foreground) / 0.5)",
+          }}
+        >
+          Morning Briefing
+        </span>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={refreshing}
+          style={{
+            height: 20,
+            padding: "0 8px",
+            borderRadius: 4,
+            border: "1px solid hsl(var(--border))",
+            background: "transparent",
+            color: "hsl(var(--muted-foreground))",
+            fontFamily: "'Geist Mono', monospace",
+            fontSize: 10,
+            fontWeight: 500,
+            cursor: refreshing ? "not-allowed" : "pointer",
+            opacity: refreshing ? 0.5 : 1,
+          }}
+        >
+          {refreshing ? "Generating…" : "Generate"}
+        </button>
+      </div>
+    );
+  }
 
   const content = brief.content;
   const today = new Date().toLocaleDateString("en-US", {
@@ -49,14 +117,7 @@ export function MorningBriefingCard({ brief, alertCount = 0 }: Props) {
 
   async function handleRefresh(e: React.MouseEvent) {
     e.stopPropagation();
-    if (refreshing) return;
-    setRefreshing(true);
-    try {
-      await fetch("/api/morning-briefing", { method: "POST" });
-      window.location.reload();
-    } catch {
-      setRefreshing(false);
-    }
+    handleGenerate();
   }
 
   function toggle() {
