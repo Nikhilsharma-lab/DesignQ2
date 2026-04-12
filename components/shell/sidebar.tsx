@@ -1,7 +1,7 @@
 // components/shell/sidebar.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
@@ -119,6 +119,8 @@ export function Sidebar({
   const pathname = usePathname();
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   const hasPinnedViews = pinnedViews && pinnedViews.length > 0;
 
   function isActive(href: string) {
@@ -350,7 +352,7 @@ export function Sidebar({
             size="icon-xs"
             onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
           >
-            {resolvedTheme === "dark" ? (
+            {mounted && resolvedTheme === "dark" ? (
               <Sun className="size-3.5" />
             ) : (
               <Moon className="size-3.5" />
