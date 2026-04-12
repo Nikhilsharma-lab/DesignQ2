@@ -635,6 +635,19 @@ npm run start
 
 **Last updated: April 7, 2026 — synced with CHANGELOG through PR #13**
 
+## Testing
+
+- Run tests: `npm test`
+- Test directory: `test/` (unit + integration), `e2e/` (Playwright)
+- See TESTING.md for full conventions
+
+Test expectations:
+- 100% coverage is the goal — tests make vibe coding safe
+- When writing new functions, write a corresponding test
+- When fixing a bug, write a regression test that would have caught it
+- When adding a conditional (if/else, switch), test both paths
+- Never commit code that makes existing tests fail
+
 ## Skill routing
 
 When the user's request matches an available skill, ALWAYS invoke it using the Skill
