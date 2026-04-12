@@ -13,8 +13,9 @@ import { InitiativeDetail } from "@/components/initiatives/initiative-detail";
 export default async function InitiativeDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
+  const { id } = await params;
   const supabase = await createClient();
   const {
     data: { user },
@@ -32,7 +33,7 @@ export default async function InitiativeDetailPage({
     .from(initiatives)
     .where(
       and(
-        eq(initiatives.id, params.id),
+        eq(initiatives.id, id),
         eq(initiatives.orgId, profile.orgId)
       )
     );
