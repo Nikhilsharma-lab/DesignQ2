@@ -19,6 +19,7 @@ import {
   Send,
   Check,
   ChevronDown,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +47,7 @@ interface ActionPanelProps {
   notification: InboxNotification;
   onArchive: (id: string) => void;
   onToggleRead: (id: string) => void;
+  onClose: () => void;
 }
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -449,7 +451,7 @@ function GenericPanel({ notification, onArchive }: { notification: InboxNotifica
 
 // ── Main Action Panel ───────────────────────────────────────────────────────
 
-export function InboxActionPanel({ notification, onArchive, onToggleRead }: ActionPanelProps) {
+export function InboxActionPanel({ notification, onArchive, onToggleRead, onClose }: ActionPanelProps) {
   const config = typeConfig[notification.type] || { icon: Bell, color: "var(--notif-project-update)", label: notification.type };
   const Icon = config.icon;
   const isUnread = !notification.readAt;
@@ -470,6 +472,15 @@ export function InboxActionPanel({ notification, onArchive, onToggleRead }: Acti
               {notification.title}
             </h2>
           </div>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={onClose}
+            className="shrink-0 text-muted-foreground"
+            title="Close panel (Esc)"
+          >
+            <X size={16} />
+          </Button>
         </div>
       </div>
 

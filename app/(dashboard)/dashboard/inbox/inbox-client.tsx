@@ -381,7 +381,7 @@ export function InboxClient({
   return (
     <div className="flex-1 flex min-h-0 gap-4 px-4 pb-4">
       {/* ── Left: Notification List ─────────────────────────────── */}
-      <div className={`flex flex-col overflow-y-auto py-2 ${selectedNotif ? "w-[440px] shrink-0" : "flex-1 max-w-2xl"}`}>
+      <div className={`flex flex-col overflow-y-auto py-2 ${selectedNotif ? "w-[440px] shrink-0" : "flex-1"}`}>
         {/* Header */}
         <div className="flex items-center justify-between mb-5 px-2">
           <h1 className="text-lg font-bold text-foreground">Inbox</h1>
@@ -586,6 +586,7 @@ export function InboxClient({
               setSelectedNotifId(null);
             }}
             onToggleRead={toggleRead}
+            onClose={() => setSelectedNotifId(null)}
           />
         </div>
       )}
