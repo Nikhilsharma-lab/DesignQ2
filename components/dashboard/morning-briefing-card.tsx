@@ -145,6 +145,11 @@ export function MorningBriefingCard({ brief, alertCount = 0 }: Props) {
               · Generated at {generatedTime}
             </span>
           )}
+          {!expanded && content.oneThing && (
+            <span className="text-[10px] text-muted-foreground/60 truncate max-w-[300px] hidden sm:inline">
+              — {content.oneThing}
+            </span>
+          )}
         </div>
 
         {/* Right: alerts + chevron + dismiss */}

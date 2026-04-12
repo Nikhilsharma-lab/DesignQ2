@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { db } from "@/db";
@@ -11,73 +10,28 @@ import {
   proactiveAlerts,
   validationSignoffs,
 } from "@/db/schema";
-import { eq, inArray, sql, and, isNull, gte, notInArray } from "drizzle-orm";
+import { eq, inArray, sql, and, isNull, gte } from "drizzle-orm";
 import { RealtimeDashboard } from "@/components/realtime/realtime-dashboard";
 import { MorningBriefingCard } from "@/components/dashboard/morning-briefing-card";
 import { AlertsSection } from "@/components/dashboard/alerts-section";
+import { PipelineSummary } from "@/components/dashboard/pipeline-summary";
+import {
+  RichRequestCard,
+  MediumRequestCard,
+  CompactRequestRow,
+} from "@/components/dashboard/request-card";
 import { buildFocusSections } from "@/lib/focus-ordering";
-import { getActiveStageLabel, getPhaseLabel } from "@/lib/workflow";
 import { Badge } from "@/components/ui/badge";
+import { SectionLabel } from "@/components/ui/section-label";
 import type { Request } from "@/db/schema";
 
-// ── Priority badge helpers ──────────────────────────────────────────────────
+// ── Greeting helper ────────────────────────────────────────────────────────
 
-function PriorityBadge({ priority }: { priority: string | null }) {
-  if (!priority) return null;
-  return (
-    <Badge
-      variant="outline"
-      className="font-mono text-[10px] font-bold uppercase tracking-wide shrink-0 border-transparent"
-      style={{
-        background: `var(--priority-${priority}-bg)`,
-        color: `var(--priority-${priority}-text)`,
-      }}
-    >
-      {priority.toUpperCase()}
-    </Badge>
-  );
-}
-
-// ── Request card ────────────────────────────────────────────────────────────
-
-function RequestCard({
-  request,
-  firstAssigneeName,
-}: {
-  request: Request;
-  firstAssigneeName: string | undefined;
-}) {
-  const phaseLabel = request.phase ? getPhaseLabel(request.phase) : null;
-  const stageLabel = getActiveStageLabel(request);
-
-  return (
-    <Link
-      href={`/dashboard/requests?dock=${request.id}`}
-      className="flex items-center gap-3 px-5 py-2.5 no-underline transition-colors border-b hover:bg-muted"
-    >
-      {/* Title */}
-      <span className="flex-1 text-sm font-medium truncate text-foreground">
-        {request.title}
-      </span>
-
-      {/* Phase · Stage */}
-      {phaseLabel && (
-        <span className="font-mono text-[10px] whitespace-nowrap shrink-0 text-muted-foreground/60">
-          {phaseLabel} · {stageLabel}
-        </span>
-      )}
-
-      {/* Priority badge */}
-      <PriorityBadge priority={request.priority} />
-
-      {/* First assignee */}
-      {firstAssigneeName && (
-        <span className="font-mono text-[10px] whitespace-nowrap shrink-0 text-muted-foreground/60">
-          {firstAssigneeName}
-        </span>
-      )}
-    </Link>
-  );
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
 }
 
 // ── Focus section ───────────────────────────────────────────────────────────
@@ -95,33 +49,65 @@ function FocusSectionBlock({
   sectionRequests: Request[];
   assigneesByRequest: Record<string, string[]>;
 }) {
+  const isCompleted = sectionKey === "completed";
+
   return (
-    <section aria-label={label} className="mb-6">
+    <section aria-label={label} className={isCompleted ? "opacity-60" : ""}>
       {/* Section header */}
-      <div className="flex items-center gap-2 px-5 py-1.5 border-b">
+      <div className="flex items-center gap-2 mb-3">
         <span
           aria-hidden
-          className="w-[7px] h-[7px] rounded-full shrink-0"
+          className="w-2 h-2 rounded-full shrink-0"
           style={{ background: color }}
         />
-        <span className="font-mono text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
-          {label}
-        </span>
-        <span className="font-mono text-[10px] text-muted-foreground/60">
+        <SectionLabel className="mb-0">{label}</SectionLabel>
+        <Badge
+          variant="outline"
+          size="sm"
+          className="font-mono text-muted-foreground/50"
+        >
           {sectionRequests.length}
-        </span>
+        </Badge>
       </div>
 
-      {/* Request cards */}
-      <div>
-        {sectionRequests.map((r) => (
-          <RequestCard
-            key={r.id}
-            request={r}
-            firstAssigneeName={assigneesByRequest[r.id]?.[0]}
-          />
-        ))}
-      </div>
+      {/* Tier: Rich cards for attention */}
+      {sectionKey === "attention" && (
+        <div className="space-y-3">
+          {sectionRequests.map((r) => (
+            <RichRequestCard
+              key={r.id}
+              request={r}
+              firstAssigneeName={assigneesByRequest[r.id]?.[0]}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Tier: Medium cards in grid for active work */}
+      {sectionKey === "active" && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {sectionRequests.map((r) => (
+            <MediumRequestCard
+              key={r.id}
+              request={r}
+              firstAssigneeName={assigneesByRequest[r.id]?.[0]}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Tier: Compact rows for recent / completed */}
+      {(sectionKey === "recent" || sectionKey === "completed") && (
+        <div className="rounded-lg border bg-card divide-y">
+          {sectionRequests.map((r) => (
+            <CompactRequestRow
+              key={r.id}
+              request={r}
+              firstAssigneeName={assigneesByRequest[r.id]?.[0]}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -140,6 +126,8 @@ export default async function DashboardPage() {
     .from(profiles)
     .where(eq(profiles.id, user.id));
   if (!profile) redirect("/signup");
+
+  const firstName = profile.fullName?.split(" ")[0] ?? "there";
 
   // Morning briefing
   const todayString = new Date().toISOString().slice(0, 10);
@@ -259,47 +247,64 @@ export default async function DashboardPage() {
 
   const isEmpty = focusSections.length === 0;
 
+  const todayFormatted = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
   return (
     <>
       <RealtimeDashboard orgId={profile.orgId} />
 
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center h-10 px-5 shrink-0 border-b bg-card">
+      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b bg-card">
         <span className="text-sm font-semibold tracking-tight text-foreground">
-          Home
+          {getGreeting()}, {firstName}
+        </span>
+        <span className="text-xs text-muted-foreground/60 font-mono">
+          {todayFormatted}
         </span>
       </div>
 
-      {/* ── Morning briefing ─────────────────────────────────────────────── */}
-      <MorningBriefingCard brief={briefForCard} alertCount={inlineAlerts.length} />
-
-      {/* ── Alerts ──────────────────────────────────────────────────────── */}
-      <div className="px-5 pt-3">
-        <AlertsSection alerts={inlineAlerts} />
-      </div>
-
-      {/* ── Focus sections ──────────────────────────────────────────────── */}
+      {/* ── Scrollable content ──────────────────────────────────────────── */}
       <div className="flex-1 overflow-y-auto">
-        {isEmpty ? (
-          <div className="flex items-center justify-center px-5 py-20">
-            <p className="text-sm text-center max-w-xs leading-relaxed text-muted-foreground/60">
-              You&apos;re clear. Time to think, learn, or help a teammate.
-            </p>
-          </div>
-        ) : (
-          <div className="pt-4">
-            {focusSections.map((section) => (
-              <FocusSectionBlock
-                key={section.key}
-                sectionKey={section.key}
-                label={section.label}
-                color={section.color}
-                sectionRequests={section.requests}
-                assigneesByRequest={assigneesByRequest}
-              />
-            ))}
-          </div>
-        )}
+        <div className="max-w-4xl mx-auto px-5 py-6 space-y-8">
+          {/* Pipeline summary */}
+          <PipelineSummary allRequests={allRequests} />
+
+          {/* Morning briefing */}
+          <MorningBriefingCard
+            brief={briefForCard}
+            alertCount={inlineAlerts.length}
+          />
+
+          {/* Alerts */}
+          <AlertsSection alerts={inlineAlerts} />
+
+          {/* Focus sections */}
+          {isEmpty ? (
+            <div className="flex items-center justify-center px-5 py-20">
+              <p className="text-sm text-center max-w-xs leading-relaxed text-muted-foreground/60">
+                You&apos;re clear. Time to think, learn, or help a teammate.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-8">
+              {focusSections.map((section) => (
+                <FocusSectionBlock
+                  key={section.key}
+                  sectionKey={section.key}
+                  label={section.label}
+                  color={section.color}
+                  sectionRequests={section.requests}
+                  assigneesByRequest={assigneesByRequest}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
