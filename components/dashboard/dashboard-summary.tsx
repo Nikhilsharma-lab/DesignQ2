@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
 
 type SummaryTab = "pipeline" | "team" | "priority";

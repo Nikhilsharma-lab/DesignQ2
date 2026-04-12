@@ -23,7 +23,7 @@ import { DashboardSummary } from "@/components/dashboard/dashboard-summary";
 import { buildFocusSections } from "@/lib/focus-ordering";
 import { Badge } from "@/components/ui/badge";
 import { SectionLabel } from "@/components/ui/section-label";
-import type { Request, Phase } from "@/db/schema";
+import type { Request } from "@/db/schema";
 
 // ── Greeting helper ────────────────────────────────────────────────────────
 
