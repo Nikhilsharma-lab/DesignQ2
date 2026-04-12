@@ -155,14 +155,14 @@ function SignoffRequestedPanel({ notification, onArchive }: { notification: Inbo
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">Review and submit your sign-off for this request.</p>
 
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
         {(["approved", "approved_with_conditions", "rejected"] as const).map((d) => (
           <Button
             key={d}
             variant="outline"
-            size="lg"
+            size="sm"
             onClick={() => setDecision(decision === d ? null : d)}
-            className={`justify-start text-sm rounded-xl ${
+            className={`text-sm ${
               decision === d
                 ? d === "approved"
                   ? "bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/15"
@@ -199,8 +199,7 @@ function SignoffRequestedPanel({ notification, onArchive }: { notification: Inbo
           onClick={handleSubmit}
           disabled={submitting || (decision === "approved_with_conditions" && !conditions.trim())}
           variant={decision === "rejected" ? "destructive" : "default"}
-          size="lg"
-          className="w-full"
+          size="default"
         >
           {submitting ? "Submitting..." : "Submit sign-off"}
         </Button>
