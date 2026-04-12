@@ -18,13 +18,13 @@ import {
   ExternalLink,
   Send,
   Check,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Separator } from "@/components/ui/separator";
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -74,6 +74,15 @@ function formatTime(dateStr: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 const typeConfig: Record<string, { icon: typeof Bell; color: string; label: string }> = {
   assigned: { icon: UserPlus, color: "var(--notif-assigned)", label: "Assignment" },
   comment: { icon: MessageSquare, color: "var(--notif-comment)", label: "Comment" },
@@ -89,6 +98,17 @@ const typeConfig: Record<string, { icon: typeof Bell; color: string; label: stri
   nudge: { icon: Bell, color: "var(--notif-nudge)", label: "Nudge" },
   project_update: { icon: FolderOpen, color: "var(--notif-project-update)", label: "Project Update" },
 };
+
+// ── Property Row ───────────────────────────────────────────────────────────
+
+function PropertyRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <span className="text-sm text-muted-foreground">{label}</span>
+      <div className="flex items-center gap-2 text-sm text-foreground">{children}</div>
+    </div>
+  );
+}
 
 // ── Sub-panels ──────────────────────────────────────────────────────────────
 
@@ -142,7 +162,7 @@ function SignoffRequestedPanel({ notification, onArchive }: { notification: Inbo
             variant="outline"
             size="lg"
             onClick={() => setDecision(decision === d ? null : d)}
-            className={`justify-start text-sm ${
+            className={`justify-start text-sm rounded-xl ${
               decision === d
                 ? d === "approved"
                   ? "bg-green-500/10 border-green-500/30 text-green-600 hover:bg-green-500/15"
@@ -223,7 +243,7 @@ function CommentPanel({ notification, onArchive }: { notification: InboxNotifica
     <div className="space-y-4">
       {/* Original comment */}
       {notification.body && (
-        <div className="bg-muted rounded-xl p-3">
+        <div className="bg-muted rounded-xl p-3.5">
           <div className="flex items-center gap-2 mb-2">
             <Avatar size="sm">
               <AvatarFallback className="text-[9px]">
@@ -328,9 +348,9 @@ function NudgePanel({ notification, onArchive }: { notification: InboxNotificati
   const [isPending, startTransition] = useTransition();
 
   const responses = [
-    { key: "blocked", label: "I'm blocked", icon: "🚧", desc: "Something is preventing progress" },
-    { key: "thinking", label: "Still thinking", icon: "💭", desc: "Working through the problem" },
-    { key: "update", label: "Update now", icon: "✏️", desc: "I'll post a reflection" },
+    { key: "blocked", label: "I'm blocked", icon: "\u{1F6A7}", desc: "Something is preventing progress" },
+    { key: "thinking", label: "Still thinking", icon: "\u{1F4AD}", desc: "Working through the problem" },
+    { key: "update", label: "Update now", icon: "\u270F\uFE0F", desc: "I'll post a reflection" },
   ];
 
   function handleRespond(responseKey: string) {
@@ -376,7 +396,7 @@ function NudgePanel({ notification, onArchive }: { notification: InboxNotificati
             size="lg"
             onClick={() => handleRespond(r.key)}
             disabled={isPending}
-            className={`justify-start h-auto py-3 ${
+            className={`justify-start h-auto py-3 rounded-xl ${
               selectedResponse === r.key ? "bg-accent border-primary/30" : ""
             }`}
           >
@@ -415,7 +435,7 @@ function GenericPanel({ notification, onArchive }: { notification: InboxNotifica
   return (
     <div className="space-y-4">
       {notification.body && (
-        <div className="bg-muted rounded-xl p-3">
+        <div className="bg-muted rounded-xl p-3.5">
           <p className="text-sm text-foreground/80 leading-relaxed">{notification.body}</p>
         </div>
       )}
@@ -436,27 +456,31 @@ export function InboxActionPanel({ notification, onArchive, onToggleRead }: Acti
   const isUnread = !notification.readAt;
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Header */}
-      <div className="px-5 py-4 shrink-0">
-        <div className="flex items-center gap-2.5 mb-3">
+    <div className="flex flex-col h-full overflow-y-auto">
+      {/* ── Title area ──────────────────────────────────────────── */}
+      <div className="px-5 pt-5 pb-4 shrink-0">
+        <div className="flex items-start gap-3 mb-4">
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: `color-mix(in srgb, ${config.color} 10%, transparent)` }}
+            className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+            style={{ background: `color-mix(in srgb, ${config.color} 12%, transparent)` }}
           >
-            <Icon size={16} style={{ color: config.color }} />
+            <Icon size={18} style={{ color: config.color }} />
           </div>
-          <div className="flex-1 min-w-0">
-            <span
-              className="text-[10px] font-semibold uppercase tracking-wider"
-              style={{ color: config.color }}
-            >
-              {config.label}
-            </span>
-            <p className="text-xs text-muted-foreground/60 mt-0.5 font-mono">{formatTime(notification.createdAt)}</p>
+          <div className="flex-1 min-w-0 pt-0.5">
+            <h2 className="text-base font-semibold text-foreground leading-snug">
+              {notification.title}
+            </h2>
           </div>
+        </div>
+      </div>
 
-          {/* Quick actions */}
+      {/* ── Properties section ──────────────────────────────────── */}
+      <div className="mx-4 rounded-xl bg-muted/40 px-4 py-1 shrink-0">
+        <div className="flex items-center justify-between py-2.5">
+          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+            Properties
+            <ChevronDown size={12} className="text-muted-foreground/50" />
+          </span>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -482,30 +506,58 @@ export function InboxActionPanel({ notification, onArchive, onToggleRead }: Acti
           </div>
         </div>
 
-        {/* Title */}
-        <h2 className="text-sm font-semibold text-foreground leading-snug">{notification.title}</h2>
+        <PropertyRow label="Type">
+          <div
+            className="w-2 h-2 rounded-full shrink-0"
+            style={{ background: config.color }}
+          />
+          <span
+            className="text-xs font-medium"
+            style={{ color: config.color }}
+          >
+            {config.label}
+          </span>
+        </PropertyRow>
 
-        {/* Actor */}
         {notification.actorName && (
-          <div className="flex items-center gap-2 mt-2.5">
+          <PropertyRow label="From">
             <Avatar size="sm">
               <AvatarFallback className="text-[9px]">
                 {getInitials(notification.actorName)}
               </AvatarFallback>
             </Avatar>
-            <span className="text-xs text-muted-foreground">{notification.actorName}</span>
-          </div>
+            <span className="text-sm">{notification.actorName}</span>
+          </PropertyRow>
         )}
+
+        <PropertyRow label="Time">
+          <span className="text-sm text-muted-foreground">{formatDate(notification.createdAt)}</span>
+        </PropertyRow>
+
+        <PropertyRow label="Status">
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-md ${
+            isUnread
+              ? "bg-primary/10 text-primary"
+              : notification.archivedAt
+              ? "bg-green-500/10 text-green-600"
+              : "bg-muted text-muted-foreground"
+          }`}>
+            {isUnread ? "Unread" : notification.archivedAt ? "Done" : "Read"}
+          </span>
+        </PropertyRow>
       </div>
 
-      {/* Content -- scrollable */}
-      <div className="flex-1 overflow-y-auto px-5 py-4">
+      {/* ── Content section ─────────────────────────────────────── */}
+      <div className="flex-1 px-5 py-5">
         {renderActionContent(notification, onArchive)}
       </div>
 
-      {/* Footer -- view full request */}
+      {/* ── Footer link ─────────────────────────────────────────── */}
       <div className="px-5 py-3 shrink-0">
-        <Link href={notification.url} className="flex items-center justify-center gap-1.5 w-full h-7 rounded-md text-xs text-muted-foreground hover:bg-muted transition-colors">
+        <Link
+          href={notification.url}
+          className="flex items-center justify-center gap-1.5 w-full h-8 rounded-lg text-xs text-muted-foreground hover:bg-muted transition-colors"
+        >
           <ExternalLink size={12} />
           View full {notification.requestId ? "request" : "page"}
         </Link>

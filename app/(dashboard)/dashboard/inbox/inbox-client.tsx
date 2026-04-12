@@ -27,7 +27,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
 import { InboxActionPanel } from "./inbox-action-panel";
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -380,11 +379,11 @@ export function InboxClient({
   }, [currentList, selectedNotifId]);
 
   return (
-    <div className="flex-1 flex min-h-0">
+    <div className="flex-1 flex min-h-0 gap-4 px-4 pb-4">
       {/* ── Left: Notification List ─────────────────────────────── */}
-      <div className={`flex flex-col overflow-y-auto px-6 py-6 ${selectedNotif ? "w-[420px] shrink-0" : "flex-1 max-w-2xl"}`}>
+      <div className={`flex flex-col overflow-y-auto py-2 ${selectedNotif ? "w-[440px] shrink-0" : "flex-1 max-w-2xl"}`}>
         {/* Header */}
-        <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center justify-between mb-5 px-2">
           <h1 className="text-lg font-bold text-foreground">Inbox</h1>
           {tab === "inbox" && active.length > 0 && (
             <Button variant="ghost" size="xs" onClick={archiveAll}>
@@ -394,25 +393,27 @@ export function InboxClient({
         </div>
 
         {/* Tabs */}
-        <Tabs
-          value={tab}
-          onValueChange={(v) => { setTab(v as "inbox" | "done"); setSelectedIndex(0); }}
-          className="mb-5"
-        >
-          <TabsList variant="line">
-            <TabsTrigger value="inbox">
-              Inbox
-              {unreadCount > 0 && (
-                <Badge className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">{unreadCount}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="done">Done</TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <div className="px-2">
+          <Tabs
+            value={tab}
+            onValueChange={(v) => { setTab(v as "inbox" | "done"); setSelectedIndex(0); }}
+            className="mb-5"
+          >
+            <TabsList variant="line">
+              <TabsTrigger value="inbox">
+                Inbox
+                {unreadCount > 0 && (
+                  <Badge className="ml-1.5 h-4 min-w-4 px-1 text-[10px]">{unreadCount}</Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="done">Done</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
 
         {/* Keyboard hint */}
         {currentList.length > 0 && (
-          <div className="flex items-center gap-3 mb-4 text-[10px] text-muted-foreground/50">
+          <div className="flex items-center gap-3 mb-4 px-3 text-[10px] text-muted-foreground/50">
             <span><kbd className="px-1.5 py-0.5 rounded-md bg-muted text-[9px] font-mono">J</kbd><kbd className="px-1.5 py-0.5 rounded-md bg-muted text-[9px] font-mono ml-0.5">K</kbd> navigate</span>
             <span><kbd className="px-1.5 py-0.5 rounded-md bg-muted text-[9px] font-mono">E</kbd> done</span>
             <span><kbd className="px-1.5 py-0.5 rounded-md bg-muted text-[9px] font-mono">U</kbd> read</span>
@@ -440,7 +441,7 @@ export function InboxClient({
             {indexedGroups.map((group) => (
               <div key={group.label}>
                 {/* Time group header */}
-                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 px-1">
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 px-3">
                   {group.label}
                 </div>
 
@@ -457,9 +458,9 @@ export function InboxClient({
                         key={notif.id}
                         data-index={notif._flatIndex}
                         onClick={() => selectNotification(notif)}
-                        className={`group flex items-start gap-3 px-3 py-3 rounded-lg cursor-pointer transition-all ${
+                        className={`group flex items-start gap-3 px-3 py-3 rounded-xl cursor-pointer transition-all ${
                           notif.id === selectedNotifId
-                            ? "bg-accent ring-1 ring-primary/30"
+                            ? "bg-accent"
                             : isSelected
                             ? "bg-accent/60"
                             : "hover:bg-accent/50"
@@ -477,7 +478,7 @@ export function InboxClient({
 
                         {/* Type icon */}
                         <div
-                          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5"
                           style={{ background: `color-mix(in srgb, ${color} 10%, transparent)` }}
                         >
                           <Icon size={14} style={{ color }} />
@@ -537,7 +538,7 @@ export function InboxClient({
                               >
                                 <PopoverTrigger
                                   onClick={(e) => e.stopPropagation()}
-                                  className="inline-flex items-center justify-center size-5 rounded-sm text-muted-foreground hover:text-amber-500 hover:bg-muted transition-colors"
+                                  className="inline-flex items-center justify-center size-5 rounded-md text-muted-foreground hover:text-amber-500 hover:bg-muted transition-colors"
                                   title="Snooze (H)"
                                 >
                                   <Clock size={14} />
@@ -577,7 +578,7 @@ export function InboxClient({
 
       {/* ── Right: Action Panel ─────────────────────────────────── */}
       {selectedNotif && (
-        <div className="flex-1 min-w-[320px] bg-background">
+        <div className="flex-1 min-w-[340px] rounded-xl border bg-card overflow-hidden">
           <InboxActionPanel
             notification={selectedNotif}
             onArchive={(id) => {
