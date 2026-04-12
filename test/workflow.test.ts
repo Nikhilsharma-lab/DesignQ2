@@ -75,46 +75,45 @@ describe('nextDesignStage', () => {
 
 describe('phase detection helpers', () => {
   it('isPredesign uses phase when available', () => {
-    expect(isPredesign({ phase: 'predesign', stage: 'anything' })).toBe(true)
+    expect(isPredesign({ phase: 'predesign', stage: 'intake' })).toBe(true)
     expect(isPredesign({ phase: 'design', stage: 'intake' })).toBe(false)
   })
 
   it('isPredesign falls back to legacy stage when no phase', () => {
-    // @ts-expect-error testing legacy null phase
-    expect(isPredesign({ phase: null, stage: 'intake' })).toBe(true)
-    // @ts-expect-error testing legacy null phase
-    expect(isPredesign({ phase: null, stage: 'sense' })).toBe(false)
+    const nullPhase = null as unknown as 'predesign'
+    expect(isPredesign({ phase: nullPhase, stage: 'intake' })).toBe(true)
+    expect(isPredesign({ phase: nullPhase, stage: 'explore' })).toBe(false)
   })
 
   it('isDesign uses phase when available', () => {
-    expect(isDesign({ phase: 'design', stage: 'anything' })).toBe(true)
-    expect(isDesign({ phase: 'predesign', stage: 'sense' })).toBe(false)
+    expect(isDesign({ phase: 'design', stage: 'intake' })).toBe(true)
+    expect(isDesign({ phase: 'predesign', stage: 'intake' })).toBe(false)
   })
 
   it('isDev returns true for dev phase', () => {
-    expect(isDev({ phase: 'dev', stage: 'anything' })).toBe(true)
+    expect(isDev({ phase: 'dev', stage: 'build' })).toBe(true)
     expect(isDev({ phase: 'design', stage: 'build' })).toBe(false)
   })
 
   it('isTrack returns true for track phase', () => {
-    expect(isTrack({ phase: 'track', stage: 'anything' })).toBe(true)
+    expect(isTrack({ phase: 'track', stage: 'impact' })).toBe(true)
     expect(isTrack({ phase: 'dev', stage: 'impact' })).toBe(false)
   })
 })
 
 describe('getActiveStageLabel', () => {
   it('returns predesign sub-stage label', () => {
-    const req = { phase: 'predesign' as const, stage: 'anything', predesignStage: 'shape' as const, designStage: null, kanbanState: null, trackStage: null }
+    const req = { phase: 'predesign' as const, stage: 'intake' as const, predesignStage: 'shape' as const, designStage: null, kanbanState: null, trackStage: null }
     expect(getActiveStageLabel(req)).toBe('Shape')
   })
 
   it('defaults to intake when predesignStage is null', () => {
-    const req = { phase: 'predesign' as const, stage: 'anything', predesignStage: null, designStage: null, kanbanState: null, trackStage: null }
+    const req = { phase: 'predesign' as const, stage: 'intake' as const, predesignStage: null, designStage: null, kanbanState: null, trackStage: null }
     expect(getActiveStageLabel(req)).toBe('Intake')
   })
 
   it('returns design sub-stage label', () => {
-    const req = { phase: 'design' as const, stage: 'anything', predesignStage: null, designStage: 'diverge' as const, kanbanState: null, trackStage: null }
+    const req = { phase: 'design' as const, stage: 'intake' as const, predesignStage: null, designStage: 'diverge' as const, kanbanState: null, trackStage: null }
     expect(getActiveStageLabel(req)).toBe('Diverge')
   })
 })

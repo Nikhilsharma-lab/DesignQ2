@@ -1,7 +1,8 @@
 import { drizzle } from "drizzle-orm/postgres-js";
-import postgres, { type Sql, type TransactionSql } from "postgres";
+import postgres, { type Sql } from "postgres";
+import { sql as sqlt } from "drizzle-orm";
 import * as schema from "./schema";
-import { systemSql } from "./system";
+import { systemDb } from "./system";
 
 type LaneSchema = typeof schema;
 export type UserDb = ReturnType<typeof drizzle<LaneSchema>>;
@@ -12,12 +13,8 @@ interface SessionOptions {
   inviteToken?: string | null;
 }
 
-function createUserDb(sql: TransactionSql): UserDb {
-  return drizzle(sql as unknown as Sql, { schema });
-}
-
 // ⚠️  TRANSACTION CONSTRAINT: `withDbSession` wraps the entire callback in a
-// single Postgres transaction (via systemSql.begin). This means the DB connection
+// single Postgres transaction (via Drizzle's db.transaction()). The DB connection
 // is held open for the full duration of `fn`, including any awaited I/O.
 //
 // For routes that make external API calls (Claude, Figma, Resend, etc.),
@@ -27,16 +24,14 @@ export async function withDbSession<T>(
   options: SessionOptions,
   fn: (db: SessionDb) => Promise<T>,
 ): Promise<T> {
-  return systemSql.begin(async (sql) => {
-    const tx = sql as unknown as Sql;
-
+  return systemDb.transaction(async (tx) => {
     if (options.userId) {
-      await tx`select set_config('app.current_user_id', ${options.userId}, true)`;
+      await tx.execute(sqlt`select set_config('app.current_user_id', ${options.userId}, true)`);
     }
     if (options.inviteToken) {
-      await tx`select set_config('app.invite_token', ${options.inviteToken}, true)`;
+      await tx.execute(sqlt`select set_config('app.invite_token', ${options.inviteToken}, true)`);
     }
-    return fn(createUserDb(sql));
+    return fn(tx as unknown as SessionDb);
   }) as Promise<T>;
 }
 
