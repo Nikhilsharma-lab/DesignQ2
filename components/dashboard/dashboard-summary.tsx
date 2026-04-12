@@ -49,14 +49,14 @@ export function DashboardSummary({
   return (
     <div className="flex flex-col h-full">
       {/* Tabs */}
-      <div className="flex items-center gap-1 px-4 pt-4 pb-3">
+      <div className="flex items-center gap-1 px-4 pt-4 pb-2">
         {TABS.map((tab) => (
           // eslint-disable-next-line no-restricted-syntax -- tab button with custom styling
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
             className={cn(
-              "px-3 py-1 rounded-md text-xs font-medium transition-colors",
+              "px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
               activeTab === tab.key
                 ? "bg-accent text-accent-foreground"
                 : "text-muted-foreground hover:text-foreground hover:bg-accent/50"
@@ -66,8 +66,6 @@ export function DashboardSummary({
           </button>
         ))}
       </div>
-
-      <div className="border-t" />
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto px-4 py-3">
@@ -92,23 +90,19 @@ export function DashboardSummary({
             ))}
 
             {shippedThisWeek > 0 && (
-              <>
-                <div className="border-t my-2" />
-                <div className="flex items-center justify-between py-1.5 px-1">
-                  <span className="text-sm text-accent-success">
-                    Shipped this week
-                  </span>
-                  <span className="text-sm text-accent-success tabular-nums font-medium">
-                    {shippedThisWeek}
-                  </span>
-                </div>
-              </>
+              <div className="flex items-center justify-between py-1.5 px-1 mt-2">
+                <span className="text-sm text-accent-success">
+                  Shipped this week
+                </span>
+                <span className="text-sm text-accent-success tabular-nums font-medium">
+                  {shippedThisWeek}
+                </span>
+              </div>
             )}
 
-            <div className="border-t my-2" />
-            <div className="flex items-center justify-between py-1.5 px-1">
-              <span className="text-sm text-muted-foreground">Total</span>
-              <span className="text-sm text-muted-foreground tabular-nums">
+            <div className="flex items-center justify-between py-1.5 px-1 mt-2 pt-3">
+              <span className="text-xs text-muted-foreground/60">Total</span>
+              <span className="text-xs text-muted-foreground/60 tabular-nums">
                 {totalRequests}
               </span>
             </div>

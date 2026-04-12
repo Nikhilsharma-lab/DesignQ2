@@ -98,7 +98,7 @@ function FocusSectionBlock({
 
       {/* Tier: Compact rows for recent / completed */}
       {(sectionKey === "recent" || sectionKey === "completed") && (
-        <div className="rounded-lg border bg-card divide-y">
+        <div className="rounded-xl border bg-card overflow-hidden">
           {sectionRequests.map((r) => (
             <CompactRequestRow
               key={r.id}
@@ -305,7 +305,7 @@ export default async function DashboardPage() {
       <RealtimeDashboard orgId={profile.orgId} />
 
       {/* ── Toolbar ─────────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between h-12 px-5 shrink-0 border-b">
+      <div className="flex items-center justify-between h-12 px-5 shrink-0">
         <span className="text-sm font-semibold tracking-tight text-foreground">
           {getGreeting()}, {firstName}
         </span>
@@ -315,10 +315,10 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── 3-pane body ─────────────────────────────────────────────────── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden gap-4 px-4 pb-4">
         {/* ── Main content ────────────────────────────────────────────── */}
         <div className="flex-1 overflow-y-auto">
-          <div className="px-6 py-6 space-y-6">
+          <div className="py-2 space-y-6">
             {/* Morning briefing */}
             <MorningBriefingCard
               brief={briefForCard}
@@ -353,7 +353,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* ── Right summary panel ─────────────────────────────────────── */}
-        <aside className="hidden lg:flex w-[260px] shrink-0 border-l flex-col">
+        <aside className="hidden lg:flex w-[260px] shrink-0 flex-col rounded-xl border bg-card">
           <DashboardSummary
             phases={phases}
             priorities={priorityStats}
