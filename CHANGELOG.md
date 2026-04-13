@@ -7,6 +7,12 @@ All notable changes are documented here. Update this file with every PR before m
 
 ---
 
+## 2026-04-13
+
+### Changed
+- align codebase vocabulary to CLAUDE.md spec (PR #27)
+
+
 ## 2026-04-12
 
 ### Changed
