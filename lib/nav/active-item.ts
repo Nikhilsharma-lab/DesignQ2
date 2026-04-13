@@ -2,11 +2,11 @@
  * getActiveNavItem — determines which sidebar item to highlight.
  *
  * Rules from nav-spec section 6:
- * - A stream's canonical location is always {team} → Active streams
- * - Validation gate/cross-team views highlight on the list;
- *   click into a stream → highlight moves to team's Active streams
+ * - A request's canonical location is always {team} → Active requests
+ * - Prove/cross-team views highlight on the list;
+ *   click into a request → highlight moves to team's Active requests
  * - Inbox stays highlighted during triage flow
- * - Cross-team view stays visible (not highlighted) when viewing a stream from it
+ * - Cross-team view stays visible (not highlighted) when viewing a request from it
  */
 
 export type NavItemKey =
@@ -36,7 +36,7 @@ export function getActiveNavItem(
   if (pathname === "/dashboard/inbox" || pathname.startsWith("/dashboard/inbox/")) {
     return "inbox";
   }
-  if (pathname === "/dashboard/streams" || pathname === "/dashboard/streams/") {
+  if (pathname === "/dashboard/my-requests" || pathname === "/dashboard/my-requests/") {
     return "my_streams";
   }
   if (pathname.startsWith("/dashboard/drafts")) {
@@ -57,10 +57,10 @@ export function getActiveNavItem(
     return "cross_team_view";
   }
 
-  // ── Stream detail — canonical location is team → Active streams ���──────────
-  // URL: /dashboard/streams/:id (individual stream)
-  // When a stream is open, highlight its team's Active streams
-  if (pathname.match(/^\/dashboard\/streams\/[^/]+/) && streamContext) {
+  // ── Request detail — canonical location is team → Active requests ─────────
+  // URL: /dashboard/my-requests/:id (individual request)
+  // When a request is open, highlight its team's Active requests
+  if (pathname.match(/^\/dashboard\/my-requests\/[^/]+/) && streamContext) {
     return `team:${streamContext.teamSlug}:active_streams`;
   }
 

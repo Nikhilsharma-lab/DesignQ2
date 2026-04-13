@@ -1,10 +1,10 @@
-export default function MyStreamsPage() {
+export default function MyRequestsPage() {
   return (
     <div className="max-w-4xl mx-auto px-6 py-10 space-y-6">
       <div>
-        <h1 className="text-lg font-semibold text-foreground">My streams</h1>
+        <h1 className="text-lg font-semibold text-foreground">My requests</h1>
         <p className="text-xs text-muted-foreground/60 mt-1">
-          Streams you own or are assigned to.
+          Requests where you&apos;re the designer owner.
         </p>
       </div>
       <div className="rounded-xl border bg-card p-8 text-center">

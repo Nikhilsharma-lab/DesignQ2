@@ -17,7 +17,8 @@ export interface SidebarTeam {
 }
 
 export interface SidebarPersonal {
-  myStreams: number;
+  myRequests: number;
+  submittedByMe: number;
   drafts: number;
   inbox: number;
 }

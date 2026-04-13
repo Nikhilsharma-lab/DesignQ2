@@ -12,8 +12,8 @@ describe("getActiveNavItem", () => {
     expect(getActiveNavItem("/dashboard/inbox/msg-123")).toBe("inbox");
   });
 
-  it("my streams list", () => {
-    expect(getActiveNavItem("/dashboard/streams")).toBe("my_streams");
+  it("my requests list", () => {
+    expect(getActiveNavItem("/dashboard/my-requests")).toBe("my_streams");
   });
 
   it("drafts", () => {
@@ -42,26 +42,26 @@ describe("getActiveNavItem", () => {
     expect(getActiveNavItem("/dashboard/views/stalled")).toBe("cross_team_view");
   });
 
-  // ── Stream detail → canonical team location ───────────────────────────
+  // ── Request detail → canonical team location ──────────────────────────
 
-  it("stream detail with context → team active streams", () => {
+  it("request detail with context → team active requests", () => {
     expect(
-      getActiveNavItem("/dashboard/streams/stream-abc", {
+      getActiveNavItem("/dashboard/my-requests/req-abc", {
         teamSlug: "consumer-app",
       }),
     ).toBe("team:consumer-app:active_streams");
   });
 
-  it("stream detail from different team → that team's active streams", () => {
+  it("request detail from different team → that team's active requests", () => {
     expect(
-      getActiveNavItem("/dashboard/streams/stream-xyz", {
+      getActiveNavItem("/dashboard/my-requests/req-xyz", {
         teamSlug: "platform",
       }),
     ).toBe("team:platform:active_streams");
   });
 
-  it("stream detail WITHOUT context → falls back to my_streams", () => {
-    expect(getActiveNavItem("/dashboard/streams/stream-abc")).toBe("my_streams");
+  it("request detail WITHOUT context → falls back to my_streams", () => {
+    expect(getActiveNavItem("/dashboard/my-requests/req-abc")).toBe("my_streams");
   });
 
   // ── Team-scoped pages ─────────────────────────────────────────────────

@@ -23,7 +23,7 @@ function makeTeam(overrides: Partial<SidebarTeam> = {}): SidebarTeam {
 function makeData(overrides: Partial<SidebarData> = {}): SidebarData {
   return {
     workspace: { id: "ws-1", name: "Lane", slug: "lane", role: "member" },
-    personal: { inbox: 0, myStreams: 2, drafts: 0 },
+    personal: { inbox: 0, myRequests: 2, submittedByMe: 0, drafts: 0 },
     teams: [makeTeam()],
     user: { id: "u-1", fullName: "Test User", email: "test@lane.io" },
     ...overrides,
@@ -65,9 +65,9 @@ describe("deriveEffectiveRole", () => {
 // ── orderSidebarItems per role ──────────────────────────────────────────────
 
 describe("orderSidebarItems — Designer (member)", () => {
-  it("lands on My streams", () => {
+  it("lands on My requests", () => {
     const result = orderSidebarItems(makeData());
-    expect(result.landingPath).toBe("/dashboard/streams");
+    expect(result.landingPath).toBe("/dashboard/my-requests");
   });
 
   it("teams expanded by default (first 4)", () => {
@@ -184,6 +184,6 @@ describe("orderSidebarItems — edge cases", () => {
     });
     // member with no teams can't be pm (no team roles), so it's designer
     const result = orderSidebarItems(noTeams);
-    expect(result.landingPath).toBe("/dashboard/streams");
+    expect(result.landingPath).toBe("/dashboard/my-requests");
   });
 });

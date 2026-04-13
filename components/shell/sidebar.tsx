@@ -12,6 +12,8 @@ import {
   FileEdit,
   Bookmark,
   Lightbulb,
+  MessageSquare,
+  Send,
   Settings,
   LogOut,
   Search,
@@ -19,6 +21,7 @@ import {
   Sun,
   Moon,
   ChevronsUpDown,
+  Sparkles,
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 import { useSidebarData } from "@/hooks/use-sidebar-data";
@@ -39,6 +42,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,10 +71,12 @@ interface Props {
 const personalNav = [
   { href: "/dashboard", icon: Home, label: "Home" },
   { href: "/dashboard/inbox", icon: Inbox, label: "Inbox" },
-  { href: "/dashboard/streams", icon: Layers, label: "My streams" },
+  { href: "/dashboard/my-requests", icon: Layers, label: "My requests" },
+  { href: "/dashboard/submitted", icon: Send, label: "Submitted by me" },
   { href: "/dashboard/drafts", icon: FileEdit, label: "My drafts" },
   { href: "/dashboard/saved", icon: Bookmark, label: "Saved" },
-  { href: "/dashboard/ideas", icon: Lightbulb, label: "Idea board" },
+  { href: "/dashboard/reflections", icon: MessageSquare, label: "Reflections" },
+  { href: "/dashboard/ideas", icon: Lightbulb, label: "Ideas" },
 ] as const;
 
 // ── Sidebar ──────────────────────────────────────────────────────────────────
@@ -86,6 +92,7 @@ export function Sidebar({
   const pathname = usePathname();
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [showUpdates, setShowUpdates] = useState(false);
   useEffect(() => setMounted(true), []);
 
   // Fetch team data for Zone 3
@@ -130,7 +137,13 @@ export function Sidebar({
                 <DropdownMenuItem>
                   <Link href="/settings" className="flex items-center gap-2 w-full">
                     <Settings className="size-3.5" />
-                    Organization Settings
+                    Settings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href="/settings/members?invite=1" className="flex items-center gap-2 w-full">
+                    <UserPlus className="size-3.5" />
+                    Invite and manage members
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
@@ -173,9 +186,6 @@ export function Sidebar({
             <SidebarMenuButton className="text-muted-foreground">
               <Search className="size-4" />
               <span className="flex-1">Search...</span>
-              <kbd className="pointer-events-none h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground hidden sm:inline-flex">
-                ⌘K
-              </kbd>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -203,9 +213,14 @@ export function Sidebar({
                       <NavBadge tier={2} value={inboxUnreadCount} />
                     </SidebarMenuBadge>
                   ) : null}
-                  {item.label === "My streams" && sidebarData?.personal?.myStreams ? (
+                  {item.label === "My requests" && sidebarData?.personal?.myRequests ? (
                     <SidebarMenuBadge>
-                      <NavBadge tier={2} value={sidebarData.personal.myStreams} />
+                      <NavBadge tier={2} value={sidebarData.personal.myRequests} />
+                    </SidebarMenuBadge>
+                  ) : null}
+                  {item.label === "Submitted by me" && sidebarData?.personal?.submittedByMe ? (
+                    <SidebarMenuBadge>
+                      <NavBadge tier={2} value={sidebarData.personal.submittedByMe} />
                     </SidebarMenuBadge>
                   ) : null}
                 </SidebarMenuItem>
@@ -232,27 +247,25 @@ export function Sidebar({
       {/* ── Footer ─────────────────────────────────────────── */}
       <SidebarFooter>
         <SidebarSeparator />
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <Link href="/settings/members?invite=1" className="contents">
-              <SidebarMenuButton tooltip="Invite">
-                <UserPlus className="size-4" />
-                <span>Invite</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/settings" className="contents">
-              <SidebarMenuButton
-                isActive={pathname.startsWith("/settings")}
-                tooltip="Settings"
-              >
-                <Settings className="size-4" />
-                <span>Settings</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="px-3 py-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowUpdates((v) => !v)}
+            className="flex items-center gap-2 text-[11px] text-muted-foreground hover:text-sidebar-accent-foreground transition-colors w-full"
+          >
+            <Sparkles className="size-3.5" />
+            <span>What&apos;s new</span>
+          </Button>
+          {showUpdates && (
+            <div className="mt-2 rounded-lg border bg-popover p-3 text-popover-foreground shadow-md">
+              <p className="text-xs font-medium mb-1">Latest updates</p>
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                Turbopack enabled, query performance improved, dark mode refined.
+              </p>
+            </div>
+          )}
+        </div>
       </SidebarFooter>
     </ShadcnSidebar>
   );

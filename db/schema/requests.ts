@@ -65,10 +65,10 @@ export const predesignStageEnum = pgEnum("predesign_stage", [
 
 export const designStageEnum = pgEnum("design_stage", [
   "sense",
-  "explore",
-  "interrogate",
-  "validate",
-  "refine",
+  "frame",
+  "diverge",
+  "converge",
+  "prove",
 ]);
 
 export const kanbanStateEnum = pgEnum("kanban_state", [
@@ -182,7 +182,7 @@ export type Comment = typeof comments.$inferSelect;
 export type NewComment = typeof comments.$inferInsert;
 export type Phase = "predesign" | "design" | "dev" | "track";
 export type PredesignStage = "intake" | "context" | "shape" | "bet";
-export type DesignStage = "sense" | "explore" | "interrogate" | "validate" | "refine";
+export type DesignStage = "sense" | "frame" | "diverge" | "converge" | "prove";
 export type KanbanState = "todo" | "in_progress" | "in_review" | "qa" | "done";
 export type TrackStage = "measuring" | "complete";
 

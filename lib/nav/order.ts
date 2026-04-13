@@ -3,10 +3,10 @@
  * based on the user's effective role.
  *
  * From nav-spec section 3:
- * - Designer: lands on My streams, teams expanded, Active streams top
- * - PM: lands on Intake queue of primary team, Intake promoted
- * - Design Head (admin): lands on Weekly report, teams collapsed, Commitments promoted
- * - Guest: personal zone only, "Shared with me", lands on most recent stream
+ * - Designer: lands on My requests, teams expanded, Active requests top
+ * - PM: lands on Intake of primary team, Intake promoted
+ * - Design Head (admin): lands on Home, teams collapsed, Commitments promoted
+ * - Guest: personal zone only, "Shared with me", lands on most recent request
  */
 
 import type { SidebarData, SidebarTeam } from "./types";
@@ -115,7 +115,7 @@ export function orderSidebarItems(
     case "designer":
     default:
       return {
-        landingPath: "/dashboard/streams",
+        landingPath: "/dashboard/my-requests",
         showCrossTeamViews: false,
         teams: data.teams.map((t, i) => ({
           ...t,

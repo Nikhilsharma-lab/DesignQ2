@@ -60,7 +60,7 @@ export default async function DashboardLayout({
 
         const now = new Date();
 
-        const [orgRequestsResult, pinnedViewsResult, [{ value }]] = await Promise.all([
+        const [orgRequestsResult, pinnedViewsResult, unreadResult] = await Promise.allSettled([
           db.select().from(requests).where(eq(requests.orgId, profile.orgId)),
           db
             .select({
@@ -95,9 +95,9 @@ export default async function DashboardLayout({
             ),
         ]);
 
-        orgRequests = orgRequestsResult;
-        userPinnedViews = pinnedViewsResult;
-        inboxUnreadCount = value;
+        orgRequests = orgRequestsResult.status === "fulfilled" ? orgRequestsResult.value : [];
+        userPinnedViews = pinnedViewsResult.status === "fulfilled" ? pinnedViewsResult.value : [];
+        inboxUnreadCount = unreadResult.status === "fulfilled" ? unreadResult.value[0].value : 0;
       }
     }
   } catch {

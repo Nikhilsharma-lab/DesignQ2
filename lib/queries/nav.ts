@@ -44,7 +44,8 @@ export interface TeamForSidebar {
 }
 
 export interface PersonalZoneCounts {
-  myStreams: number;
+  myRequests: number;
+  submittedByMe: number;
   drafts: number;
   inbox: number;
 }
@@ -147,7 +148,7 @@ export async function getUserTeamsForSidebar(
     }
   }
 
-  // Step 3: Count streams in validation (design_stage = 'refine')
+  // Step 3: Count requests in Prove (design_stage = 'prove')
   const validationRows = await db
     .select({
       teamId: requests.projectId,
@@ -157,7 +158,7 @@ export async function getUserTeamsForSidebar(
     .where(
       and(
         inArray(requests.projectId, teamIds),
-        eq(requests.designStage, "refine"),
+        eq(requests.designStage, "prove"),
       ),
     )
     .groupBy(requests.projectId);
@@ -188,7 +189,8 @@ export async function getUserTeamsForSidebar(
 
 /**
  * Get counts for the Personal zone.
- * - myStreams: streams where user is the designer_owner
+ * - myRequests: requests where user is the designer_owner
+ * - submittedByMe: requests where user is the requester (needs requester_id column)
  * - drafts: requests in draft status owned by user
  * - inbox: placeholder (0) — inbox count comes from notifications table
  */
@@ -196,7 +198,7 @@ export async function getPersonalZoneCounts(
   userId: string,
   workspaceId: string,
 ): Promise<PersonalZoneCounts> {
-  const [myStreamsRow] = await db
+  const [myRequestsRow] = await db
     .select({ cnt: count() })
     .from(requests)
     .where(
@@ -218,7 +220,9 @@ export async function getPersonalZoneCounts(
     );
 
   return {
-    myStreams: Number(myStreamsRow?.cnt ?? 0),
+    myRequests: Number(myRequestsRow?.cnt ?? 0),
+    // TODO: real count needs a dedicated requester_id column on the requests table
+    submittedByMe: 0,
     drafts: Number(draftsRow?.cnt ?? 0),
     inbox: 0, // Driven by notifications table, not queried here
   };
