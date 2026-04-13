@@ -9,6 +9,44 @@
 
 ---
 
+## Spec files — read these first
+
+Before touching navigation, sidebar, onboarding, empty states, or request intake, read the relevant spec file. If a spec and a prompt disagree, the spec wins. If a spec and this CLAUDE.md disagree on vocabulary, CLAUDE.md wins — the specs are aligned to it.
+
+- **`docs/nav-spec.md`** — left navigation architecture, three-zone sidebar, role-aware ordering, badge hierarchy, empty/overflow states, workspace switcher, keyboard navigation, guest flow, team creation
+- **`docs/onboarding-spec.md`** — three-persona onboarding (Design Head / Designer / PM), intake check UI that aligns to Part 2 Stage 1, progressive disclosure moments, sample team flow, weekly digest introduction
+
+### Vocabulary lock (applies to all UI, copy, labels, empty states)
+
+These terms are canonical and must not be renamed or substituted:
+- **Request** — the primary unit of design work (never "Stream," "Ticket," "Issue," "Task")
+- **Predesign / Design / Build / Track** — the four phases (Part 1)
+- **Sense / Frame / Diverge / Converge / Prove** — the five design stages (Part 3)
+- **Intake** — the sidebar item and stage name (never "Intake queue")
+- **Prove** — the three-sign-off gate (never "Sign-off," "Validation gate")
+- **Commitments** — cycle-committed work (never "Betting table," "Bet cycle")
+- **Ideas** — the upstream pool (never "Idea board")
+- **Reflection** — the designer's own written thinking (never "Status update")
+- **weekly digest** — the Friday AI summary
+
+### Sidebar non-negotiables
+
+The left sidebar must never contain items with these labels:
+- Projects, Streams, Cycles (as top-level), Requests (as top-level), Issues, Tickets, Tasks
+- Team (as top-level), Insights or Radar (unless user role is owner/admin)
+- "Sign-off," "Validation gate," "Betting table," "Bet cycle"
+- Any item containing "bet," "betting," "stream," or "queue" (as suffix)
+
+See `nav-spec.md` section 13 for the full forbidden list.
+
+### Onboarding non-negotiables
+
+- **No tour libraries.** Intro.js, Shepherd, Driver.js, and equivalents are banned.
+- **Inline empty states only.** Teach concepts at the moment the user encounters them, not in sequential tours.
+- **Teach one concept in the first 60 seconds:** Requests moving through the four phases. Do not explain Prove, Commitments, Ideas, or the five design stages until the user reaches them naturally.
+- **Intake check aligns to Part 2 Stage 1.** The classifier returns `problem_framed | solution_specific | hybrid`. Do not invent new classification values.
+
+---
 ## CRITICAL BUILD RULES
 
 ### NEVER Build These (Anti-Surveillance Principles)
@@ -207,10 +245,10 @@ Design Head decides per cycle:
 
 ### Stage 2e: PROVE (Quality Gate)
 
-**Purpose:** 3-sign-off validation before dev.
+**Purpose:** Three sign-offs from Designer, PM, and Design Head before dev handoff. This is Lane's one deliberate slow-down — the place where non-linear work becomes intentional.
 
 **Build spec:**
-- 3 sign-off cards: Designer ✅, PM ✅, Design Head ✅
+- Three sign-off cards: Designer ✅, PM ✅, Design Head ✅
 - Each: Approve / Approve with comments / Request changes
 - If rejected: loops back with structured feedback (logged)
 - Engineering feasibility review (non-blocking, async)
@@ -606,7 +644,7 @@ The Prove stage has accumulated mixed vocabulary: "Sign-off," "Validation gate,"
 - **Stale code identifiers from the stage enum fix** — several variables still use old stage vocabulary despite the underlying logic being correct. Known examples: `isRefineStage` in `components/requests/design-phase-panel.tsx:83`. Grep for `isRefine\|isValidate\|isExplore\|isInterrogate` as identifier prefixes before the Phase 2 session to find the full list.
 
 **What is permanently NOT being renamed (documented as decisions, not drift):**
-- The `validation_signoffs` database table, its Drizzle schema exports (`validationSignoffs`, `ValidationSignoff`, `NewValidationSignoff`), and the `signer_role` column — internal schema, not user-facing.
+- **Database schema: `validation_signoffs` table stays.** The table, its Drizzle schema exports (`validationSignoffs`, `ValidationSignoff`, `NewValidationSignoff`), the `signer_role` column, and all related identifiers are **not** being renamed. A schema rename was discussed as a follow-up ("Option A" — rename to `proofs` or similar) but was formally cancelled on April 13. Rationale: "sign-off" is the canonical act word per the vocabulary rule, so the schema is already coherent; the rename would cost 2-3 hours of migration work with zero user-facing benefit; and pre-launch effort is better spent on the intake check UI, onboarding build, and real implementations of placeholder pages. Do not re-open this decision without explicit discussion.
 - The `/api/requests/[id]/validate/` API route — internal endpoint, not user-facing.
 - Notification enum values `signoff_requested`, `signoff_submitted` — these use "sign-off" which is the canonical act word, so they are correct.
 - Function names like `detectSignoffOverdue`, types like `pendingSignoffRoles`, AI prompt text, email templates — all use "sign-off" which stays.
