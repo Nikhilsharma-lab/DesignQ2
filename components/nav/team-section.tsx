@@ -38,9 +38,9 @@ export function TeamSection({ team, defaultOpen = true }: Props) {
 
   const items = [
     {
-      href: `${base}/streams`,
+      href: `${base}/active-requests`,
       icon: Layers,
-      label: "Active streams",
+      label: "Active requests",
       badge: team.streamCounts.active > 0 ? { tier: 2 as const, value: team.streamCounts.active } : null,
     },
     {

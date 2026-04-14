@@ -22,14 +22,14 @@ export interface OrderedTeam extends SidebarTeam {
 }
 
 export type TeamItemKey =
-  | "active_streams"
+  | "active_requests"
   | "intake_queue"
   | "commitments"
   | "validation_gate"
   | "archive";
 
 const DEFAULT_ORDER: readonly TeamItemKey[] = [
-  "active_streams",
+  "active_requests",
   "intake_queue",
   "commitments",
   "validation_gate",
@@ -38,14 +38,14 @@ const DEFAULT_ORDER: readonly TeamItemKey[] = [
 
 const PM_ORDER: readonly TeamItemKey[] = [
   "intake_queue",
-  "active_streams",
+  "active_requests",
   "commitments",
   "validation_gate",
   "archive",
 ] as const;
 
 const DESIGN_HEAD_ORDER: readonly TeamItemKey[] = [
-  "active_streams",
+  "active_requests",
   "intake_queue",
   "commitments",
   "validation_gate",

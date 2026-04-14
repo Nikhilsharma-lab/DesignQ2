@@ -18,7 +18,7 @@ export type NavItemKey =
   | "cross_team_view"
   | "report"
   // Team-scoped items: "team:{teamSlug}:{item}"
-  | `team:${string}:active_streams`
+  | `team:${string}:active_requests`
   | `team:${string}:intake_queue`
   | `team:${string}:commitments`
   | `team:${string}:validation_gate`
@@ -61,19 +61,19 @@ export function getActiveNavItem(
   // URL: /dashboard/my-requests/:id (individual request)
   // When a request is open, highlight its team's Active requests
   if (pathname.match(/^\/dashboard\/my-requests\/[^/]+/) && streamContext) {
-    return `team:${streamContext.teamSlug}:active_streams`;
+    return `team:${streamContext.teamSlug}:active_requests`;
   }
 
   // ── Team-scoped pages ─────────────────────────────────────────────────────
   const teamMatch = pathname.match(
-    /^\/dashboard\/teams\/([^/]+)\/(streams|intake|commitments|validation|archive)/,
+    /^\/dashboard\/teams\/([^/]+)\/(active-requests|intake|commitments|validation|archive)/,
   );
   if (teamMatch) {
     const teamSlug = teamMatch[1];
     const section = teamMatch[2];
     switch (section) {
-      case "streams":
-        return `team:${teamSlug}:active_streams`;
+      case "active-requests":
+        return `team:${teamSlug}:active_requests`;
       case "intake":
         return `team:${teamSlug}:intake_queue`;
       case "commitments":

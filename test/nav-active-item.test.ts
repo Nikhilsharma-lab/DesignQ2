@@ -49,7 +49,7 @@ describe("getActiveNavItem", () => {
       getActiveNavItem("/dashboard/my-requests/req-abc", {
         teamSlug: "consumer-app",
       }),
-    ).toBe("team:consumer-app:active_streams");
+    ).toBe("team:consumer-app:active_requests");
   });
 
   it("request detail from different team → that team's active requests", () => {
@@ -57,7 +57,7 @@ describe("getActiveNavItem", () => {
       getActiveNavItem("/dashboard/my-requests/req-xyz", {
         teamSlug: "platform",
       }),
-    ).toBe("team:platform:active_streams");
+    ).toBe("team:platform:active_requests");
   });
 
   it("request detail WITHOUT context → falls back to my_streams", () => {
@@ -66,9 +66,9 @@ describe("getActiveNavItem", () => {
 
   // ── Team-scoped pages ─────────────────────────────────────────────────
 
-  it("team active streams", () => {
-    expect(getActiveNavItem("/dashboard/teams/consumer-app/streams")).toBe(
-      "team:consumer-app:active_streams",
+  it("team active requests", () => {
+    expect(getActiveNavItem("/dashboard/teams/consumer-app/active-requests")).toBe(
+      "team:consumer-app:active_requests",
     );
   });
 

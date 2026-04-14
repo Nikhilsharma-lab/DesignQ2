@@ -84,9 +84,9 @@ describe("orderSidebarItems — Designer (member)", () => {
     expect(result.teams[4].defaultOpen).toBe(false);
   });
 
-  it("Active streams is first in item order", () => {
+  it("Active requests is first in item order", () => {
     const result = orderSidebarItems(makeData());
-    expect(result.teams[0].itemOrder[0]).toBe("active_streams");
+    expect(result.teams[0].itemOrder[0]).toBe("active_requests");
   });
 
   it("does not show cross-team views", () => {
