@@ -408,7 +408,9 @@ Blocks solution-specific. Suggests reframes. Extracts problems from hybrids.
 Priority, complexity, type — all with reasoning. Not dropdowns.
 
 ### 3. Duplicate Detection
-Semantic search (pgvector embeddings) across all requests.
+**Current implementation (April 14):** LLM-based comparison — triage prompt asks Claude to flag semantic overlaps with existing Requests. Results stored as JSON in `requests.potential_duplicates`. Works at small scale.
+
+**Planned replacement:** Real pgvector semantic search — adds pgvector extension to Supabase, generates embeddings on Request creation, uses vector similarity operators (`<=>` cosine distance) for queries. Not yet built. See parking lot in `docs/ROADMAP.md` for trigger conditions.
 
 ### 4. Smart Assignment
 Capacity + skills + context-switching cost + growth opportunity.
