@@ -6,6 +6,8 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
+> **Next session starts here →** AI foundation verification (Week 1). Grep all 8 `lib/ai/` files for Zod constraints incompatible with Anthropic structured output, fix each, run end-to-end, refactor catch blocks. Budget 2-3 hours. Then Item 4 (intake check UI, 5 hours). See session log at bottom for context from the April 14 warmup block.
+
 ---
 
 ## How to use this document
@@ -28,9 +30,9 @@ This file is the source of truth for what to build next on Lane. Every session s
 
 These exist because Phase 2 dependency mapping surfaced four "don't know" answers. Each one blocks later work. Run them first so the rest of the plan executes on known ground.
 
-- [ ] **V1** — Verify migration 0002 applied to Supabase dev. Check if `designer_owner_id` column exists on the `requests` table via `npm run db:studio` or the Supabase dashboard. Gates Item 11. (5 min)
-- [ ] **V2** — Investigate whether Request submitter ID is stored anywhere in the database. Read the Request intake code in `app/actions/` or `app/api/requests/`, grep the schema in `db/schema/requests.ts` for columns like `requester_id`, `submitted_by`, `created_by_id`. If yes, Item 6 uses the existing column. If no, Item 6 needs a small migration. Gates Item 6. (10 min)
-- [ ] **V3** — Verify Anthropic API key works. Check `.env.local` for `ANTHROPIC_API_KEY`, then actually trigger an existing AI feature like triage and confirm it responds. Gates Item 4. (5 min)
+- [x] **V1** — Verify migration 0002 applied to Supabase dev. `designer_owner_id` column confirmed on `requests` table via Drizzle Studio. Gates Item 11. (actual: 5 min)
+- [x] **V2** — Investigate Request submitter ID storage. Found: `requester_id` column exists in `db/schema/requests.ts` (lines 92-94). Item 6 uses the existing column — no migration needed. Gates Item 6. (actual: 5 min)
+- [x] **V3** — Verify Anthropic API key works. **Findings (April 14):** Expanded into 3-hour debug session. Four bugs found and fixed: (1) seed-only AI data — triage never ran live; (2) dead API key replaced; (3) deprecated model ID `claude-3-5-haiku-20241022` → `claude-haiku-4-5-20251001` across 17 files; (4) Zod 4 + Anthropic structured output incompatibility (vercel/ai#13355) — runtime clamping pattern applied. Triage verified end-to-end. Gates Item 4. (actual: 3 hours)
 - [x] **V4** — Investigate pgvector duplicate detection status. **Findings (April 14):** pgvector is NOT installed or used. Schema has no vector column, no embedding generation code in `lib/`, no pgvector similarity operators in queries. Duplicate detection works via LLM-based comparison — triage prompt asks Claude to find semantic overlaps with existing Requests, results stored as JSON in `potential_duplicates` column. Feature works end-to-end (verified during V3 test). CLAUDE.md Part 9.3 describes pgvector as the approach but this was never implemented. Current approach is fine at small scale; needs replacement before high-volume. Affects Item 9 — scope increased (see below). (actual: 15 min)
 
 ---
@@ -50,12 +52,12 @@ These items are on the sidebar or in the spec files but don't yet have enough de
 
 **Budget:** 15 hours. **Planned:** ~13 hours. **Slack:** 2 hours.
 
-- [ ] V1 — Verify migration 0002 (5 min)
+- [x] V1 — Verify migration 0002. Column exists. (actual: 5 min)
 - [ ] **Item 11** — Apply migration 0002 to Supabase dev if V1 showed it wasn't already applied. `npm run db:push` + verification. [STRICT: after V1] (10 min)
-- [ ] V2 — Investigate Request submitter ID storage (10 min)
-- [ ] V3 — Verify Anthropic API key works (5 min)
-- [ ] V4 — Investigate pgvector duplicate detection (20 min)
-- [ ] **Item 3** — Team-scoped streams route investigation. Read `app/(dashboard)/dashboard/teams/[slug]/streams/page.tsx`, decide: rename to `active-requests`, delete, or leave. Read-only recon, produces a decision note. (20 min)
+- [x] V2 — Investigate Request submitter ID storage. `requester_id` exists — no migration needed. (actual: 5 min)
+- [x] V3 — Verify Anthropic API key works. Expanded to 3 hours — 4 bugs found and fixed. See verification section above. (actual: 3 hours)
+- [x] V4 — Investigate pgvector duplicate detection. Not installed; LLM-based. See verification section above. (actual: 15 min)
+- [x] **Item 3** — Rename `teams/[slug]/streams/` route to `active-requests/`. Updated page component, nav keys in `active-item.ts` and `order.ts`, `team-section.tsx` link+label, both test files. 43/43 tests pass. (actual: 40 min)
 - [ ] **S2** — Spec "What's new" footer (25 min)
 - [ ] **S1** — Spec Reflections page (45 min)
 - [ ] **Item 1** — Phase 2 Sign-off → Prove rename + stale identifier sweep. Rename `components/requests/validation-gate.tsx` → `prove-gate.tsx`, rename `ValidationGate` export → `ProveGate`, update all import sites, rename `app/(dashboard)/dashboard/teams/[slug]/validation/` directory → `/prove/`, update nav keys `team:${slug}:validation_gate` → `team:${slug}:prove` in `lib/nav/active-item.ts` and `lib/nav/order.ts`, grep for and fix stale identifiers like `isRefineStage` in `components/requests/design-phase-panel.tsx:83` and elsewhere. Use scoped Claude Code prompts with stop points, per the pattern established in April 13 alignment session. (2 hours)
@@ -222,8 +224,34 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
-*Last updated: April 14, 2026 — initial roadmap committed.*
+*Last updated: April 14, 2026 — April 14 warmup block consolidated.*
 
+---
+
+## Session log — April 14 warmup block
+
+**Duration:** ~4.5 hours | **Commits:** 6
+
+| Commit | Description |
+|--------|-------------|
+| cc2394a | fix: update AI model ID from deprecated `claude-3-5-haiku-20241022` to `claude-haiku-4-5-20251001` across 17 files |
+| 63e7d6b | fix: Zod 4 + Anthropic structured output schema fix in `lib/ai/triage.ts` with runtime clamping |
+| f933952 | docs: add AI foundation verification as strict blocker for Item 4 |
+| 36b428f | docs: V4 closeout, pgvector findings, CLAUDE.md Part 9.3 update |
+| 31cdcc9 | fix: rename teams/[slug]/streams route to active-requests, align nav keys |
+| 55fc381 | chore: align codebase vocabulary to CLAUDE.md spec |
+
+**Verifications completed:** V1 (migration 0002), V2 (requester_id exists), V3 (Anthropic API end-to-end), V4 (pgvector not installed)
+
+**Bugs caught and fixed:**
+1. Dead Anthropic API key → replaced
+2. Deprecated model ID `claude-3-5-haiku-20241022` → renamed to `claude-haiku-4-5-20251001` in 17 files
+3. Zod 4 `.int().min().max()` emits JSON Schema properties Anthropic rejects (vercel/ai#13355) → runtime clamping pattern
+4. Seed-only AI data — triage had never run live → now verified working
+
+**Time breakdown:** V1+V2 10 min | V3 3 hours (expanded) | V4 15 min | Item 3 40 min | roadmap updates 20 min
+
+**Remaining Week 1 items:** S1, S2, Item 1, AI foundation verification, Item 4, Item 5, Item 11
 
 ---
 
@@ -236,19 +264,14 @@ Items that come up mid-execution but aren't yet sequenced. Add anything here the
 - Each item is one line, with a date. Format: `- [YYYY-MM-DD] description`
 - Do not add effort estimates here. Estimates happen when an item leaves the parking lot and gets sequenced.
 - Do not prioritize. The parking lot is unsorted on purpose.
-- [2026-04-14] Item 4 intake check should use `claude-haiku-4-5-20251001` per onboarding-spec.md section 7, not the older `claude-3-5-haiku-20241022` that the existing AI features use. Don't copy the model string from triage/idea-validator/etc. when building the classifier.
-- [2026-04-14] AI silent failure audit. All code in lib/ai/ catches errors and writes null to database columns without surfacing the failure. Discovered during V3 investigation — triage, context-brief, handoff-brief, idea-validator, prediction-confidence, impact-retrospective, proactive-alerts, and morning-briefing have never run successfully (account had zero credits). Before shipping Item 4 (intake check), add proper error surfacing to all AI code so failures are visible in logs and to users. Also consider adding an AI integration smoke test that runs on deploy and verifies at least one real API call succeeds.
 - [2026-04-14] New Request creation has no sidebar shortcut. Currently only accessible via /dashboard/requests page header action. During V3 testing, I expected a button in the sidebar footer and was surprised not to find one. Consider: (a) adding a "New request" button to the sidebar footer alongside "What's new," (b) adding a keyboard shortcut like `N R` alongside the existing `N I` for new idea, or (c) both. Small feature, high discoverability value. Decide during week 4 re-scope or earlier if it keeps coming up.
-- [2026-04-14] Silent failure audit in lib/ai/. Discovered during V3 that the try/catch around triageRequest() in app/api/requests/route.ts swallows the entire error with no surfacing. When the Anthropic API key was dead, every Request created silently succeeded at the DB level but triage silently failed — no error to the user, no log in the terminal once the server restarted, nothing. This is a pattern across all 8 files in lib/ai/. Before shipping Item 4 (intake check UI), audit every try/catch in lib/ai/ to ensure: (a) errors are logged with enough context to debug, (b) errors surface to the user in some form (error state in UI, null with a distinct "failed" indicator, or an admin-only log), (c) the Request row's status reflects the AI failure clearly. Budget 1-2 hours. Prerequisite for Item 4.
 - [2026-04-14] Replace LLM-based duplicate detection with real pgvector similarity search. Current implementation (per V4 findings) uses Claude's comparison inside the triage prompt — works fine at small scale, but cost scales linearly with Request database size and accuracy is capped by what can fit in the prompt context. Trigger for replacement: when Request database hits ~500 rows, or when triage latency/cost becomes noticeable. Probably shares infrastructure with Item 9's pgvector implementation, so these could land together. Not urgent but worth tracking.
 
 **Review cadence:**
 - **End of week 4 re-scope:** read the full parking lot. For each item, decide: sequence it into weeks 5-7, keep it in the parking lot, or delete it.
 - **End of week 7 or 8:** same review. Decide what survives into the next roadmap.
 
-**Items currently in the parking lot:**
-
-*(empty — add items as they come up)*
+**Active items:** 2 (model ID note and silent failure audit absorbed into sequenced "AI foundation verification" item)
 
 
 ---
