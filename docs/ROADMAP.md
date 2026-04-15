@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session starts here →** AI foundation verification (Week 1). Grep all 8 `lib/ai/` files for Zod constraints incompatible with Anthropic structured output, fix each, run end-to-end, refactor catch blocks. Budget 2-3 hours. Then Item 4 (intake check UI, 5 hours). See session log at bottom for context from the April 14 warmup block.
+> **Next session:** AI foundation audit is complete. Item 4 (Intake check UI) is now unblocked. Before starting Item 4, fix the two production issues in the parking lot (ANTHROPIC_API_KEY 401 in Vercel, database connection pool exhaustion) — both are blockers for any real customer use. After production is stable, start Item 4. S1 (Reflections spec) and S2 (What's new spec) can be done in any order alongside Item 4.
 
 ---
 
@@ -61,7 +61,7 @@ These items are on the sidebar or in the spec files but don't yet have enough de
 - [ ] **S2** — Spec "What's new" footer (25 min)
 - [ ] **S1** — Spec Reflections page (45 min)
 - [ ] **Item 1** — Phase 2 Sign-off → Prove rename + stale identifier sweep. Rename `components/requests/validation-gate.tsx` → `prove-gate.tsx`, rename `ValidationGate` export → `ProveGate`, update all import sites, rename `app/(dashboard)/dashboard/teams/[slug]/validation/` directory → `/prove/`, update nav keys `team:${slug}:validation_gate` → `team:${slug}:prove` in `lib/nav/active-item.ts` and `lib/nav/order.ts`, grep for and fix stale identifiers like `isRefineStage` in `components/requests/design-phase-panel.tsx:83` and elsewhere. Use scoped Claude Code prompts with stop points, per the pattern established in April 13 alignment session. (2 hours)
-- [ ] **AI foundation verification + silent failure audit.** [STRICT: required before Item 4] Tonight's V3 investigation surfaced four AI integration bugs: zero credits, dead API key, deprecated model ID across 17 files, and Zod 4 + Anthropic structured output incompatibility in `triage.ts`. Only `triage` is verified working end-to-end; the other 7 features in `lib/ai/` (context-brief, handoff-brief, idea-validator, impact-retrospective, morning-briefing, prediction-confidence, proactive-alerts) are unverified and may have similar schema or wiring issues. Scope: (a) grep all 8 files in `lib/ai/` for Zod constraints that might be rejected by Anthropic structured output — `.min()`, `.max()`, `.minLength()`, `.maxLength()`, `.regex()`, `.email()`, `.url()`, and any `.int()` usage (Zod 4 auto-emits safe integer bounds); (b) fix each incompatible schema using the pattern from triage.ts (drop constraints, expand `.describe()`, add runtime validation/clamping); (c) run each of the 8 features end-to-end at least once with realistic input, verify output populated in the database; (d) refactor the catch blocks in each file to surface errors via `console.error` with context instead of silently swallowing them. Prerequisite for Item 4 — Item 4 adds a 9th AI feature with the same integration pattern, and shipping it without this audit repeats tonight's 3-hour debug cycle for every subsequent AI feature. (2-3 hours)
+- [x] **AI foundation verification + silent failure audit.** [STRICT: required before Item 4] Completed across two sessions (April 14-15). Phase 1: grepped all 8 `lib/ai/` files for Anthropic-incompatible Zod constraints. Phase 2: fixed 3 files (prediction-confidence, idea-validator, morning-briefing) — 6 fields total, same pattern: drop constraints, expand `.describe()`, add runtime validation. Phase 3: verified all 8 AI features end-to-end against real `claude-haiku-4-5-20251001`. All 8 PASS. Phase 4: refactored silent failure patterns across 13 files — 1 lib/ai catch-and-rethrow, 2 API route error surfacing fixes, 9 UI component console.error additions, 1 API response shape improvement (triageStatus field). Total actual time: ~7 hours across two sessions (estimated 2-3 hours).
 - [ ] **Item 4** — Intake check UI build [STRICT: after V3, after AI foundation verification] . Three-panel classifier (problem_framed, solution_specific, hybrid) per `docs/onboarding-spec.md` section 7. Classifier call to `claude-haiku-4-5-20251001`. Three distinct panel UIs with different CTAs. "Submit anyway with justification" escape hatch. Writes `requests.ai_flagged`, `requests.ai_classifier_result`, `requests.ai_extracted_problem`, `requests.ai_extracted_solution`, `requests.submit_justification`. Analytics events per onboarding-spec section 10. [STRICT: after V3] (5 hours)
 - [ ] **Item 5** — Real My requests page. Replace `app/(dashboard)/dashboard/my-requests/page.tsx` placeholder with a real list view. Query: `requests.designer_owner_id = auth.uid()`. Sort by most recent update. Filter by phase. Empty state per `docs/nav-spec.md` tone. (4 hours)
 
@@ -224,7 +224,7 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
-*Last updated: April 14, 2026 — April 14 warmup block consolidated.*
+*Last updated: April 15, 2026 — AI foundation audit closed out across two sessions.*
 
 ---
 
@@ -255,6 +255,25 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
+### Session log — April 15 AI foundation audit
+
+**Commits landed (3, in order):**
+1. prediction-confidence schema fix: dropped `.int().min(0).max(100)`, added runtime clamp
+2. idea-validator schema fix: dropped `.int().min(1).max(10)` from 4 fields, added runtime clamps
+3. morning-briefing schema fix: dropped `.min(1).max(5)` from items array, added runtime truncate/throw
+4. Silent failure refactor: idea-validator try/catch/rethrow, requests route triageStatus field, ideas validate route 500 with body, 9 UI component console.error additions
+
+**Verifications completed:** All 8 AI features in `lib/ai/` confirmed working end-to-end against real Anthropic API. None of the runtime clamps fired — model returns clean output natively. Clamps are insurance against future drift.
+
+**Architecture discoveries:**
+- Request detail UI uses DetailDock side panel (global, `?dock={id}` URL param), not a dedicated `[id]/page.tsx` route
+- Prediction confidence panel auto-fires via useEffect on mount, gated by `optimisticStage === "shape" || "bet"` + impactMetric + impactPrediction
+- Claude Code host shell pollutes ANTHROPIC_API_KEY and ANTHROPIC_BASE_URL — future tsx/node scripts need `unset` prefix
+
+**Time spent:** ~3.5 hours (Phase 1: 50 min, Phase 2: 50 min, Phase 3: 90 min, Phase 4: 60 min)
+
+---
+
 ## Parking lot
 
 Items that come up mid-execution but aren't yet sequenced. Add anything here the moment you think of it — don't hold it in your head, don't put it in a chat, don't stuff it into the current week.
@@ -266,12 +285,16 @@ Items that come up mid-execution but aren't yet sequenced. Add anything here the
 - Do not prioritize. The parking lot is unsorted on purpose.
 - [2026-04-14] New Request creation has no sidebar shortcut. Currently only accessible via /dashboard/requests page header action. During V3 testing, I expected a button in the sidebar footer and was surprised not to find one. Consider: (a) adding a "New request" button to the sidebar footer alongside "What's new," (b) adding a keyboard shortcut like `N R` alongside the existing `N I` for new idea, or (c) both. Small feature, high discoverability value. Decide during week 4 re-scope or earlier if it keeps coming up.
 - [2026-04-14] Replace LLM-based duplicate detection with real pgvector similarity search. Current implementation (per V4 findings) uses Claude's comparison inside the triage prompt — works fine at small scale, but cost scales linearly with Request database size and accuracy is capped by what can fit in the prompt context. Trigger for replacement: when Request database hits ~500 rows, or when triage latency/cost becomes noticeable. Probably shares infrastructure with Item 9's pgvector implementation, so these could land together. Not urgent but worth tracking.
+- [2026-04-15] **Claude Code shell environment pollution.** Claude Code exports `ANTHROPIC_BASE_URL=https://api.anthropic.com` (missing `/v1`) and overrides `ANTHROPIC_API_KEY`. Any tsx/node scripts in Lane that call Anthropic need `unset ANTHROPIC_API_KEY ANTHROPIC_BASE_URL &&` prefix. Not a Lane bug — Claude Code environment issue.
+- [2026-04-15] **Create separate Supabase project for dev/staging.** Currently local dev and production share the same hosted Supabase project. Fine pre-launch with zero customers. Must separate before onboarding first beta tester. Budget: 1-2 hours including env var updates.
+- [2026-04-15] **Phase 3 test data cleanup.** AI verification testing left ~6-10 test rows across requests, predictionConfidence, and possibly other tables. Clean up before showing prod to anyone. Quick query: delete where title starts with "Phase 3 test" or similar.
+- [2026-04-15] **Error UI for AI panel failures.** Phase 4 Tier 3 added console.error logging to 9 UI components but deferred error UI (what the user sees when AI fails). Needs design decisions: error text, style, retry button. Scope: 9 components, each needs a small inline error state. Budget: 2-3 hours including design.
 
 **Review cadence:**
 - **End of week 4 re-scope:** read the full parking lot. For each item, decide: sequence it into weeks 5-7, keep it in the parking lot, or delete it.
 - **End of week 7 or 8:** same review. Decide what survives into the next roadmap.
 
-**Active items:** 2 (model ID note and silent failure audit absorbed into sequenced "AI foundation verification" item)
+**Active items:** 6 (model ID note and silent failure audit absorbed into completed "AI foundation verification" item)
 
 
 ---
