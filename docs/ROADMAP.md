@@ -289,12 +289,14 @@ Items that come up mid-execution but aren't yet sequenced. Add anything here the
 - [2026-04-15] **Create separate Supabase project for dev/staging.** Currently local dev and production share the same hosted Supabase project. Fine pre-launch with zero customers. Must separate before onboarding first beta tester. Budget: 1-2 hours including env var updates.
 - [2026-04-15] **Phase 3 test data cleanup.** AI verification testing left ~6-10 test rows across requests, predictionConfidence, and possibly other tables. Clean up before showing prod to anyone. Quick query: delete where title starts with "Phase 3 test" or similar.
 - [2026-04-15] **Error UI for AI panel failures.** Phase 4 Tier 3 added console.error logging to 9 UI components but deferred error UI (what the user sees when AI fails). Needs design decisions: error text, style, retry button. Scope: 9 components, each needs a small inline error state. Budget: 2-3 hours including design.
+- [2026-04-14] **Production Anthropic API key 401 in Vercel.** Added ANTHROPIC_API_KEY to Vercel production env vars and redeployed during April 14 session. Production still returns `invalid x-api-key` 401 on triage calls. Cause unclear — possible env var value problem, environment scope issue, or redeploy timing. Needs fresh diagnosis: verify key value starts with `sk-ant-api03-`, confirm Production environment is explicitly checked (not just Preview/Development), check timestamp on env var to confirm update landed. Blocker for Item 4 since Item 4 depends on AI functionality in production. Budget: 30-60 min investigation.
+- [2026-04-14] **Production database connection pool exhaustion.** Vercel runtime logs from April 14 session show `Error [PostgresError]: MaxClientsInSessionMode: max clients reached - in Session mode max clients are limited to pool_size` across multiple endpoints: `/api/nav`, `/dashboard`, `/dashboard/requests`, profile queries. Pre-existing issue, not caused by recent deploys — just newly visible because we actually used production for the first time. Affects every feature in prod, not just AI. Diagnosis needed: (a) check Drizzle connection pool config in `db/client.ts` or equivalent, (b) check whether Supabase is configured for session mode vs transaction mode pooling, (c) check for connection leaks in server actions, (d) consider Supabase plan/pool settings. BLOCKER for any real customer use — users will hit 500s and failed page loads constantly until fixed. Budget: 1-2 hours investigation.
 
 **Review cadence:**
 - **End of week 4 re-scope:** read the full parking lot. For each item, decide: sequence it into weeks 5-7, keep it in the parking lot, or delete it.
 - **End of week 7 or 8:** same review. Decide what survives into the next roadmap.
 
-**Active items:** 6 (model ID note and silent failure audit absorbed into completed "AI foundation verification" item)
+**Active items:** 8 (model ID note and silent failure audit absorbed into completed "AI foundation verification" item)
 
 
 ---
