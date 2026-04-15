@@ -12,7 +12,6 @@ import {
   FileEdit,
   Bookmark,
   Lightbulb,
-  MessageSquare,
   Send,
   Settings,
   LogOut,
@@ -75,7 +74,6 @@ const personalNav = [
   { href: "/dashboard/submitted", icon: Send, label: "Submitted by me" },
   { href: "/dashboard/drafts", icon: FileEdit, label: "My drafts" },
   { href: "/dashboard/saved", icon: Bookmark, label: "Saved" },
-  { href: "/dashboard/reflections", icon: MessageSquare, label: "Reflections" },
   { href: "/dashboard/ideas", icon: Lightbulb, label: "Ideas" },
 ] as const;
 

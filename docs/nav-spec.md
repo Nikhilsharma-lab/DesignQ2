@@ -62,8 +62,9 @@ Always first after the header. Never changes regardless of which team context th
 4. **Submitted by me** — Requests where the current user was the requester (PM / submitter)
 5. **My drafts**
 6. **Saved**
-7. **Reflections** — the user's own reflection history, per CLAUDE.md Part 3
-8. **Ideas**
+7. **Ideas**
+
+**Note:** The `/dashboard/reflections` route still exists as a placeholder page, but is intentionally not surfaced in the sidebar as of April 15, 2026. The Reflections feature is deferred to post-v1 per S1 outcome. The placeholder route is preserved so any pre-existing links don't 404.
 
 **Role-aware ordering:** the structure is the same for everyone, but the role-aware logic (see section 3) can promote one item above others inside the Personal zone. For example, a designer sees My requests at position 3 (after Home and Inbox); a PM sees Submitted by me promoted above My requests.
 

@@ -26,7 +26,7 @@ These terms are canonical and must not be renamed or substituted:
 - **Prove** — the three-sign-off gate (never "Sign-off," "Validation gate")
 - **Commitments** — cycle-committed work (never "Betting table," "Bet cycle")
 - **Ideas** — the upstream pool (never "Idea board")
-- **Reflection** — the designer's own written thinking (never "Status update")
+- **Reflection** — the designer's own written thinking (never "Status update"). *Feature deferred to post-v1 per April 15 S1 outcome; vocabulary preserved for future reconsideration.*
 - **weekly digest** — the Friday AI summary
 
 ### Sidebar non-negotiables
@@ -184,7 +184,7 @@ Design Head decides per cycle:
 
 **These stages are non-linear. Designers move between them freely.**
 **No due dates. Appetites (time budgets) apply to the entire phase, not individual stages.**
-**Progress is captured through reflections, not status updates.**
+**When Reflections ship, progress will be captured through them, not status updates.** *(Reflections deferred to post-v1 per April 15 S1 outcome.)*
 
 ### Stage 2a: SENSE
 
@@ -224,7 +224,7 @@ Design Head decides per cycle:
 **Build spec:**
 - Iteration cards: each has Figma link, description, rationale
 - "Add Direction" button — creates new iteration
-- Reflection field: designer's thinking on each direction
+- Rationale field: designer's thinking on why this direction, what tradeoffs they're seeing, what they're learning
 - Comment threads per iteration (PM, eng, other designers)
 - Version control: every Figma update = new version entry
 - AI: "Iteration Summary" button generates stakeholder-friendly overview
@@ -376,7 +376,7 @@ To Do → In Progress → In Review → Design QA → Done
 | Task | Work item | Design isn't a task to check off |
 | Overdue | Appetite exceeded | Budgets, not deadlines |
 | Due date | Appetite | Design has budgets, not deadlines |
-| Status update | Reflection | Designers share thinking |
+| Status update | Reflection | Designers share thinking *(feature deferred to post-v1 per April 15 S1 outcome; vocabulary preserved)* |
 | Sprint | Cycle | Less pressure, same cadence |
 | Velocity | Throughput | Output, not speed |
 | Assign | Recommend + Approve | AI recommends, humans approve |
@@ -660,7 +660,7 @@ The Prove stage has accumulated mixed vocabulary: "Sign-off," "Validation gate,"
 
 - **Onboarding build.** Full spec is in `docs/onboarding-spec.md`, vocabulary-aligned and ready to execute. Section 11 has the 13-step build order. Includes Design Head full flow (4 screens), Designer/PM lightweight variants, the intake check (the killer moment, aligns to CLAUDE.md Part 2 Stage 1 classifier), five progressive disclosure moments, sample team seed script, instrumentation. Budget a full day of focused work.
 
-- **Real implementations for placeholder pages.** `My requests`, `Submitted by me`, and `Reflections` currently render placeholder text. Each needs a real list view, queries, and empty states. The `Submitted by me` count needs a `requester_id` column on the requests table first.
+- **Real implementations for placeholder pages.** `My requests` and `Submitted by me` currently render placeholder text. Each needs a real list view, queries, and empty states. The `Submitted by me` count needs a `requester_id` column on the requests table first. *(`Reflections` placeholder stays in-code but is deferred to post-v1 per April 15 S1 outcome — not surfaced in sidebar.)*
 
 - **Command palette.** Deleted in the alignment session. Re-add when building Zone 3 team sections — wire `cmdk` to search Requests by title via pgvector, add an actions registry, re-add the `⌘K` chord hint to the sidebar search.
 
@@ -684,7 +684,7 @@ The roadmap absorbs and sequences everything that was previously listed here as 
 | 5-stage design flow screens | Weeks 5-6 — Item 14 parts 1 and 2 |
 | Design Frame creation | Week 5 — Item 14 part 1 |
 | Iteration management | Week 6 — Item 14 part 2 |
-| Reflection system | Week 2 (page) and Week 6 (design-phase integration) — Item 7-build, Item 14 part 2 |
+| Reflection system | **Deferred to post-v1** per April 15 S1 outcome — Item 7-build deferred, Item 14 part 2 Rationale field only |
 | Feedback threads | Week 6 — Item 14 part 2 |
 | Handoff doc generation improvements | Week 6 — Item 15a |
 | Impact logging refinements | Week 7 — Item 15b |
