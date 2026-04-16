@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** S1, S2, and Item 11 are done. Item 1 (Sign-off → Prove rename) is next. After Item 1, fix the two production issues in the parking lot (ANTHROPIC_API_KEY 401 in Vercel, database connection pool exhaustion) before starting Item 4. Item 4 depends on production AI working.
+> **Next session:** Item 1 is done. Next unchecked Week 1 items are Item 4 (Intake check UI, 5 hours) and Item 5 (My requests page, 4 hours). Before starting Item 4, fix the two production issues in the parking lot (ANTHROPIC_API_KEY 401 in Vercel, database connection pool exhaustion) — both are blockers for Item 4's value in production. Read `docs/WORKING-RULES.md` at the start of every new chat.
 
 ---
 
