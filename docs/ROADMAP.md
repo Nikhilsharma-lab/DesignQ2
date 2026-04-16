@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** AI foundation audit is complete. Item 4 (Intake check UI) is now unblocked. Before starting Item 4, fix the two production issues in the parking lot (ANTHROPIC_API_KEY 401 in Vercel, database connection pool exhaustion) — both are blockers for any real customer use. After production is stable, start Item 4. S1 (Reflections spec) and S2 (What's new spec) can be done in any order alongside Item 4.
+> **Next session:** S1, S2, and Item 11 are done. Item 1 (Sign-off → Prove rename) is next. After Item 1, fix the two production issues in the parking lot (ANTHROPIC_API_KEY 401 in Vercel, database connection pool exhaustion) before starting Item 4. Item 4 depends on production AI working.
 
 ---
 
@@ -53,7 +53,7 @@ These items are on the sidebar or in the spec files but don't yet have enough de
 **Budget:** 15 hours. **Planned:** ~13 hours. **Slack:** 2 hours.
 
 - [x] V1 — Verify migration 0002. Column exists. (actual: 5 min)
-- [ ] **Item 11** — Apply migration 0002 to Supabase dev if V1 showed it wasn't already applied. `npm run db:push` + verification. [STRICT: after V1] (10 min)
+- [x] **Item 11** — Apply migration 0002 to Supabase dev. Schema already in sync — `npm run db:push` returned no changes. Column `designer_owner_id` confirmed present from V1. (actual: 1 min)
 - [x] V2 — Investigate Request submitter ID storage. `requester_id` exists — no migration needed. (actual: 5 min)
 - [x] V3 — Verify Anthropic API key works. Expanded to 3 hours — 4 bugs found and fixed. See verification section above. (actual: 3 hours)
 - [x] V4 — Investigate pgvector duplicate detection. Not installed; LLM-based. See verification section above. (actual: 15 min)
