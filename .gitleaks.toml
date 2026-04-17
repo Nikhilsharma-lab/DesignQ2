@@ -1,0 +1,47 @@
+title = "Lane gitleaks config"
+
+# Extend the default ruleset with Lane-specific patterns.
+# The default rules already catch AWS, GitHub, Stripe, Google Cloud, Slack, etc.
+[extend]
+useDefault = true
+
+[[rules]]
+id = "figma-token-encryption-key"
+description = "Lane FIGMA_TOKEN_ENCRYPTION_KEY (AES-256 key, 64 hex chars)"
+regex = '''(?i)FIGMA_TOKEN_ENCRYPTION_KEY\s*[:=]\s*["']?[0-9a-f]{64}["']?'''
+tags = ["lane", "encryption-key"]
+
+[[rules]]
+id = "anthropic-api-key"
+description = "Anthropic API key"
+regex = '''sk-ant-[a-zA-Z0-9\-_]{40,}'''
+tags = ["anthropic", "api-key"]
+
+[[rules]]
+id = "supabase-service-role"
+description = "Supabase service role JWT (starts with eyJ, contains service_role)"
+regex = '''eyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]*?service_role[A-Za-z0-9_-]*\.[A-Za-z0-9_-]{10,}'''
+tags = ["supabase"]
+
+[[rules]]
+id = "cron-secret"
+description = "Lane CRON_SECRET assignment"
+regex = '''(?i)CRON_SECRET\s*[:=]\s*["'][A-Za-z0-9+/=_-]{20,}["']'''
+tags = ["lane", "cron"]
+
+# Don't scan lockfiles, build output, or the CI's own dummy values.
+[allowlist]
+description = "Lane-wide allowlist"
+paths = [
+  '''package-lock\.json$''',
+  '''\.next/''',
+  '''node_modules/''',
+  '''\.github/workflows/ci\.yml$''',
+]
+regexes = [
+  # The CI's dummy FIGMA_TOKEN_ENCRYPTION_KEY (all zeros) is a placeholder, not a real key.
+  '''0{64}''',
+  '''ci-anthropic-key''',
+  '''ci-cron-secret''',
+  '''ci-anon-key''',
+]

@@ -1,4 +1,11 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "git": {
+    "deploymentEnabled": {
+      "main": true
+    }
+  },
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- ':(exclude)*.md' ':(exclude)docs/**' ':(exclude)04-specs/**' ':(exclude)TODO*.md' ':(exclude)deferred.md' ':(exclude)CHANGELOG.md' ':(exclude).github/**'",
   "crons": [
     {
       "path": "/api/insights/digest/generate",
