@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 const PHASES = [
   { value: "predesign", label: "Predesign" },
@@ -31,32 +32,34 @@ export function PhaseFilter({
 
   return (
     <div className="flex gap-1">
-      <button
-        type="button"
+      <Button
+        size="sm"
+        variant={!activePhase ? "default" : "ghost"}
         onClick={() => setPhase(null)}
-        className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+        className={
           !activePhase
-            ? "bg-primary text-primary-foreground"
+            ? ""
             : "bg-muted text-muted-foreground hover:text-foreground"
-        }`}
+        }
       >
         All
-      </button>
+      </Button>
       {PHASES.map((phase) => (
-        <button
+        <Button
           key={phase.value}
-          type="button"
+          size="sm"
+          variant={activePhase === phase.value ? "default" : "ghost"}
           onClick={() =>
             setPhase(activePhase === phase.value ? null : phase.value)
           }
-          className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+          className={
             activePhase === phase.value
-              ? "bg-primary text-primary-foreground"
+              ? ""
               : "bg-muted text-muted-foreground hover:text-foreground"
-          }`}
+          }
         >
           {phase.label}
-        </button>
+        </Button>
       ))}
     </div>
   );
