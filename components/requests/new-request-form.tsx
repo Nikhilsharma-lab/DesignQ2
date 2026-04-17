@@ -75,7 +75,7 @@ export function NewRequestForm({ onClose, projects }: Props) {
 
     if (!res.ok) {
       const data = await res.json();
-      setError(data.error ?? "Something went wrong");
+      setError(data.message ?? data.error ?? "Something went wrong");
       setLoading(false);
       return;
     }

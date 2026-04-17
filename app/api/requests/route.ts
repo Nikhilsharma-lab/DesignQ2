@@ -12,7 +12,22 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json();
-  const { title, description, businessContext, successMetrics, figmaUrl, impactMetric, impactPrediction, deadlineAt, projectId, intakeJustification } = body;
+  const {
+    title,
+    description,
+    businessContext,
+    successMetrics,
+    figmaUrl,
+    impactMetric,
+    impactPrediction,
+    deadlineAt,
+    projectId,
+    submitJustification,
+    aiClassifierResult,
+    aiFlagged,
+    aiExtractedProblem,
+    aiExtractedSolution,
+  } = body;
 
   if (!title?.trim() || !description?.trim()) {
     return NextResponse.json({ error: "Title and description are required" }, { status: 400 });
@@ -32,7 +47,51 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid project" }, { status: 400 });
     }
 
-    // Create request
+    // --- Server-side triage (runs BEFORE insert) ---
+    // Fetch recent org requests for duplicate detection.
+    const existingRequests = await db
+      .select({ id: requests.id, title: requests.title, description: requests.description })
+      .from(requests)
+      .where(eq(requests.orgId, profile.orgId))
+      .orderBy(requests.createdAt)
+      .limit(40);
+
+    let triageResult: Awaited<ReturnType<typeof triageRequest>> | null = null;
+    let triageError: string | null = null;
+    try {
+      triageResult = await triageRequest({
+        title: title.trim(),
+        description: description.trim(),
+        businessContext: businessContext?.trim() || null,
+        successMetrics: successMetrics?.trim() || null,
+        deadline: deadlineAt ?? null,
+        existingRequests,
+      });
+    } catch (err) {
+      // Fail-open: skip gate check, proceed with client-provided AI fields only.
+      triageError = err instanceof Error ? err.message : "Unknown triage error";
+      console.error("[requests/POST] Triage failed, proceeding without gate check:", err);
+    }
+
+    // --- Server-side intake gate enforcement ---
+    const serverClassification = triageResult?.classification || aiClassifierResult || null;
+    if (
+      serverClassification &&
+      (serverClassification === "solution_specific" || serverClassification === "hybrid") &&
+      (!submitJustification || !submitJustification.trim())
+    ) {
+      return NextResponse.json(
+        {
+          error: "intake_gate_blocked",
+          message:
+            "This request was classified as solution-specific. Reframe the problem or provide a justification.",
+          classification: serverClassification,
+        },
+        { status: 400 }
+      );
+    }
+
+    // --- Insert request with triage + AI fields in one write ---
     const [request] = await db
       .insert(requests)
       .values({
@@ -46,8 +105,19 @@ export async function POST(req: NextRequest) {
         impactMetric: impactMetric?.trim() || null,
         impactPrediction: impactPrediction?.trim() || null,
         deadlineAt: deadlineAt ? new Date(deadlineAt) : null,
-        intakeJustification: intakeJustification?.trim() || null,
-        status: "submitted",
+        intakeJustification: submitJustification?.trim() || null,
+        aiClassifierResult: triageResult?.classification || aiClassifierResult || null,
+        aiFlagged:
+          triageResult?.classification === "solution_specific" ||
+          triageResult?.classification === "hybrid"
+            ? triageResult.classification
+            : aiFlagged || null,
+        aiExtractedProblem: triageResult?.reframedProblem || aiExtractedProblem || null,
+        aiExtractedSolution: triageResult?.extractedSolution || aiExtractedSolution || null,
+        priority: triageResult?.priority ?? null,
+        complexity: triageResult?.complexity ?? null,
+        requestType: triageResult?.requestType ?? null,
+        status: triageResult ? "triaged" : "submitted",
         stage: "intake",
         projectId,
       })
@@ -59,71 +129,37 @@ export async function POST(req: NextRequest) {
       stage: "intake",
     });
 
-    // Run AI triage
+    // Insert AI analysis row (only if triage succeeded)
     let triage = null;
-    try {
-      // Fetch recent org requests for duplicate detection (exclude the one just created)
-      const existing = await db
-        .select({ id: requests.id, title: requests.title, description: requests.description })
-        .from(requests)
-        .where(eq(requests.orgId, profile.orgId))
-        .orderBy(requests.createdAt)
-        .limit(40);
-      const existingRequests = existing.filter((r) => r.id !== request.id);
-
-      const result = await triageRequest({
-        title: request.title,
-        description: request.description,
-        businessContext: request.businessContext,
-        successMetrics: request.successMetrics,
-        deadline: deadlineAt ?? null,
-        existingRequests,
-      });
-
+    if (triageResult) {
       const [saved] = await db
         .insert(requestAiAnalysis)
         .values({
           requestId: request.id,
-          priority: result.priority,
-          complexity: result.complexity,
-          requestType: result.requestType,
-          qualityScore: result.qualityScore,
-          qualityFlags: result.qualityFlags,
-          summary: result.summary,
-          reasoning: result.reasoning,
-          suggestions: result.suggestions,
-          potentialDuplicates: result.potentialDuplicates ?? [],
+          priority: triageResult.priority,
+          complexity: triageResult.complexity,
+          requestType: triageResult.requestType,
+          qualityScore: triageResult.qualityScore,
+          qualityFlags: triageResult.qualityFlags,
+          summary: triageResult.summary,
+          reasoning: triageResult.reasoning,
+          suggestions: triageResult.suggestions,
+          potentialDuplicates: triageResult.potentialDuplicates ?? [],
           aiModel: "claude-haiku-4-5-20251001",
         })
         .returning();
-
-      // Update request with AI-determined values
-      await db
-        .update(requests)
-        .set({
-          priority: result.priority,
-          complexity: result.complexity,
-          requestType: result.requestType,
-          status: "triaged",
-          updatedAt: new Date(),
-        })
-        .where(eq(requests.id, request.id));
-
       triage = saved;
-      return NextResponse.json({ request, triage, triageStatus: "ok" }, { status: 201 });
-    } catch (err) {
-      console.error("AI triage failed:", err);
-      // Request is still created, just without triage
-      return NextResponse.json(
-        {
-          request,
-          triage: null,
-          triageStatus: "failed",
-          triageError: err instanceof Error ? err.message : "Unknown triage error",
-        },
-        { status: 201 }
-      );
     }
+
+    return NextResponse.json(
+      {
+        request,
+        triage,
+        triageStatus: triageResult ? "ok" : "failed",
+        ...(triageError ? { triageError } : {}),
+      },
+      { status: 201 }
+    );
   });
 }
 
