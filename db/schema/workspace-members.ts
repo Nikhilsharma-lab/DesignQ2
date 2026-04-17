@@ -13,6 +13,7 @@ export const workspaceMembers = pgTable(
     role: workspaceRoleEnum("role").notNull().default("member"),
     invitedBy: uuid("invited_by"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+    onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
   },
   (table) => ({
     pk: primaryKey({ columns: [table.workspaceId, table.userId] }),

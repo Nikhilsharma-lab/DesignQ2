@@ -26,3 +26,4 @@ export * from "./published_views";
 export * from "./notifications";
 export * from "./workspace-members";
 export * from "./stream-guests";
+export * from "./analytics-events";
