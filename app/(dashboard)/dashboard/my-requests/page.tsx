@@ -5,7 +5,7 @@ import { profiles, requests } from "@/db/schema";
 import type { Phase } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { CompactRequestRow } from "@/components/dashboard/request-card";
-import { PhaseFilter } from "./phase-filter";
+import { PhaseFilter } from "@/components/requests/phase-filter";
 
 const VALID_PHASES: readonly Phase[] = ["predesign", "design", "dev", "track"];
 
