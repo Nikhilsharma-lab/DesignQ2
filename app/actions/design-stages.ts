@@ -54,3 +54,21 @@ export async function saveDesignFrame(
     return { success: true };
   });
 }
+
+export async function saveEngineeringFeasibility(
+  requestId: string,
+  feasibility: string,
+) {
+  const userId = await getAuthedUserId();
+  if (!userId) return { error: "Not authenticated" };
+
+  return withUserDb(userId, async (db) => {
+    await db
+      .update(requests)
+      .set({ engineeringFeasibility: feasibility })
+      .where(eq(requests.id, requestId));
+
+    revalidatePath(`/dashboard/requests/${requestId}`);
+    return { success: true };
+  });
+}

@@ -252,6 +252,7 @@ export function DetailDock({ profileRole = "member", isTestUser = false }: { pro
                     designFrameConstraints: request.designFrameConstraints,
                     designFrameDivergence: request.designFrameDivergence,
                     description: request.description,
+                    engineeringFeasibility: request.engineeringFeasibility,
                   }}
                 />
               </>

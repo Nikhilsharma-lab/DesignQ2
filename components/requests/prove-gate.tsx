@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Callout } from "@/components/ui/callout";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { DECISION_BADGE } from "@/lib/theme-colors";
+import { saveEngineeringFeasibility } from "@/app/actions/design-stages";
 
 type SignerRole = "designer" | "pm" | "design_head";
 type Decision = "approved" | "approved_with_conditions" | "rejected";
@@ -23,6 +25,7 @@ interface ProveGateProps {
   requestId: string;
   myProfileRole: string; // raw profile role (designer/pm/lead/admin)
   isTestUser?: boolean;  // test account — can sign for any role
+  initialFeasibility?: string | null;
 }
 
 const ROLES: { key: SignerRole; label: string; desc: string }[] = [
@@ -50,7 +53,12 @@ const decisionLabels: Record<Decision, string> = {
   rejected: "Rejected",
 };
 
-export function ProveGate({ requestId, myProfileRole, isTestUser = false }: ProveGateProps) {
+export function ProveGate({
+  requestId,
+  myProfileRole,
+  isTestUser = false,
+  initialFeasibility = null,
+}: ProveGateProps) {
   const router = useRouter();
   const mySignerRole = signerRoleFromProfile(myProfileRole);
 
@@ -58,6 +66,57 @@ export function ProveGate({ requestId, myProfileRole, isTestUser = false }: Prov
   const [optimisticSignoffs, setOptimisticSignoffs] = useState<Signoff[]>(signoffs);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [feasibility, setFeasibility] = useState(initialFeasibility ?? "");
+  const [feasibilitySaved, setFeasibilitySaved] = useState(true);
+  const [feasibilityPending, setFeasibilityPending] = useState(false);
+
+  const [handoffBrief, setHandoffBrief] = useState<{
+    designDecisions: Array<{ decision: string; rationale: string }>;
+    openQuestions: string[];
+    buildSequence: string[];
+    figmaNotes: string;
+    edgeCases: string[];
+  } | null>(null);
+  const [handoffLoading, setHandoffLoading] = useState(false);
+  const [handoffFetched, setHandoffFetched] = useState(false);
+
+  function handleFeasibilitySave() {
+    setFeasibilityPending(true);
+    saveEngineeringFeasibility(requestId, feasibility)
+      .then(() => {
+        setFeasibilitySaved(true);
+      })
+      .catch((err) => {
+        console.error("[prove-gate] feasibility save failed:", err);
+      })
+      .finally(() => setFeasibilityPending(false));
+  }
+
+  function handleFeasibilityBlur() {
+    if (!feasibilitySaved && feasibility.trim()) {
+      handleFeasibilitySave();
+    }
+  }
+
+  async function fetchHandoffBrief() {
+    setHandoffLoading(true);
+    try {
+      const res = await fetch(
+        `/api/requests/${requestId}/handoff-brief`,
+        { method: "POST" },
+      );
+      if (!res.ok) throw new Error("Failed to generate");
+      const data = await res.json();
+      const brief = data.brief ?? data;
+      setHandoffBrief(brief);
+      setHandoffFetched(true);
+    } catch (err) {
+      console.error("[prove-gate] handoff brief failed:", err);
+    } finally {
+      setHandoffLoading(false);
+    }
+  }
 
   useEffect(() => {
     setOptimisticSignoffs(signoffs);
@@ -280,6 +339,137 @@ export function ProveGate({ requestId, myProfileRole, isTestUser = false }: Prov
       {error && (
         <Callout variant="error">{error}</Callout>
       )}
+
+      {/* Engineering feasibility — non-blocking, async */}
+      <div className="space-y-2 border-t pt-4">
+        <label className="text-xs font-medium text-foreground">
+          Engineering feasibility notes
+        </label>
+        <p className="text-[11px] text-muted-foreground">
+          Non-blocking. Engineers can flag concerns or constraints here
+          during the Prove review.
+        </p>
+        <Textarea
+          value={feasibility}
+          onChange={(e) => {
+            setFeasibility(e.target.value);
+            setFeasibilitySaved(false);
+          }}
+          onBlur={handleFeasibilityBlur}
+          placeholder="Any technical concerns, constraints, or notes for the build phase?"
+          rows={3}
+          className="text-xs resize-y"
+        />
+        <span className="text-[10px] text-muted-foreground/50">
+          {feasibilityPending ? "Saving..." : feasibilitySaved ? "Saved" : "Unsaved changes"}
+        </span>
+      </div>
+
+      {/* AI Handoff checklist */}
+      <div className="border-t pt-4">
+        {!handoffFetched && !handoffLoading && (
+          <div className="border border-dashed rounded-lg p-4 text-center space-y-2">
+            <p className="text-[11px] text-muted-foreground">
+              AI can generate a handoff checklist covering design decisions,
+              open questions, build sequence, and edge cases.
+            </p>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={fetchHandoffBrief}
+            >
+              Generate handoff checklist
+            </Button>
+          </div>
+        )}
+
+        {handoffLoading && (
+          <div className="border border-dashed rounded-lg p-4 text-center">
+            <p className="text-[11px] text-muted-foreground animate-pulse">
+              Generating handoff checklist...
+            </p>
+          </div>
+        )}
+
+        {handoffFetched && handoffBrief && (
+          <div className="border rounded-lg p-4 space-y-3">
+            <p className="text-xs font-medium text-foreground">
+              AI handoff checklist
+            </p>
+
+            {handoffBrief.designDecisions.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Design decisions
+                </p>
+                {handoffBrief.designDecisions.map((d, i) => (
+                  <div key={i} className="text-xs text-muted-foreground">
+                    <span className="font-medium text-foreground">
+                      {d.decision}
+                    </span>
+                    {d.rationale && ` — ${d.rationale}`}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {handoffBrief.buildSequence.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Build sequence
+                </p>
+                {handoffBrief.buildSequence.map((step, i) => (
+                  <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                    <span className="text-muted-foreground/40 shrink-0 font-mono text-[10px]">
+                      {i + 1}.
+                    </span>
+                    {step}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {handoffBrief.openQuestions.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Open questions
+                </p>
+                {handoffBrief.openQuestions.map((q, i) => (
+                  <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                    <span className="text-muted-foreground/40 shrink-0">?</span>
+                    {q}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {handoffBrief.edgeCases.length > 0 && (
+              <div className="space-y-1">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Edge cases
+                </p>
+                {handoffBrief.edgeCases.map((ec, i) => (
+                  <p key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                    <span className="text-muted-foreground/40 shrink-0">!</span>
+                    {ec}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            {handoffBrief.figmaNotes && (
+              <div className="space-y-1">
+                <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                  Figma notes
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {handoffBrief.figmaNotes}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

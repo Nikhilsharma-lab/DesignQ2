@@ -128,6 +128,7 @@ export const requests = pgTable("requests", {
   designFrameSuccessCriteria: text("design_frame_success_criteria"),
   designFrameConstraints: text("design_frame_constraints"),
   designFrameDivergence: text("design_frame_divergence"),
+  engineeringFeasibility: text("engineering_feasibility"),
 
   // If request was created from an approved idea
   linkedIdeaId: uuid("linked_idea_id"),

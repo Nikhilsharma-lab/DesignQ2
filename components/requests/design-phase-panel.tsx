@@ -48,6 +48,7 @@ interface Props {
     designFrameConstraints: string | null;
     designFrameDivergence: string | null;
     description: string | null;
+    engineeringFeasibility: string | null;
   };
 }
 
@@ -294,7 +295,12 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
 
         {/* Prove stage: show ProveGate instead of advance button */}
         {isProveStage ? (
-          <ProveGate requestId={requestId} myProfileRole={profileRole} isTestUser={isTestUser} />
+          <ProveGate
+            requestId={requestId}
+            myProfileRole={profileRole}
+            isTestUser={isTestUser}
+            initialFeasibility={requestData?.engineeringFeasibility ?? null}
+          />
         ) : (
           <>
             {/* Gate status for explore + handoff */}
