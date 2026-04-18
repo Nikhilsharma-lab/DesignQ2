@@ -23,6 +23,7 @@ import { ProveFirstTimeModal } from "./prove-first-time-modal";
 import { getSeenHints } from "@/app/actions/get-seen-hints";
 import { SensePanel } from "./sense-panel";
 import { FramePanel } from "./frame-panel";
+import { ConvergePanel } from "./converge-panel";
 
 const STAGES = [
   { key: "sense",    desc: "Deep understanding before proposing anything. Related research, past decisions, nothing rushed." },
@@ -250,12 +251,23 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
           />
         )}
 
-        {current && currentDesignStage !== "sense" && currentDesignStage !== "frame" && (
-          <div>
-            <p className="text-xs font-semibold text-foreground mb-0.5">{getStageLabel(current.key)}</p>
-            <p className="text-xs text-muted-foreground">{current.desc}</p>
-          </div>
+        {current && currentDesignStage === "converge" && (
+          <ConvergePanel
+            requestId={requestId}
+            iterations={iterationsList}
+          />
         )}
+
+        {current &&
+          currentDesignStage !== "sense" &&
+          currentDesignStage !== "frame" &&
+          currentDesignStage !== "converge" &&
+          !isProveStage && (
+            <div>
+              <p className="text-xs font-semibold text-foreground mb-0.5">{getStageLabel(current.key)}</p>
+              <p className="text-xs text-muted-foreground">{current.desc}</p>
+            </div>
+          )}
 
         {/* Prove stage: show ProveGate instead of advance button */}
         {isProveStage ? (

@@ -22,6 +22,7 @@ export * from "./activity_log";
 export * from "./cycles";
 export * from "./initiatives";
 export * from "./iterations";
+export * from "./decision-log";
 export * from "./published_views";
 export * from "./notifications";
 export * from "./workspace-members";
