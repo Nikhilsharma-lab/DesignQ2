@@ -207,7 +207,7 @@ async function gatherLeadContext(orgId: string) {
         eq(proactiveAlerts.orgId, orgId),
         eq(proactiveAlerts.dismissed, false),
         gt(proactiveAlerts.expiresAt, now),
-        inArray(proactiveAlerts.type, ["stall_escalation", "signoff_overdue"])
+        inArray(proactiveAlerts.type, ["signoff_overdue"])
       )
     )
     .orderBy(desc(proactiveAlerts.generatedAt))

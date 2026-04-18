@@ -11,7 +11,7 @@ import { requests } from "./requests";
 
 export const alertTypeEnum = pgEnum("alert_type", [
   "stall_nudge",        // private to designer — no movement 5+ days
-  "stall_escalation",   // to Design Head — nudge sent 2+ days ago, still no movement
+  "stall_escalation",   // DEPRECATED — violates anti-surveillance principles. No code creates this type. Safe to remove in a future enum migration.
   "signoff_overdue",    // to PM or Design Head — validate stage 3+ days, not signed
   "figma_drift",        // to dev + Design Head — post-handoff change unreviewed 24h+
 ]);

@@ -15,7 +15,6 @@ import { eq, and, lt, not, inArray, desc, gt, or } from "drizzle-orm";
 // ── Named thresholds ───────────────────────────────────────────────────────
 
 const STALL_NUDGE_THRESHOLD_DAYS = 5;
-const ESCALATION_THRESHOLD_DAYS = 2;
 const SIGNOFF_OVERDUE_THRESHOLD_DAYS = 3;
 const FIGMA_DRIFT_THRESHOLD_HOURS = 24;
 
@@ -87,7 +86,7 @@ async function ruleKeyExists(ruleKey: string): Promise<boolean> {
 // ── AlertCandidate type ────────────────────────────────────────────────────
 
 export interface AlertCandidate {
-  type: "stall_nudge" | "stall_escalation" | "signoff_overdue" | "figma_drift";
+  type: "stall_nudge" | "signoff_overdue" | "figma_drift";
   requestId: string;
   requestTitle: string;
   recipientId: string;
@@ -166,84 +165,7 @@ export async function detectStallNudges(orgId: string): Promise<AlertCandidate[]
   return candidates;
 }
 
-// ── 2. Stall escalation ────────────────────────────────────────────────────
-// stall_nudge was sent 2+ days ago and still no movement.
-// Recipient: org Design Head (lead/admin role).
-export async function detectStallEscalations(orgId: string): Promise<AlertCandidate[]> {
-  const candidates: AlertCandidate[] = [];
-  const wk = weekKey();
-
-  const recentNudges = await db
-    .select({
-      requestId: proactiveAlerts.requestId,
-      generatedAt: proactiveAlerts.generatedAt,
-      recipientId: proactiveAlerts.recipientId,
-    })
-    .from(proactiveAlerts)
-    .where(
-      and(
-        eq(proactiveAlerts.orgId, orgId),
-        eq(proactiveAlerts.type, "stall_nudge"),
-        eq(proactiveAlerts.dismissed, false),
-        lt(proactiveAlerts.generatedAt, daysAgo(ESCALATION_THRESHOLD_DAYS))
-      )
-    );
-
-  const [lead] = await db
-    .select({ id: profiles.id })
-    .from(profiles)
-    .where(
-      and(
-        eq(profiles.orgId, orgId),
-        or(eq(profiles.role, "lead"), eq(profiles.role, "admin"))
-      )
-    )
-    .limit(1);
-  if (!lead) return candidates;
-
-  for (const nudge of recentNudges) {
-    if (!nudge.requestId) continue;
-
-    const ruleKey = `stall_escalation_${nudge.requestId}_${wk}`;
-    if (await ruleKeyExists(ruleKey)) continue;
-
-    const lastActivity = await getLastActivityAt(nudge.requestId);
-    if (lastActivity && lastActivity > nudge.generatedAt) continue;
-
-    const [req] = await db
-      .select({ id: requests.id, title: requests.title })
-      .from(requests)
-      .where(eq(requests.id, nudge.requestId));
-    if (!req) continue;
-
-    const [designer] = await db
-      .select({ fullName: profiles.fullName })
-      .from(profiles)
-      .where(eq(profiles.id, nudge.recipientId));
-
-    const daysSince = lastActivity
-      ? Math.floor((Date.now() - lastActivity.getTime()) / 86400000)
-      : null;
-
-    candidates.push({
-      type: "stall_escalation",
-      requestId: req.id,
-      requestTitle: req.title,
-      recipientId: lead.id,
-      ruleKey,
-      ctaUrl: `/dashboard/requests/${req.id}`,
-      designerName: designer?.fullName ?? "the designer",
-      daysSinceActivity: daysSince ?? undefined,
-      lastActivityDescription: lastActivity
-        ? `Still no movement after nudge. Last activity was ${daysSince} days ago.`
-        : "No activity recorded on this request.",
-    });
-  }
-
-  return candidates;
-}
-
-// ── 3. Sign-off overdue ────────────────────────────────────────────────────
+// ── 2. Sign-off overdue ────────────────────────────────────────────────────
 // Request in validate stage 3+ days, not all 3 roles have signed.
 // Recipients: each role that hasn't signed yet.
 export async function detectSignoffOverdue(orgId: string): Promise<AlertCandidate[]> {

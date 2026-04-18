@@ -27,7 +27,7 @@ const alertSchema = z.object({
 export type AlertCopy = z.infer<typeof alertSchema>;
 
 export interface AlertInput {
-  type: "stall_nudge" | "stall_escalation" | "signoff_overdue" | "figma_drift";
+  type: "stall_nudge" | "signoff_overdue" | "figma_drift";
   requestTitle: string;
   requestId: string;
   designerName?: string;
@@ -42,8 +42,6 @@ export interface AlertInput {
 const TYPE_CONTEXT: Record<AlertInput["type"], string> = {
   stall_nudge:
     "A designer's request has had no activity (no stage change or comment) for several days. Write a private, supportive nudge — not an accusation. The designer should feel supported, not watched.",
-  stall_escalation:
-    "A designer was nudged privately but the request still hasn't moved. The Design Head needs to know. Frame it as a team health signal, not a performance issue.",
   signoff_overdue:
     "A request has been sitting in validation (Prove stage) waiting for sign-offs for several days. The people who haven't signed off need a reminder.",
   figma_drift:

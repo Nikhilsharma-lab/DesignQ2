@@ -4,7 +4,6 @@ import { db } from "@/db";
 import { organizations, proactiveAlerts } from "@/db/schema";
 import {
   detectStallNudges,
-  detectStallEscalations,
   detectSignoffOverdue,
   detectFigmaDrift,
 } from "@/lib/alerts/detect";
@@ -35,18 +34,16 @@ export async function GET(req: NextRequest) {
     let errors = 0;
 
     try {
-      // Run all 4 detectors in parallel
-      const [stallNudges, stallEscalations, signoffOverdue, figmaDrift] =
+      // Run all 3 detectors in parallel
+      const [stallNudges, signoffOverdue, figmaDrift] =
         await Promise.all([
           detectStallNudges(org.id),
-          detectStallEscalations(org.id),
           detectSignoffOverdue(org.id),
           detectFigmaDrift(org.id),
         ]);
 
       const allCandidates = [
         ...stallNudges,
-        ...stallEscalations,
         ...signoffOverdue,
         ...figmaDrift,
       ];

@@ -23,7 +23,7 @@ interface NotificationItem {
 
 interface AlertItem {
   id: string;
-  type: "stall_nudge" | "stall_escalation" | "signoff_overdue" | "figma_drift";
+  type: "stall_nudge" | "signoff_overdue" | "figma_drift";
   urgency: "low" | "medium" | "high";
   title: string;
   body: string;
