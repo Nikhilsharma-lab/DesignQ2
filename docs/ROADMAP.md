@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** Week 7 — buffer + hardening only. Start with the active-requests page build (~1 hour), then the pre-customer security sweep (~4-5 hours). Log 15h bug fixes as they surface. GTM work begins in Week 8 after the Week 7 production-ready exit state is confirmed — strict dependency, not parallel. Read docs/WORKING-RULES.md first.
+> **Next session:** Pre-customer security sweep (Week 7, ~4-5 hours). Single focused session combining five items: (1) Dependabot triage + merge the 2 open PRs (1 high, 1 moderate), (2) ANTHROPIC_API_KEY 401 in Vercel production — diagnose + fix, (3) connection pool exhaustion — diagnose Drizzle/Supabase pool config, (4) separate Supabase dev/staging project from prod, (5) Phase 3 test data cleanup. Active-requests page shipped April 18 — zero placeholder pages remain. GTM work gated on Week 7 exit state — strict, not parallel.
 
 ---
 
@@ -170,7 +170,7 @@ If Item 14 compresses 30%, that's ~7 hours of slack across the plan — consider
 
 **Budget:** 15 hours. **Planned:** ~8 hours build + 7 hours slack.
 
-- [ ] **active-requests page build** — Real query + list mirroring Items 5/6/15f. ~1 hour.
+- [x] **active-requests page build** — **Complete (April 18).** Replaced the 22-line placeholder at `app/(dashboard)/dashboard/teams/[slug]/active-requests/page.tsx` with a real team-scoped query: `requests WHERE orgId = profile.orgId AND projectId = team.id AND phase IN ('predesign', 'design')`, ordered by `updatedAt desc`. Same structural pattern as Commitments (Item 15f) — auth → profile → team lookup by slug → scoped query → first-assignee name resolution via `allAssignments` ordered by `assignedAt asc` → `CompactRequestRow` list. Shared `PhaseFilter` component plugged in; URL `?phase=predesign|design` respected, Build/Track clicks gracefully ignored (filter UI shows "All" highlighted while base query still returns active-phase work). Empty state differentiated: "queue is clear" narrative when unfiltered, "No active requests in Predesign/Design for this team" when filtered to a specific phase with no results. `ActivePhase` type narrowed to `"predesign" | "design"` for Drizzle's enum-column type check. Shipped as commit acad4c0. **Zero placeholder pages remain in the app** — every sidebar route now resolves to a real query. (actual: ~30 min vs 1-hour estimate)
 - [ ] **Item 15h** — Bug fixes as they surface. Log here as you go.
 - [ ] **Pre-customer security sweep** — Single focused session combining:
   - Dependabot: triage + merge 2 open PRs (1 high, 1 moderate)
@@ -284,7 +284,7 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
-*Last updated: April 18, 2026 — Weeks 1-6 complete. Lane is feature-complete. Week 7: buffer + hardening. Week 8: GTM launch (strict: after Week 7 exit state).*
+*Last updated: April 18, 2026 — Weeks 1-6 complete + active-requests page (Week 7 opener). Zero placeholder pages remain. Next: pre-customer security sweep. Week 8 GTM launch is gated on Week 7 exit state.*
 
 ---
 
