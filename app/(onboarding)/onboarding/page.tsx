@@ -21,7 +21,10 @@ export default async function OnboardingPage() {
 
   // If already onboarded, kick back to the dashboard so users can't re-enter the flow.
   const [membership] = await db
-    .select({ onboardedAt: workspaceMembers.onboardedAt })
+    .select({
+      onboardedAt: workspaceMembers.onboardedAt,
+      invitedBy: workspaceMembers.invitedBy,
+    })
     .from(workspaceMembers)
     .where(
       and(
@@ -39,6 +42,17 @@ export default async function OnboardingPage() {
     .from(workspaces)
     .where(eq(workspaces.id, profile.orgId));
 
+  // Inviter first name — used in the Designer/PM welcome copy.
+  // Null when the user was not invited (workspace owners, self-joins).
+  let inviterFirstName: string | null = null;
+  if (membership?.invitedBy) {
+    const [inviter] = await db
+      .select({ fullName: profiles.fullName })
+      .from(profiles)
+      .where(eq(profiles.id, membership.invitedBy));
+    inviterFirstName = inviter?.fullName?.split(" ")[0] ?? null;
+  }
+
   const variant = await detectOnboardingVariant(user.id, profile.orgId);
 
   const firstName = profile.fullName?.split(" ")[0] ?? "there";
@@ -51,6 +65,7 @@ export default async function OnboardingPage() {
       workspaceId={profile.orgId}
       firstName={firstName}
       workspaceName={workspaceName}
+      inviterFirstName={inviterFirstName}
     />
   );
 }

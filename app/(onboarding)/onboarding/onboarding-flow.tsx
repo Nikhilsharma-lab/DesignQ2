@@ -14,12 +14,14 @@ interface OnboardingFlowProps {
   workspaceId: string;
   firstName: string;
   workspaceName: string;
+  inviterFirstName: string | null;
 }
 
 export function OnboardingFlow({
   variant,
   firstName,
   workspaceName,
+  inviterFirstName,
 }: OnboardingFlowProps) {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -233,38 +235,132 @@ export function OnboardingFlow({
     }
   }
 
-  // --- Designer: placeholder for Phase E ---
+  // --- Designer: 2 screens ---
   if (variant === "designer") {
-    return (
-      <div className="space-y-6 text-center">
-        <h1 className="text-2xl font-semibold text-foreground">
-          Welcome to {workspaceName}.
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          You&apos;re a designer. Your onboarding flow is coming soon.
-        </p>
-        <Button size="lg" onClick={handleFinishOnboarding} disabled={isPending}>
-          Continue to Lane
-        </Button>
-      </div>
-    );
+    switch (step) {
+      // Screen 1 — Welcome
+      case 0:
+        return (
+          <div className="space-y-6 text-center">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold text-foreground">
+                {inviterFirstName
+                  ? `${inviterFirstName} added you to ${workspaceName}.`
+                  : `You\u2019ve joined ${workspaceName}.`}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                You&apos;re a designer on {workspaceName}. Lane will get you
+                to your first Request in a moment.
+              </p>
+            </div>
+
+            <Button
+              size="lg"
+              onClick={() => setStep(1)}
+              disabled={isPending}
+            >
+              Continue
+            </Button>
+          </div>
+        );
+
+      // Screen 2 — Waiting state (assigned-Request branch is a follow-up)
+      case 1:
+        return (
+          <div className="space-y-6 text-center">
+            <Card>
+              <CardContent className="p-6 space-y-4 text-left">
+                <p className="text-sm text-muted-foreground">
+                  You don&apos;t have any Requests yet. Your team lead will
+                  assign one soon. In the meantime, explore the sidebar —
+                  your team&apos;s work lives in {workspaceName}.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Button
+              size="lg"
+              onClick={handleFinishOnboarding}
+              disabled={isPending}
+            >
+              Explore Lane
+            </Button>
+          </div>
+        );
+    }
   }
 
-  // --- PM: placeholder for Phase F ---
+  // --- PM: 2 screens ---
   if (variant === "pm") {
-    return (
-      <div className="space-y-6 text-center">
-        <h1 className="text-2xl font-semibold text-foreground">
-          Welcome to {workspaceName}.
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          You&apos;re a PM. Your onboarding flow is coming soon.
-        </p>
-        <Button size="lg" onClick={handleFinishOnboarding} disabled={isPending}>
-          Continue to Lane
-        </Button>
-      </div>
-    );
+    switch (step) {
+      // Screen 1 — Welcome with intake foreshadowing
+      case 0:
+        return (
+          <div className="space-y-6 text-center">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold text-foreground">
+                {inviterFirstName
+                  ? `${inviterFirstName} added you to ${workspaceName}.`
+                  : `You\u2019ve joined ${workspaceName}.`}
+              </h1>
+              <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                You&apos;re a PM on {workspaceName}. In Lane, PMs submit
+                design work by describing problems — not proposing solutions.
+                More on that in a second.
+              </p>
+            </div>
+
+            <Button
+              size="lg"
+              onClick={() => setStep(1)}
+              disabled={isPending}
+            >
+              Continue
+            </Button>
+          </div>
+        );
+
+      // Screen 2 — Land on Intake (Item 4's classifier fires naturally)
+      case 1:
+        return (
+          <div className="space-y-6 text-center">
+            <Card>
+              <CardContent className="p-6 space-y-4 text-left">
+                <p className="text-sm text-muted-foreground">
+                  This is {workspaceName}&apos;s Intake. Requests you submit
+                  here get shaped into design work. Ready to try it?
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="space-y-2">
+              <Button
+                size="lg"
+                onClick={() => {
+                  startTransition(async () => {
+                    await finishOnboarding();
+                    router.push("/dashboard/requests");
+                    router.refresh();
+                  });
+                }}
+                disabled={isPending}
+              >
+                Submit your first request
+              </Button>
+              <div>
+                <button
+                  type="button"
+                  onClick={handleFinishOnboarding}
+                  disabled={isPending}
+                  className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                >
+                  I&apos;ll look around first
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+    }
   }
 
   // Fallback — should never reach here
