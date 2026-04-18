@@ -1,12 +1,22 @@
 // components/requests/track-phase-panel.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { PanelHeader } from "@/components/ui/panel-header";
 import { SectionLabel } from "@/components/ui/section-label";
+import { classifyVariance, formatVariance } from "@/lib/impact/variance";
+
+interface PriorCalibration {
+  requestId: string;
+  requestTitle: string;
+  predictedValue: string;
+  actualValue: string | null;
+  variancePercent: string | number | null;
+}
 
 interface Props {
   requestId: string;
@@ -17,22 +27,13 @@ interface Props {
   initialVariancePercent: number | null;
 }
 
-function varianceConfig(v: number): { label: string; style: string } {
-  const abs = Math.abs(v);
-  if (abs <= 10)
-    return {
-      label: "Well-calibrated",
-      style: "text-accent-success bg-accent-success/10 border-accent-success/20",
-    };
-  if (v < -10)
-    return {
-      label: "Over-optimistic",
-      style: "text-accent-danger bg-accent-danger/10 border-accent-danger/20",
-    };
-  return {
-    label: "Under-optimistic",
-    style: "text-accent-warning bg-accent-warning/10 border-accent-warning/20",
-  };
+function formatMeasuredAgo(measuredAt: Date | null): string {
+  if (!measuredAt) return "";
+  const diffMs = Date.now() - measuredAt.getTime();
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (days === 0) return "Measured today";
+  if (days === 1) return "Measured 1 day ago";
+  return `Measured ${days} days ago`;
 }
 
 export function TrackPhasePanel({
@@ -46,9 +47,44 @@ export function TrackPhasePanel({
   const router = useRouter();
   const [actual, setActual] = useState(impactActual ?? "");
   const [optimisticActual, setOptimisticActual] = useState<string | null>(impactActual);
+  const [notes, setNotes] = useState("");
   const [variancePercent, setVariancePercent] = useState<number | null>(initialVariancePercent);
+  const [measuredAt, setMeasuredAt] = useState<Date | null>(null);
+  const [priorCalibrations, setPriorCalibrations] = useState<PriorCalibration[]>([]);
+  const [saving, setSaving] = useState(false);
   const [completing, setCompleting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Fetch existing record + prior calibrations on mount
+  useEffect(() => {
+    fetch(`/api/requests/${requestId}/impact-record`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.record) {
+          setNotes(data.record.notes ?? "");
+          const vp = data.record.variancePercent;
+          if (vp !== null && vp !== undefined) {
+            setVariancePercent(typeof vp === "string" ? parseFloat(vp) : vp);
+          }
+          if (data.record.measuredAt) {
+            setMeasuredAt(new Date(data.record.measuredAt));
+          }
+        }
+      })
+      .catch((err) =>
+        console.error("[track-phase-panel] fetch record failed:", err),
+      );
+
+    fetch(`/api/pm/prior-calibrations?excludeRequestId=${requestId}`)
+      .then((r) => r.json())
+      .then((data) => {
+        setPriorCalibrations(data.calibrations ?? []);
+      })
+      .catch((err) =>
+        console.error("[track-phase-panel] fetch prior calibrations failed:", err),
+      );
+  }, [requestId]);
 
   async function handleSave() {
     if (!actual.trim()) return;
@@ -56,11 +92,15 @@ export function TrackPhasePanel({
     const previousVariance = variancePercent;
     setOptimisticActual(actual.trim());
     setError(null);
+    setSaving(true);
     try {
       const res = await fetch(`/api/requests/${requestId}/impact-record`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ actualValue: actual.trim() }),
+        body: JSON.stringify({
+          actualValue: actual.trim(),
+          notes: notes.trim() || undefined,
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -71,12 +111,16 @@ export function TrackPhasePanel({
         if (typeof data.variancePercent === "number") {
           setVariancePercent(data.variancePercent);
         }
+        setMeasuredAt(new Date());
+        setEditing(false);
         router.refresh();
       }
     } catch {
       setOptimisticActual(previousActual);
       setVariancePercent(previousVariance);
       setError("Network error");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -96,11 +140,11 @@ export function TrackPhasePanel({
   }
 
   const isComplete = trackStage === "complete";
-  const vcfg = variancePercent !== null ? varianceConfig(variancePercent) : null;
+  const vcfg = variancePercent !== null ? classifyVariance(variancePercent) : null;
+  const showInput = !isComplete && (!optimisticActual || editing);
 
   return (
     <div className="border rounded-xl overflow-hidden">
-      {/* Header */}
       <PanelHeader>
         <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Phase 4 — Track
@@ -117,7 +161,6 @@ export function TrackPhasePanel({
       </PanelHeader>
 
       <div className="px-5 py-4 space-y-4">
-        {/* Metric */}
         {impactMetric && (
           <div>
             <SectionLabel className="mb-1">Metric</SectionLabel>
@@ -125,11 +168,39 @@ export function TrackPhasePanel({
           </div>
         )}
 
-        {/* Predicted */}
         {impactPrediction && (
           <div>
             <SectionLabel className="mb-1">Predicted</SectionLabel>
             <p className="text-xs text-muted-foreground">{impactPrediction}</p>
+          </div>
+        )}
+
+        {/* Prior-calibration hint — shown only when still measuring and the input is visible */}
+        {showInput && priorCalibrations.length > 0 && (
+          <div className="border border-dashed rounded-lg p-3 space-y-1.5">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+              Your recent predictions — for reference
+            </p>
+            {priorCalibrations.map((p) => {
+              const vp =
+                p.variancePercent === null
+                  ? null
+                  : typeof p.variancePercent === "string"
+                    ? parseFloat(p.variancePercent)
+                    : p.variancePercent;
+              return (
+                <div key={p.requestId} className="text-[11px] text-muted-foreground">
+                  <span className="text-foreground">{p.requestTitle}</span>
+                  {" — predicted "}
+                  <span className="font-mono text-foreground">{p.predictedValue}</span>
+                  {", actual "}
+                  <span className="font-mono text-foreground">{p.actualValue ?? "—"}</span>
+                  {vp !== null && (
+                    <span className="ml-1 text-muted-foreground/60">({formatVariance(vp)})</span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
 
@@ -140,24 +211,62 @@ export function TrackPhasePanel({
             <p className="text-xs text-foreground">{optimisticActual ?? "—"}</p>
           ) : (
             <div className="space-y-2">
-              {optimisticActual && (
-                <p className="text-xs text-foreground">{optimisticActual}</p>
+              {optimisticActual && !editing && (
+                <div className="flex items-center gap-2">
+                  <p className="text-xs text-foreground">{optimisticActual}</p>
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => {
+                      setActual(optimisticActual);
+                      setEditing(true);
+                    }}
+                    className="text-[11px]"
+                  >
+                    Edit
+                  </Button>
+                </div>
               )}
-              <Input
-                type="text"
-                value={actual}
-                onChange={(e) => setActual(e.target.value)}
-                placeholder="e.g. +4.2% retention"
-                inputSize="sm"
-              />
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleSave}
-                disabled={!actual.trim()}
-              >
-                Save
-              </Button>
+              {showInput && (
+                <>
+                  <Input
+                    type="text"
+                    value={actual}
+                    onChange={(e) => setActual(e.target.value)}
+                    placeholder="e.g. +4.2% retention"
+                    inputSize="sm"
+                  />
+                  <Textarea
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="Notes (optional) — context that shaped this result, e.g. 'competitor launched same week', 'holiday slowdown'"
+                    rows={2}
+                    className="text-xs resize-none"
+                  />
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={!actual.trim() || saving}
+                    >
+                      {saving ? "Saving..." : optimisticActual ? "Save changes" : "Save"}
+                    </Button>
+                    {editing && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setActual(optimisticActual ?? "");
+                          setEditing(false);
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -175,18 +284,22 @@ export function TrackPhasePanel({
             <div className="flex items-center justify-between text-xs">
               <span className="text-muted-foreground/60">Variance</span>
               <span className={`font-mono text-[10px] px-1.5 py-0.5 rounded border ${vcfg.style}`}>
-                {variancePercent! > 0 ? "+" : ""}
-                {variancePercent!.toFixed(1)}%
+                {formatVariance(variancePercent!)}
               </span>
             </div>
             <span className={`inline-block text-[10px] px-1.5 py-0.5 rounded border font-medium ${vcfg.style}`}>
-              {vcfg.label}
+              {vcfg.displayText}
             </span>
+            {measuredAt && (
+              <p className="text-[10px] text-muted-foreground/50 pt-1">
+                {formatMeasuredAgo(measuredAt)}
+              </p>
+            )}
           </div>
         )}
 
         {/* Mark complete */}
-        {!isComplete && optimisticActual && (
+        {!isComplete && optimisticActual && !editing && (
           <Button
             variant="default"
             size="sm"
