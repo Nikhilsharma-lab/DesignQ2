@@ -101,10 +101,11 @@ export function IterationCard({ iteration, commentCount = 0 }: Props) {
               </div>
             </div>
           ) : (
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setEditingRationale(true)}
-              className="w-full text-left"
+              className="w-full h-auto justify-start text-left p-0 font-normal hover:bg-transparent"
             >
               {iteration.rationale ? (
                 <p className="text-xs text-muted-foreground line-clamp-2">
@@ -118,7 +119,7 @@ export function IterationCard({ iteration, commentCount = 0 }: Props) {
                   Add rationale — why this direction?
                 </p>
               )}
-            </button>
+            </Button>
           )}
         </div>
 

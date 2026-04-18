@@ -60,14 +60,15 @@ export function OnboardingFlow({
                 Show me around
               </Button>
               <div>
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   onClick={handleFinishOnboarding}
                   disabled={isPending}
-                  className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                  className="text-xs text-muted-foreground/60 hover:text-muted-foreground hover:no-underline h-auto p-0"
                 >
                   Skip — I&apos;ll explore on my own
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -226,14 +227,15 @@ export function OnboardingFlow({
                     Submit first request
                   </Button>
                   <div>
-                    <button
+                    <Button
                       type="button"
+                      variant="link"
                       onClick={handleFinishOnboarding}
                       disabled={isPending}
-                      className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                      className="text-xs text-muted-foreground/60 hover:text-muted-foreground hover:no-underline h-auto p-0"
                     >
                       Show me the sidebar instead
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </CardContent>
@@ -356,14 +358,15 @@ export function OnboardingFlow({
                 Submit your first request
               </Button>
               <div>
-                <button
+                <Button
                   type="button"
+                  variant="link"
                   onClick={handleFinishOnboarding}
                   disabled={isPending}
-                  className="text-xs text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                  className="text-xs text-muted-foreground/60 hover:text-muted-foreground hover:no-underline h-auto p-0"
                 >
                   I&apos;ll look around first
-                </button>
+                </Button>
               </div>
             </div>
           </div>
