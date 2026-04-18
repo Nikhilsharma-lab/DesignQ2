@@ -75,6 +75,12 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
   const [newFigmaUrl, setNewFigmaUrl] = useState("");
   const [newRationale, setNewRationale] = useState("");
   const [addingIteration, setAddingIteration] = useState(false);
+  const [iterationSummary, setIterationSummary] = useState<{
+    overview: string;
+    directions: Array<{ title: string; summary: string }>;
+    openQuestions: string[];
+  } | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
   const showIterations = currentDesignStage === "diverge" || currentDesignStage === "converge";
 
   const fetchIterations = useCallback(async () => {
@@ -106,6 +112,23 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
     setShowAddForm(false);
     setAddingIteration(false);
     fetchIterations();
+  }
+
+  async function generateSummary() {
+    setSummaryLoading(true);
+    try {
+      const res = await fetch(
+        `/api/requests/${requestId}/iteration-summary`,
+        { method: "POST" },
+      );
+      if (!res.ok) throw new Error("Failed to generate");
+      const { summary } = await res.json();
+      setIterationSummary(summary);
+    } catch (err) {
+      console.error("[design-phase-panel] iteration summary failed:", err);
+    } finally {
+      setSummaryLoading(false);
+    }
   }
 
   const currentIdx = STAGES.findIndex((s) => s.key === currentDesignStage);
@@ -324,15 +347,28 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
             <p className="text-xs font-semibold text-foreground">
               Iterations{iterationsList.length > 0 ? ` (${iterationsList.length})` : ""}
             </p>
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => setShowAddForm((v) => !v)}
-              className="flex items-center gap-1 text-[11px] font-medium"
-            >
-              <Plus size={12} />
-              Add Direction
-            </Button>
+            <div className="flex items-center gap-2">
+              {iterationsList.length >= 2 && (
+                <Button
+                  variant="link"
+                  size="sm"
+                  onClick={generateSummary}
+                  disabled={summaryLoading}
+                  className="text-[11px] font-medium"
+                >
+                  {summaryLoading ? "Generating..." : "AI summary"}
+                </Button>
+              )}
+              <Button
+                variant="link"
+                size="sm"
+                onClick={() => setShowAddForm((v) => !v)}
+                className="flex items-center gap-1 text-[11px] font-medium"
+              >
+                <Plus size={12} />
+                Add Direction
+              </Button>
+            </div>
           </div>
 
           {/* Add form */}
@@ -401,6 +437,39 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
               {iterationsList.map((iter) => (
                 <IterationCard key={iter.id} iteration={iter} />
               ))}
+            </div>
+          )}
+
+          {iterationSummary && (
+            <div className="border rounded-lg p-4 space-y-3 mt-2">
+              <p className="text-xs font-medium text-foreground">
+                Iteration summary
+              </p>
+              <p className="text-xs text-muted-foreground">
+                {iterationSummary.overview}
+              </p>
+              {iterationSummary.directions.map((d, i) => (
+                <div key={i} className="space-y-0.5">
+                  <p className="text-xs font-medium text-foreground">{d.title}</p>
+                  <p className="text-xs text-muted-foreground">{d.summary}</p>
+                </div>
+              ))}
+              {iterationSummary.openQuestions.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                    Questions for discussion
+                  </p>
+                  {iterationSummary.openQuestions.map((q, i) => (
+                    <p
+                      key={i}
+                      className="text-xs text-muted-foreground flex items-start gap-1.5"
+                    >
+                      <span className="text-muted-foreground/40 shrink-0">?</span>
+                      {q}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
