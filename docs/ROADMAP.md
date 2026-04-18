@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** Week 7 buffer — two items. **Item 15h** (bug fixes, ongoing): not a discrete sequenced task — log new items into the parking lot as they're found. **active-requests page build** (~1 hour): real query + list mirroring Items 5/6/15f, replaces the 22-line placeholder at `app/(dashboard)/dashboard/teams/[slug]/active-requests/page.tsx`. Query: `requests WHERE projectId = team.id AND phase IN ('predesign','design')`, CompactRequestRow list, phase filter, empty state. After that: **pre-customer security sweep** from the parking lot (Dependabot PRs, RLS Tier 1+2, ANTHROPIC_API_KEY 401). Week 6 closed April 18 with all three items done: 15b (~1h), 15c (~1.5h), 15g (~2h) — ~4.5h actual against 13h budget.
+> **Next session:** Week 7 — buffer + GTM prep. Start with the active-requests page build (~1 hour), then the pre-customer security sweep (~4-5 hours). Remaining time goes to GTM prep: landing page, waitlist pipeline, demo recording, LinkedIn launch post. Read docs/WORKING-RULES.md first.
 
 ---
 
@@ -164,17 +164,56 @@ If Item 14 compresses 30%, that's ~7 hours of slack across the plan — consider
 
 ---
 
-## Week 7 — Buffer + deferred items
+## Week 7 — Buffer + GTM prep
 
-**Goal:** Absorb slippage. Finish performance pass. Ship small deferred items that accumulated.
+**Goal:** Clean up deferred items. Prepare for first customer onboarding.
 
-**Budget:** 15 hours. **Planned:** variable.
+**Budget:** 15 hours. **Planned:** ~8 hours build + 7 hours GTM prep.
 
-- [ ] **Item 15h** — Ongoing bug fixes. Not a discrete sequenced task — happens as issues are found. Log them here as you go.
-- [x] **Item 8 Phase I** — **Complete (April 18) — absorbed into Item 15c.** The first-digest email preamble (a short "Welcome to your first Lane weekly digest..." intro) is now conditional copy in the `weeklyDigestEmail` template, keyed on whether any prior `weeklyDigests` row exists for the org. Shipped as part of commit f87c157.
-- [ ] **active-requests page build** — Real query + list mirroring Items 5/6/15f (deferred; parking lot item from April 18). ~1 hour.
+### Build items
 
-**Week 7 exit state:** Lane is feature-complete against the roadmap, with deferred items cleaned up. Ready for the pre-customer security sweep (parking lot) before real onboarding. Week 8 no longer exists — folded into this buffer.
+- [ ] **active-requests page build** — Real query + list mirroring Items 5/6/15f. ~1 hour.
+- [ ] **Item 15h** — Bug fixes as they surface. Log here as you go.
+- [ ] **Pre-customer security sweep** — Single focused session combining:
+  - Dependabot: triage + merge 2 open PRs (1 high, 1 moderate)
+  - ANTHROPIC_API_KEY 401 in Vercel: diagnose + fix
+  - Connection pool exhaustion: diagnose Drizzle/Supabase pool config
+  - Separate Supabase dev/staging project
+  - Phase 3 test data cleanup
+  - (~4-5 hours total)
+
+### GTM prep
+
+- [ ] **Landing page live** — Ship the public landing page with "Request access" form per onboarding-spec section 2. Waitlist + manual approval for first 90 days. Copy: problem statement, 4-phase model visual, "Built for design teams" positioning. No feature screenshots yet — philosophy-first.
+- [ ] **Waitlist pipeline** — Form submissions → Resend notification to you → manual review → invite email. Simple, no automation beyond email notification.
+- [ ] **Demo recording** — 3-minute Loom showing: onboarding flow → intake check (the killer beat) → Request moving through Sense/Frame/Diverge → Converge Decision Log → Prove sign-offs → weekly digest. For sharing in DMs after "DM me CHAOS" leads engage.
+- [ ] **LinkedIn launch post** — First public announcement. Frame: "I built the tool I wished existed as a Head of Design. Here's what it does differently." Link to waitlist. No feature list — story-first.
+- [ ] **Chaos Calculator update** — Update the lead magnet spreadsheet to reference Lane by name and link to the waitlist. The calculator quantifies the problem; Lane is the solution.
+
+**Week 7 exit state:** Lane is production-ready for first customers. Landing page is live. Waitlist is collecting leads. Demo video exists for 1:1 outreach. First LinkedIn post is published.
+
+---
+
+## Post-launch GTM (Weeks 8-12)
+
+Not sequenced week-by-week yet. Sequence after Week 7 ships based on what's working.
+
+### Content engine
+- [ ] **84-day content calendar execution** — LinkedIn (primary) + Twitter/X (co-primary) + Reddit (supplementary). ~100 min/day budgeted. Write-once-publish-twice system.
+- [ ] **DesignOps Playbook** — 10-page Word doc lead magnet. "How to run a design team without surveillance." Captures Lane's philosophy; naturally leads to the product.
+- [ ] **Behavior-Based Design Pods framework post** — Publish the proprietary framework. Position as thought leadership → "Lane implements this."
+- [ ] **Case study from first beta user** — After 4+ weeks of usage, document their before/after. The weekly digest comparison is the money shot.
+
+### Outreach
+- [ ] **"DM me CHAOS" campaign scaling** — Expand beyond LinkedIn. Track conversion: DM → Chaos Calculator → waitlist → invite → active user.
+- [ ] **Design leader 1:1 outreach** — Identify 20 design leaders at startups/growth-stage companies (Indian market first). Personalized Loom + waitlist link.
+- [ ] **Community seeding** — Post in Designer Hangout, ADPList communities, Indian design Slack groups. Not selling — sharing the philosophy + Chaos Calculator.
+
+### Product-led signals to watch
+- [ ] **5 design leaders using 3x/week over 4 weeks** — This is real PMF per the validation gate defined in CLAUDE.md. Stop validating and start scaling when this triggers.
+- [ ] **Save-to-reaction ratio on LinkedIn** — The standout signal from the first post. If saves > 5% of reactions, the content is reference-worthy.
+- [ ] **Weekly digest open rate** — If leads keep opening the Friday digest, the moat is working.
+- [ ] **Intake check reframe rate** — If most flagged submissions get reframed (not bypassed), the philosophy is landing.
 
 ---
 
@@ -237,7 +276,7 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
-*Last updated: April 18, 2026 — Weeks 1–6 complete. Week 6 shipped 15b (~1h), 15c (~1.5h), 15g (~2h) against a 13h budget. All scoped roadmap items done except Week 7 buffer (15h bug fixes + active-requests page + pre-customer security sweep). Lane is feature-complete against the roadmap.*
+*Last updated: April 18, 2026 — Weeks 1-6 complete. Lane is feature-complete. Week 7: buffer + GTM prep.*
 
 ---
 
