@@ -116,10 +116,32 @@ export function IdeaBoard({ initialIdeas, profileRole }: IdeaBoardProps) {
 
       {/* Empty state */}
       {filtered.length === 0 && (
-        <div className="border border-border rounded-xl px-6 py-12 text-center">
-          <p className="text-sm text-muted-foreground/60">
-            {activeStatus ? `No ideas in "${activeStatus}" status` : "No ideas yet -- be the first to submit one!"}
-          </p>
+        <div className="border border-border rounded-xl px-6 py-12 text-center space-y-3">
+          {activeStatus ? (
+            <p className="text-sm text-muted-foreground/60">
+              No ideas in &quot;{activeStatus}&quot; status
+            </p>
+          ) : (
+            <>
+              <h3 className="font-semibold text-sm text-foreground">
+                Ideas go here before they become work.
+              </h3>
+              <div className="text-sm text-muted-foreground space-y-2 max-w-md mx-auto text-left">
+                <p>
+                  Ideas is upstream of Intake. Anyone can post a thought —
+                  &quot;users keep asking about X,&quot; &quot;what if we
+                  redesigned Y,&quot; &quot;we should probably fix Z.&quot;
+                  No shaping, no commitments, no stages. Just ideas.
+                </p>
+                <p>
+                  Ideas that gather signal — votes, AI validation — can be
+                  promoted to Requests by a PM or design lead. Most ideas
+                  never get promoted, and that&apos;s the point. Ideas is
+                  where possibilities come to be tested cheaply.
+                </p>
+              </div>
+            </>
+          )}
         </div>
       )}
 

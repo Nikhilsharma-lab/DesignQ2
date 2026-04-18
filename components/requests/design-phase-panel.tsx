@@ -13,13 +13,21 @@ import { Callout } from "@/components/ui/callout";
 import { Input } from "@/components/ui/input";
 import { PanelHeader } from "@/components/ui/panel-header";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { ProveFirstTimeModal } from "./prove-first-time-modal";
+import { getSeenHints } from "@/app/actions/get-seen-hints";
 
 const STAGES = [
-  { key: "sense",    desc: "Understand the problem deeply before proposing anything" },
-  { key: "frame",    desc: "Define what problem is actually being solved" },
-  { key: "diverge",  desc: "Generate multiple solution directions" },
-  { key: "converge", desc: "Narrow to refined solution through critique" },
-  { key: "prove",    desc: "3 sign-offs: Designer · PM · Design Head" },
+  { key: "sense",    desc: "Deep understanding before proposing anything. Related research, past decisions, nothing rushed." },
+  { key: "frame",    desc: "Define what problem is actually being solved. Success criteria, constraints, open questions." },
+  { key: "diverge",  desc: "Generate multiple solution directions. Breadth over depth. 2-5+ iterations." },
+  { key: "converge", desc: "Narrow to a refined solution through critique and iteration." },
+  { key: "prove",    desc: "Three-sign-off validation before handoff: designer, PM, design lead." },
 ] as const;
 
 type DesignStage = (typeof STAGES)[number]["key"];
@@ -36,6 +44,17 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
   const router = useRouter();
   const [optimisticStage, setOptimisticStage] = useState<DesignStage>(currentDesignStage);
   const [error, setError] = useState<string | null>(null);
+
+  // Progressive-disclosure state for the first-time Prove modal.
+  // null while fetching on mount; treats every flag as unseen during that window.
+  const [seenHints, setSeenHints] = useState<Record<string, boolean> | null>(null);
+  const [showProveModal, setShowProveModal] = useState(false);
+
+  useEffect(() => {
+    getSeenHints()
+      .then(setSeenHints)
+      .catch(() => setSeenHints({}));
+  }, []);
 
   // Iterations state
   const [iterationsList, setIterationsList] = useState<Iteration[]>([]);
@@ -90,7 +109,7 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
     return { canAdvance: missing.length === 0, missing };
   }
 
-  async function handleAdvance() {
+  async function doAdvance() {
     const previousStage = optimisticStage;
     if (nextStage) setOptimisticStage(nextStage.key);
     setError(null);
@@ -107,6 +126,22 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
       if (nextStage) setOptimisticStage(previousStage);
       setError("Network error");
     }
+  }
+
+  async function handleAdvance() {
+    // First-time teaching: intercept Converge → Prove with the modal.
+    // If seenHints is still null (fetch in flight), we do NOT intercept —
+    // better to let the advance through than block on a slow read.
+    if (
+      currentDesignStage === "converge" &&
+      nextStage?.key === "prove" &&
+      seenHints !== null &&
+      !seenHints.prove_modal
+    ) {
+      setShowProveModal(true);
+      return;
+    }
+    await doAdvance();
   }
 
   const { canAdvance, missing } = getGateStatus();
@@ -132,38 +167,53 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
         <span className="text-xs text-muted-foreground/60">Designer leads</span>
       </PanelHeader>
 
-      {/* Stage stepper */}
-      <div className="px-5 py-4 border-b">
-        <div className="flex items-start">
-          {STAGES.map((s, i) => {
-            const isDone = i < optimisticIdx;
-            const isCurrent = s.key === optimisticStage;
-            return (
-              <div key={s.key} className="flex items-center flex-1">
-                <div className="flex flex-col items-center flex-1">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono border transition-colors ${
-                    isDone
-                      ? "bg-accent-success/15 border-accent-success/30 text-accent-success"
-                      : isCurrent
-                      ? "bg-accent-active/10 border-accent-active/20 text-accent-active"
-                      : "bg-accent border text-muted-foreground/60"
-                  }`}>
-                    {isDone ? "✓" : i + 1}
-                  </div>
-                  <span className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center ${
-                    isCurrent ? "text-accent-active" : isDone ? "text-accent-success/80" : "text-muted-foreground/60"
-                  }`}>
-                    {getStageLabel(s.key)}
-                  </span>
+      {/* Stage stepper (hover for stage description) */}
+      <TooltipProvider delay={150}>
+        <div className="px-5 py-4 border-b">
+          <div className="flex items-start">
+            {STAGES.map((s, i) => {
+              const isDone = i < optimisticIdx;
+              const isCurrent = s.key === optimisticStage;
+              return (
+                <div key={s.key} className="flex items-center flex-1">
+                  <Tooltip>
+                    <TooltipTrigger
+                      render={
+                        <div
+                          className="flex flex-col items-center flex-1 cursor-default rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/30"
+                          tabIndex={0}
+                          aria-label={`${getStageLabel(s.key)}: ${s.desc}`}
+                        />
+                      }
+                    >
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono border transition-colors ${
+                        isDone
+                          ? "bg-accent-success/15 border-accent-success/30 text-accent-success"
+                          : isCurrent
+                          ? "bg-accent-active/10 border-accent-active/20 text-accent-active"
+                          : "bg-accent border text-muted-foreground/60"
+                      }`}>
+                        {isDone ? "✓" : i + 1}
+                      </div>
+                      <span className={`text-[9px] mt-1 font-medium uppercase tracking-wide text-center ${
+                        isCurrent ? "text-accent-active" : isDone ? "text-accent-success/80" : "text-muted-foreground/60"
+                      }`}>
+                        {getStageLabel(s.key)}
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom" size="sm">
+                      {s.desc}
+                    </TooltipContent>
+                  </Tooltip>
+                  {i < STAGES.length - 1 && (
+                    <div className={`h-px w-full mb-5 mx-0.5 ${i < optimisticIdx ? "bg-accent-success/20" : "bg-accent"}`} />
+                  )}
                 </div>
-                {i < STAGES.length - 1 && (
-                  <div className={`h-px w-full mb-5 mx-0.5 ${i < optimisticIdx ? "bg-accent-success/20" : "bg-accent"}`} />
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </TooltipProvider>
 
       {/* Current stage content */}
       <div className="px-5 py-4 space-y-4">
@@ -303,6 +353,16 @@ export function DesignPhasePanel({ requestId, currentDesignStage, figmaUrl, prof
           )}
         </div>
       )}
+
+      <ProveFirstTimeModal
+        open={showProveModal}
+        onClose={() => setShowProveModal(false)}
+        onProceed={() => {
+          setShowProveModal(false);
+          setSeenHints((prev) => ({ ...(prev ?? {}), prove_modal: true }));
+          doAdvance();
+        }}
+      />
     </div>
   );
 }

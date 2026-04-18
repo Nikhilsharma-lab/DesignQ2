@@ -60,7 +60,7 @@ export default async function IdeasPage() {
   return (
     <main className="max-w-4xl mx-auto px-6 py-10">
       <div className="mb-8">
-        <h1 className="text-xl font-semibold text-foreground">Idea Board</h1>
+        <h1 className="text-xl font-semibold text-foreground">Ideas</h1>
         <p className="text-sm text-muted-foreground mt-1">Anyone can submit ideas. Org votes. Top ideas get validated and become requests.</p>
       </div>
 
