@@ -5,6 +5,7 @@ import { isAuthContextError, withAuthContext } from "@/lib/auth-context";
 import { withUserSession } from "@/db/user";
 import { createClient } from "@/lib/supabase/server";
 import { generateMorningBriefing } from "@/lib/ai/morning-briefing";
+import { checkAiRateLimit } from "@/lib/rate-limit";
 
 export async function GET(_req: NextRequest) {
   const today = new Date().toISOString().slice(0, 10);
@@ -40,6 +41,9 @@ export async function POST(_req: NextRequest) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const rateLimited = await checkAiRateLimit(user.id);
+  if (rateLimited) return rateLimited;
 
   return withUserSession(user.id, async (db) => {
     const [profile] = await db
