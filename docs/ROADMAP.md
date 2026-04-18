@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** Item 14 part 2 (Week 5) — finish the 5-stage Design Phase UI. Diverge polish (iteration management, comment threads per iteration, AI "Iteration Summary" generator, Figma version tracking). Build Converge (Decision Log, AI edge case generator, completeness meter, feedback threads). Build full Prove screen (three sign-off cards, structured feedback on rejection, engineering feasibility review, AI handoff checklist) — replaces the current minimal `ProveGate` per CLAUDE.md Part 3 Stage 2e. Week 5 also includes starts of Items 15a, 15d, 15e. Item 14 part 1 shipped April 18 at ~3.5 hours against a 15-hour budget — the compression came from reusing `ContextBriefPanel` and existing iterations infrastructure.
+> **Next session:** Item 15a (Week 5) — handoff doc generation improvements per CLAUDE.md Part 4. Enhance the auto-generated handoff doc with missing states, accessibility gaps, engineering notes. Mostly AI prompt and output formatting work against `lib/ai/handoff-brief.ts`. Estimated 4 hours. Item 14 shipped in full (both parts) on April 18 — all 5 design stages are UI-complete. Lane is now a designer product, not just a PM intake tool.
 
 ---
 
@@ -141,7 +141,7 @@ If Item 14 compresses 30%, that's ~7 hours of slack across the plan — consider
 
 **Budget:** 15 hours. **Planned:** ~15 hours.
 
-- [ ] **Item 14 part 2** — Finish Diverge screen (iteration management with 2-5+ directions, reflection fields per direction, comment threads per iteration, Figma version tracking, AI "Iteration Summary" generator). Build Converge screen (Decision Log entries, AI edge case generator, completeness meter, feedback threads). Build Prove screen (3 sign-off cards with Approve / Approve with comments / Request changes, structured feedback logging on rejection, engineering feasibility review, AI handoff checklist generator). Iteration management polish. Feedback threads. (~6 hours)
+- [x] **Item 14 part 2** — **Complete (April 18) — shipped in same session as part 1.** Investigation found Prove was already ~90% built, Diverge comment threads already shipped (`iteration-comments.tsx`), and `handoff-brief.ts` already generates edge cases — shrinking real scope substantially. Built: (Stop 1) Converge panel with `decision_log_entries` schema, `addDecisionLogEntry`/`getDecisionLog` actions, Chosen/Killed toggle, completeness meter (count-based: resolved iterations vs total), and AI edge cases reusing the handoff-brief endpoint. (Stop 2) AI iteration summary: new `lib/ai/iteration-summary.ts` (neutral prompt, explicitly forbids ranking), new `/api/requests/[id]/iteration-summary` route with rate limiting, "AI summary" button in iterations header gated to 2+ iterations. (Stop 3) Prove polish: `engineering_feasibility` column on `requests`, `saveEngineeringFeasibility` action, non-blocking feasibility textarea in ProveGate with auto-save-on-blur, inline AI handoff checklist via existing handoff-brief endpoint rendering all 5 sections (design decisions, build sequence, open questions, edge cases, figma notes). Shipped across 3 commits (49e1e98, 0f9adc6, 9e1f377). (actual: ~2 hours vs 6-hour estimate — compression from ProveGate already existing, iteration-comments already wired, handoff-brief covering two use cases)
 - [ ] **Item 15a** — Handoff doc generation improvements per CLAUDE.md Part 4. Enhance the auto-generated handoff doc with missing states, accessibility gaps, engineering notes. Mostly AI prompt and output formatting work. (4 hours)
 - [ ] **Item 15d** — Private designer nudges per CLAUDE.md Part 9 item 6. In-app nudge UI and logic. Nudges go to the designer privately, never escalated to leads automatically. Contextual and friendly. (4 hours)
 - [ ] **Item 15e** — Morning briefing improvements (start, ~1 hour of 3). Begin refinements to `lib/ai/morning-briefing.ts`. More per-role context, better summaries, handle edge cases. Continue in week 6. (1 hour)
@@ -239,7 +239,7 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
-*Last updated: April 18, 2026 — Weeks 1–3 complete, Item 14 part 1 shipped (~3.5 hours actual). Next: Item 14 part 2 in Week 5.*
+*Last updated: April 18, 2026 — Weeks 1–3 complete, Item 14 shipped in full (~5.5 hours actual for both parts). All 5 design stages UI-complete. Next: Item 15a in Week 5.*
 
 ---
 
