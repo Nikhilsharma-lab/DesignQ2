@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** Week 4 re-scope checkpoint. Weeks 1–3 are done; Item 10 is skipped as a triggered item. Before starting Item 9 (command palette + pgvector, ~14 hours) or Item 14 (Design Phase UI parts 1+2, ~21 hours), re-read weeks 5–7 with fresh eyes. Per roadmap line 112: (1) Is Item 14 still the right next bet, or has a customer conversation / demo surfaced something more urgent? (2) Is the product demo-ready for a real design leader? (3) What broke during weeks 1–3 that needs a cleanup session? (4) What feels forced, what feels right? The parking lot has 12 items to triage in the same pass. Read `docs/WORKING-RULES.md` first.
+> **Next session:** Item 14 part 1 (Week 4) — build the front half of the 5-stage Design Phase UI: Sense screen, Frame screen, and the start of Diverge. Per April 18 re-scope, Item 14 moved ahead of Item 9 (command palette) and "What's new" footer because it's the only surface that answers "why would a designer use Lane?" Estimated 15 hours; new UI work, unlikely to compress like the list views did. Read `docs/WORKING-RULES.md` first, then the "Re-scope notes — April 18" section in this file for context. Dependencies are clean: S1, Item 1, and Item 11 all done.
 
 ---
 
@@ -98,40 +98,44 @@ These items are on the sidebar or in the spec files but don't yet have enough de
 
 ---
 
-## Week 4 — Polish and the "What's new" build
+## Re-scope notes — April 18
 
-**Goal:** Add command palette, build "What's new" footer, take stock.
+The Week 4 re-scope checkpoint arrived early. Items 12 (audit only), 13 (gap-fill), and 15f (Commitments) all landed faster than estimated, closing Weeks 1–3 with time to spare. Item 10 was skipped as a triggered item.
 
-**Budget:** 15 hours. **Planned:** ~10 hours. **Slack:** 5 hours (reserved for "What's new" growing beyond estimate or for unexpected work).
+**Observation from Weeks 1–3:** estimates on list-view builds where infrastructure already existed came in 5–7× fast (Items 5, 6, 12, 13, 15f all shipped in 15–45 min vs 1.5–5 hour estimates). New-infrastructure builds hit estimate (Item 8 at 7 hours for the full onboarding stack). Item 14 is closer to the second pattern — new UI surfaces, not a list view on top of existing queries. Expect compression of 30–40% at most, not 5–7×.
 
-- [ ] **Item 9** — Command palette rebuild. Install `cmdk`. Build actions registry for common commands (new request, new idea, jump to team, open radar, etc.). Wire semantic search for Request title lookup. **Per V4 findings, pgvector is not built** — this item now includes implementing pgvector infrastructure as a prerequisite: install pgvector extension in Supabase, add embedding column to requests table, generate embeddings on Request creation (via Anthropic embeddings API or alternative), write similarity search query. Re-add `⌘K` chord hint to sidebar search button. Revised estimate: 14-16 hours. (14 hours)
-- [ ] **"What's new" footer build** — Implementation per S2 spec in `docs/nav-spec.md`. Markdown parser for CHANGELOG.md, expandable component for sidebar footer, default-collapsed UI, last 5 entries. Estimated 1.5 hours. (1.5 hours)
+**Decision:** Item 14 first, starting Week 4. It's the largest remaining piece of actual product, and it's the only surface that answers "why would a designer use Lane?" Without the 5-stage design flow, Lane is "good intake for PMs" — not a designer product. Command palette (Item 9) and "What's new" footer move to post-launch polish.
 
-**Week 4 exit state:** Lane is feature-complete against nav-spec, onboarding-spec, and all pre-launch Tier 2/3 features. The `⌘K` palette works. Users see a "What's new" surface in the footer.
+**What's moving:**
+- **Week 4** was Item 9 + "What's new." Now Item 14 part 1.
+- **Week 5** was Item 14 part 1. Now Item 14 part 2 + Item 15a/d/e start.
+- **Week 6** was Item 14 part 2 + 15 start. Now 15 finish + perf start.
+- **Week 7** was 15 finish + perf start. Now buffer + deferred items (Phase I, active-requests page).
+- **Week 8** was buffer. Folded into Week 7.
 
-**RE-SCOPE CHECKPOINT:** At end of week 4, stop and re-read weeks 5-7. Questions to ask:
-- Is Item 14 (Design Phase UI) still the right use of the next three weeks, or has a customer conversation or demo surfaced something more urgent?
-- Is the product demo-ready to show a real design leader? If yes, consider pausing the roadmap for a customer-facing week.
-- What broke during weeks 1-4 that needs a cleanup session?
-- What are you feeling good about and what feels forced?
+If Item 14 compresses 30%, that's ~7 hours of slack across the plan — consider pulling Item 9 forward at end of Week 6 or sweeping the parking lot.
 
-**If the answer to "is Item 14 still right" is no, update this file and re-sequence. The roadmap serves you, not the other way around.**
+**Questions we asked (keep for future re-scopes):**
+- Is the current "next 3 weeks" still the right bet, or has a customer conversation or demo surfaced something more urgent?
+- Is the product demo-ready to show a real user of this persona?
+- What broke in the last stretch that needs a cleanup session?
+- What feels forced, what feels right?
 
 ---
 
-## Week 5 — Start of Design Phase UI (Item 14 part 1)
+## Week 4 — Design Phase UI part 1 (Item 14 part 1)
 
-**Goal:** Build the front half of the 5-stage design flow.
+**Goal:** Ship the front half of the 5-stage design flow.
 
-**Budget:** 15 hours. **Planned:** ~15 hours.
+**Budget:** 15 hours. **Planned:** ~15 hours (new UI work; unlikely to compress like the list views did).
 
 - [ ] **Item 14 part 1** — Sense screen (read-only view of context, research, past decisions; Sensing Summary text field; AI sidebar for related research). Frame screen (Design Frame structured form: problem in designer's words, success criteria, constraints, divergence from PM brief). Design Frame creation UI. Start of Diverge screen (iteration cards, "Add Direction" button). [STRICT: after S1, Item 1, Item 11] (~15 hours) **Note from S1 outcome:** Rename "Reflection field" in the Diverge stage to "Rationale" per CLAUDE.md Part 1 update. Iteration cards still have this field — it's just renamed. No other scope change from S1 deferral.
 
-**Week 5 exit state:** Two of the five design stages are UI-complete. Designers can move a Request through Sense and Frame.
+**Week 4 exit state:** Two of the five design stages are UI-complete. Designers can move a Request through Sense and Frame. Diverge has iteration-card scaffolding.
 
 ---
 
-## Week 6 — Finish Design Phase UI + start Item 15 components
+## Week 5 — Finish Design Phase UI + start Item 15 components
 
 **Goal:** Finish the 5-stage design flow. Start two Item 15 components.
 
@@ -140,13 +144,13 @@ These items are on the sidebar or in the spec files but don't yet have enough de
 - [ ] **Item 14 part 2** — Finish Diverge screen (iteration management with 2-5+ directions, reflection fields per direction, comment threads per iteration, Figma version tracking, AI "Iteration Summary" generator). Build Converge screen (Decision Log entries, AI edge case generator, completeness meter, feedback threads). Build Prove screen (3 sign-off cards with Approve / Approve with comments / Request changes, structured feedback logging on rejection, engineering feasibility review, AI handoff checklist generator). Iteration management polish. Feedback threads. (~6 hours)
 - [ ] **Item 15a** — Handoff doc generation improvements per CLAUDE.md Part 4. Enhance the auto-generated handoff doc with missing states, accessibility gaps, engineering notes. Mostly AI prompt and output formatting work. (4 hours)
 - [ ] **Item 15d** — Private designer nudges per CLAUDE.md Part 9 item 6. In-app nudge UI and logic. Nudges go to the designer privately, never escalated to leads automatically. Contextual and friendly. (4 hours)
-- [ ] **Item 15e** — Morning briefing improvements (start, ~1 hour of 3). Begin refinements to `lib/ai/morning-briefing.ts`. More per-role context, better summaries, handle edge cases. Continue in week 7. (1 hour)
+- [ ] **Item 15e** — Morning briefing improvements (start, ~1 hour of 3). Begin refinements to `lib/ai/morning-briefing.ts`. More per-role context, better summaries, handle edge cases. Continue in week 6. (1 hour)
 
-**Week 6 exit state:** The entire 5-stage design flow is UI-complete. Lane has a working design phase experience, which is the core of what the product is *for*. Two Item 15 components shipped.
+**Week 5 exit state:** The entire 5-stage design flow is UI-complete. Lane has a working design phase experience, which is the core of what the product is *for*. Two Item 15 components shipped.
 
 ---
 
-## Week 7 — Remaining Item 15 components and performance
+## Week 6 — Remaining Item 15 components and performance
 
 **Goal:** Finish Item 15 components. Start performance pass.
 
@@ -157,20 +161,31 @@ These items are on the sidebar or in the spec files but don't yet have enough de
 - [ ] **Item 15c** — Weekly AI digest cron. Pre-generate on Friday, store per org. Cron infrastructure via Vercel cron or similar. Handle scheduling, retries, error handling. Per CLAUDE.md Part 9 item 7. (6 hours)
 - [ ] **Item 15g** — Performance pass (start, 4 of 7 hours). Profile slow pages. Optimize queries. Add indexes. Check bundle size. Reduce re-renders. Continue in buffer week. (4 hours)
 
-**Week 7 exit state:** All Item 15 components shipped except finishing touches on performance.
+**Week 6 exit state:** All Item 15 components shipped except finishing touches on performance.
 
 ---
 
-## Week 8 — Buffer (only if earlier weeks slipped)
+## Week 7 — Buffer + deferred items
 
-**Goal:** Absorb slippage. Finish performance pass. Bug fixes.
+**Goal:** Absorb slippage. Finish performance pass. Ship small deferred items that accumulated.
 
 **Budget:** 15 hours. **Planned:** variable.
 
 - [ ] **Item 15g** — Finish performance pass (remaining ~3 hours)
 - [ ] **Item 15h** — Ongoing bug fixes. Not a discrete sequenced task — happens as issues are found. Log them here as you go.
+- [ ] **Item 8 Phase I** — Weekly digest first-time email (deferred from Item 8). ~1–2 hours.
+- [ ] **active-requests page build** — Real query + list mirroring Items 5/6/15f (deferred; parking lot item from April 18). ~1 hour.
 
-**Week 8 exit state:** If you reached week 8 with nothing urgent left, you're done. Lane is feature-complete against the roadmap and ready for real customer onboarding.
+**Week 7 exit state:** Lane is feature-complete against the roadmap, with deferred items cleaned up. Ready for the pre-customer security sweep (parking lot) before real onboarding. Week 8 no longer exists — folded into this buffer.
+
+---
+
+## Deferred — post-launch
+
+Items that were on the pre-launch roadmap but moved to post-launch during the April 18 re-scope. Distinct from the parking lot: these have concrete scope and estimates; they're just not blocking the path to demo-ready.
+
+- **Item 9** — Command palette rebuild + pgvector infrastructure. ~14 hours. Install `cmdk`, build actions registry (new request, new idea, jump to team, open radar, etc.), wire semantic search for Request title lookup. Per V4 findings, also includes implementing pgvector extension in Supabase, embedding column on requests, embedding generation on Request creation, similarity search query. Re-add `⌘K` chord hint to sidebar search button. Polish, not differentiator. Revisit when Lane has a real user feeling the gap.
+- **"What's new" footer build** — Implementation per S2 spec in `docs/nav-spec.md`. Markdown parser for CHANGELOG.md, expandable component for sidebar footer, default-collapsed UI, last 5 entries. ~1.5 hours. Nice-to-have; nobody will notice it's missing pre-launch.
 
 ---
 
@@ -224,7 +239,7 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
-*Last updated: April 18, 2026 — Weeks 1–3 complete (Item 10 skipped as triggered). Next: Week 4 re-scope checkpoint.*
+*Last updated: April 18, 2026 — Weeks 1–3 complete. Re-scoped: Item 14 moved to Week 4; command palette + "What's new" deferred to post-launch. Next: Item 14 part 1.*
 
 ---
 
