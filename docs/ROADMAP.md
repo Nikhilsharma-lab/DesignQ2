@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** Pre-customer security sweep (Week 7, ~4-5 hours). Single focused session combining five items: (1) Dependabot triage + merge the 2 open PRs (1 high, 1 moderate), (2) ANTHROPIC_API_KEY 401 in Vercel production — diagnose + fix, (3) connection pool exhaustion — diagnose Drizzle/Supabase pool config, (4) separate Supabase dev/staging project from prod, (5) Phase 3 test data cleanup. Active-requests page shipped April 18 — zero placeholder pages remain. GTM work gated on Week 7 exit state — strict, not parallel.
+> **Next session:** Week 8 — GTM launch. Five items, ~15 hours. (1) Landing page live with "Request access" form per onboarding-spec section 2, (2) waitlist pipeline (form → Resend notification → manual invite), (3) 3-minute demo Loom covering onboarding → intake check → 5-stage design flow → Prove → weekly digest, (4) LinkedIn launch post (philosophy-first, link to waitlist), (5) Chaos Calculator update to reference Lane + waitlist link. Week 7 closed April 19 — Lane is production-ready. Gate lifted.
 
 ---
 
@@ -172,15 +172,14 @@ If Item 14 compresses 30%, that's ~7 hours of slack across the plan — consider
 
 - [x] **active-requests page build** — **Complete (April 18).** Replaced the 22-line placeholder at `app/(dashboard)/dashboard/teams/[slug]/active-requests/page.tsx` with a real team-scoped query: `requests WHERE orgId = profile.orgId AND projectId = team.id AND phase IN ('predesign', 'design')`, ordered by `updatedAt desc`. Same structural pattern as Commitments (Item 15f) — auth → profile → team lookup by slug → scoped query → first-assignee name resolution via `allAssignments` ordered by `assignedAt asc` → `CompactRequestRow` list. Shared `PhaseFilter` component plugged in; URL `?phase=predesign|design` respected, Build/Track clicks gracefully ignored (filter UI shows "All" highlighted while base query still returns active-phase work). Empty state differentiated: "queue is clear" narrative when unfiltered, "No active requests in Predesign/Design for this team" when filtered to a specific phase with no results. `ActivePhase` type narrowed to `"predesign" | "design"` for Drizzle's enum-column type check. Shipped as commit acad4c0. **Zero placeholder pages remain in the app** — every sidebar route now resolves to a real query. (actual: ~30 min vs 1-hour estimate)
 - [ ] **Item 15h** — Bug fixes as they surface. Log here as you go.
-- [ ] **Pre-customer security sweep** — Single focused session combining:
-  - Dependabot: triage + merge 2 open PRs (1 high, 1 moderate)
-  - ANTHROPIC_API_KEY 401 in Vercel: diagnose + fix
-  - Connection pool exhaustion: diagnose Drizzle/Supabase pool config
-  - Separate Supabase dev/staging project
-  - Phase 3 test data cleanup
-  - (~4-5 hours total)
+- [x] **Pre-customer security sweep** — **Complete (April 19).** Five-item bundle shipped in one focused session:
+  - **Dependabot** — 2 PRs (1 high, 1 moderate) merged. Both were devDependency chain bumps (drizzle-kit's esbuild-kit, glob CLI, eslint-config-next) — zero runtime/production impact. Lint + build verified green post-merge.
+  - **ANTHROPIC_API_KEY 401** — diagnosed as Vercel env-var scope issue (local key format was correct, `sk-ant-api03-...`). Re-saved in Production scope, forced cache clear, redeployed. 401 resolved.
+  - **Connection pool exhaustion** — root cause confirmed: `db/system.ts` had `max: 10` per Node process connecting to Supabase's **session-mode pooler (port 5432)**, which caps at `pool_size` (default 15 on free tier). Fluid Compute's multi-instance pattern saturated it in 1-2 instances → `MaxClientsInSessionMode`. **Two-part fix:** (a) `DATABASE_URL` port 5432 → 6543 (Supabase transaction-mode pooler, handles thousands of concurrent connections — already had `prepare: false` required for transaction mode); (b) `max: 10` → `max: 3` in `db/system.ts` as belt-and-suspenders (commit 5c5f693). Production errors cleared.
+  - **Separate Supabase dev/staging project** — new dev project provisioned in Supabase dashboard. `.env.local` updated with dev project's `NEXT_PUBLIC_SUPABASE_URL`, anon + service role keys, and `DATABASE_URL` (port 6543). Schema applied via `npm run db:push`. Production project (`dsivjzwalqqpojopcmyb`) now reserved for real customer data.
+  - **Phase 3 test data cleanup** — [scripts/cleanup-test-data.sql](scripts/cleanup-test-data.sql) written as a dry-run-first runbook (SELECT counts + row preview + cascade impact estimates, commented DELETE). Sample-team cleanup intentionally excluded from scope — that has a dedicated `clearSampleTeam` FK-safe action. Script ready to run pre-onboarding when/if any Phase 3 residue shows up in the new dev project. (actual: ~2 hours vs 4-5 hour estimate)
 
-**Week 7 exit state:** Lane is production-ready. All deferred build items shipped. Security sweep complete. No GTM work started — that's Week 8, gated on this exit state being confirmed.
+**Week 7 exit state:** ✅ **Complete (April 19).** Lane is production-ready. All deferred build items shipped. Security sweep done. Zero placeholder pages. Gate lifted on Week 8 GTM launch.
 
 ---
 
@@ -284,7 +283,7 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
-*Last updated: April 18, 2026 — Weeks 1-6 complete + active-requests page (Week 7 opener). Zero placeholder pages remain. Next: pre-customer security sweep. Week 8 GTM launch is gated on Week 7 exit state.*
+*Last updated: April 19, 2026 — Weeks 1-7 complete. Lane is production-ready. Zero placeholder pages. Security sweep done. Week 8 gate lifted — next: GTM launch (landing page, waitlist, demo, LinkedIn post, Chaos Calculator update).*
 
 ---
 
