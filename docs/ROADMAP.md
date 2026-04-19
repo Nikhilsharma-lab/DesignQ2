@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** Parking lot + deferred + post-launch sweep. Work through all remaining parking lot items (8), deferred items (analytics instrumentation ~3-4 hours), and post-launch items (Item 9 command palette + pgvector ~14 hours, What's new footer ~1.5 hours) before any GTM work begins. GTM is blocked until the product is fully hardened — zero known issues, zero deferred work. Read docs/WORKING-RULES.md first.
+> **Next session:** Week 7.5 — User flow foundation spec session. P0 blocker: Lane has no signup-to-workspace flow. Map every user path (self-signup, invite, role transfer, edge cases) before building. Read the five diagnostic outputs from the April 19 session first.
 
 ---
 
@@ -178,13 +178,36 @@ If Item 14 compresses 30%, that's ~7 hours of slack across the plan — consider
 
 ---
 
+## Week 7.5 — User flow foundation (P0 BLOCKER)
+
+**Goal:** Build the complete signup-to-workspace flow. Without this, no user can successfully sign up and use Lane.
+
+**Budget:** 10-15 hours. **Planned:** TBD after spec session.
+
+**Why this is P0:** The missing workspace_members row discovered on April 19 exposed a systemic gap — Lane has no signup-to-workspace flow. The onboarding system, role detection, and every org-scoped query depend on workspace_members existing with the correct role. Nothing in the codebase creates this row. This blocks every user, not just the founder.
+
+- [ ] **Spec session** — Map every user flow end-to-end:
+  - Self-signup (personal email) → workspace creation → owner role
+  - Self-signup (work email) → workspace creation or auto-join existing
+  - Invite link signup (designer) → join existing workspace → member role + team assignment
+  - Invite link signup (PM) → join existing workspace → member role + PM team role
+  - Role transfer (design head leaves org → who becomes owner?)
+  - Edge cases: duplicate emails, multiple workspaces, orphaned workspaces
+  - Produces docs/user-flows-spec.md
+- [ ] **Implementation** — Build the flows against the spec. Signup action creates workspace + membership. Invite accept creates membership with correct role. Role transfer mechanism for ownership.
+- [ ] **Verify** — Test every path end-to-end in dev, then production.
+
+[STRICT: blocks Week 8 GTM. No landing page until users can actually sign up and land in a working workspace.]
+
+---
+
 ## Week 8 — GTM launch
 
 **Goal:** Ship public surface. Start collecting real leads.
 
 **Budget:** 15 hours. **Planned:** ~15 hours GTM prep.
 
-**[STRICT: after Week 7 exit state]** Week 7 must be confirmed production-ready before any Week 8 item starts. The ordering is deliberate — shipping GTM before production is hardened risks a lead landing on a broken Lane.
+**[STRICT: after Week 7 exit state AND Week 7.5 user flow foundation]** Week 7 must be production-ready AND Week 7.5's signup-to-workspace flow must be implemented and verified before any Week 8 item starts. The ordering is deliberate — shipping GTM before users can actually sign up risks a landing page that leads nowhere.
 
 - [ ] **Landing page live** — Ship the public landing page with "Request access" form per onboarding-spec section 2. Waitlist + manual approval for first 90 days. Copy: problem statement, 4-phase model visual, "Built for design teams" positioning. No feature screenshots yet — philosophy-first.
 - [ ] **Waitlist pipeline** — Form submissions → Resend notification to you → manual review → invite email. Simple, no automation beyond email notification.
@@ -278,7 +301,7 @@ This file is a living plan. The commit history of this file is the story of how 
 
 ---
 
-*Last updated: April 19, 2026 — Weeks 1-7 complete. Lane is production-ready. Next: parking lot + deferred + post-launch sweep before GTM.*
+*Last updated: April 19, 2026 — Weeks 1-7 complete. P0 blocker found: no signup-to-workspace flow. Week 7.5 inserted before GTM. Next: Week 7.5 spec session.*
 
 ---
 
