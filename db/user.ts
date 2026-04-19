@@ -8,6 +8,46 @@ type LaneSchema = typeof schema;
 export type UserDb = ReturnType<typeof drizzle<LaneSchema>>;
 export type SessionDb = UserDb;
 
+/**
+ * Picks the database URL for `withUserSession`.
+ *
+ * `withUserSession` sets a session-level GUC (`app.current_user_id`) outside
+ * a transaction. Under Supabase's transaction-mode pooler (port 6543), which
+ * this project uses for `systemDb`, session-level GUCs set outside a
+ * transaction are unreliable — Supavisor may release the backend connection
+ * between queries, dropping the setting.
+ *
+ * Fix: connect `withUserSession` via a session-pooler or direct connection
+ * (typically port 5432) configured in `DIRECT_DATABASE_URL`. In production,
+ * this env var is required; missing it throws rather than silently running
+ * with unreliable RLS identity.
+ */
+export function selectUserSessionDatabaseUrl(env: {
+  DIRECT_DATABASE_URL?: string;
+  DATABASE_URL?: string;
+  NODE_ENV?: string;
+}): string {
+  if (env.DIRECT_DATABASE_URL) return env.DIRECT_DATABASE_URL;
+  if (env.NODE_ENV === "production") {
+    throw new Error(
+      "[db/user] DIRECT_DATABASE_URL is required in production. " +
+        "withUserSession uses session-level GUCs for RLS identity, which are " +
+        "unreliable under Supabase's transaction-mode pooler. Set " +
+        "DIRECT_DATABASE_URL to a session-pooler or direct connection URL."
+    );
+  }
+  if (!env.DATABASE_URL) {
+    throw new Error(
+      "[db/user] Neither DIRECT_DATABASE_URL nor DATABASE_URL is set."
+    );
+  }
+  console.warn(
+    "[db/user] DIRECT_DATABASE_URL not set, falling back to DATABASE_URL. " +
+      "RLS identity via withUserSession may be unreliable under transaction pooling."
+  );
+  return env.DATABASE_URL;
+}
+
 interface SessionOptions {
   userId?: string | null;
   inviteToken?: string | null;
@@ -71,12 +111,16 @@ export async function withUserInviteDb<T>(
  *
  * Use this instead of `withUserDb` when the callback awaits external I/O that
  * could hold a connection open for seconds (e.g. Claude API, Figma API, Resend).
+ *
+ * Connection URL is resolved via {@link selectUserSessionDatabaseUrl}.
+ * Production deployments MUST set `DIRECT_DATABASE_URL` — `DATABASE_URL`
+ * points to the transaction-mode pooler, which silently drops session GUCs.
  */
 export async function withUserSession<T>(
   userId: string,
   fn: (db: SessionDb) => Promise<T>,
 ): Promise<T> {
-  const dedicatedSql = postgres(process.env.DATABASE_URL!, {
+  const dedicatedSql = postgres(selectUserSessionDatabaseUrl(process.env), {
     prepare: false,
     max: 1,
     idle_timeout: 5,
