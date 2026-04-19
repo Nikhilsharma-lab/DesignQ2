@@ -13,7 +13,7 @@ import postgres from "postgres";
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
-const sql = postgres(process.env.DATABASE_URL);
+const sql = postgres(process.env.DATABASE_URL, { prepare: false });
 
 async function main() {
   console.log("📥  Seed Inbox — demo notifications\n");

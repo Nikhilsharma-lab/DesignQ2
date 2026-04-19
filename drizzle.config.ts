@@ -8,6 +8,7 @@ export default {
   out: "./db/migrations",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL!,
+    // Migrations need session-mode connection (DIRECT_URL); falls back to DATABASE_URL.
+    url: process.env.DIRECT_URL ?? process.env.DATABASE_URL!,
   },
 } satisfies Config;
