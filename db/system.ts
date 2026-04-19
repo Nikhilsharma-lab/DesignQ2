@@ -10,9 +10,13 @@ const g = global as unknown as {
 };
 
 function createSqlClient() {
+  // max: 3 matches Fluid Compute's instance pattern — each function instance
+  // needs only a few concurrent connections, and many instances can spin up.
+  // Paired with the transaction-mode pooler (port 6543), this avoids the
+  // MaxClientsInSessionMode error hit on session-mode pooler + higher limits.
   return postgres(process.env.DATABASE_URL!, {
     prepare: false,
-    max: 10,
+    max: 3,
     idle_timeout: 20,
     connect_timeout: 10,
   });
