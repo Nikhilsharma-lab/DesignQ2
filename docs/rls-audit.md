@@ -10,7 +10,13 @@
 
 RLS is already enabled on ~20 tables with ~40 policies defined across migrations `0005_brisk_canary.sql` and `0006_alert_rls_tighten.sql`. Policies use a helper function layer (`current_app_user_id()`, `current_app_org_id()`, etc.) whose GUCs are set by `withUserDb` / `withUserSession` from `db/user.ts`.
 
-As of April 19, 2026 (PR #44, lint guardrail), **44 files** still import raw `db` from `@/db` (system role, bypasses all RLS) — 16 more than the original 28 counted in this audit, reflecting drift. Of those 44, roughly 10 are legitimate system callers (crons, background AI jobs, published-view public route) and are allowlisted in `.eslintrc.json`. The remaining ~20+ are user-facing pages and actions that should migrate to `withUserDb` / `withUserSession`. A `no-restricted-imports` ESLint rule now warns on any new `@/db` import outside the allowlist. Migration and rule-upgrade (warn → error) tracked in **Issue #42**. Automated inventory script tracked in **Issue #43**.
+As of April 19, 2026 (PR #44, lint guardrail), **44 files** reference `@/db` (system role, bypasses all RLS) — 16 more than the original 28 counted in this audit, reflecting drift. Breakdown:
+
+- **5** are docs/plan Markdown files in `docs/` — reference-only, not linted.
+- **11** are legitimate system callers (crons, background AI jobs, analytics, digest, figma-sync, onboarding bootstrap, published-view public route) and are allowlisted in `.eslintrc.json`.
+- **28** are user-facing `.ts`/`.tsx` files (settings pages, dashboard pages, server actions, nav queries, `/api/nav`, and similar) that should migrate to `withUserDb` / `withUserSession`. Each shows up as an ESLint warning after this PR.
+
+A `no-restricted-imports` ESLint rule now warns on any new `@/db` import outside the allowlist. The rule is intentionally at `warn` level (not `error`) so CI stays green while the 28-file migration backlog is worked down. Migration and rule-upgrade (warn → error) tracked in **Issue #42**. Automated inventory script tracked in **Issue #43**.
 
 ---
 
