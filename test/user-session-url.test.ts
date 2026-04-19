@@ -80,6 +80,7 @@ describe("selectUserSessionDatabaseUrl", () => {
     expect(
       selectUserSessionDatabaseUrl({ DATABASE_URL: "postgres://pooled" })
     ).toBe("postgres://pooled");
+    expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });
 
