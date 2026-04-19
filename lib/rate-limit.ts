@@ -45,8 +45,13 @@ let _initialized = false;
 
 function ensureLimiters(): void {
   if (_initialized) return;
-  _initialized = true;
+  // selectRateLimiterConfig can throw in production if env vars are missing.
+  // Mark _initialized only AFTER it returns — otherwise a warm serverless
+  // instance would throw on the first request (correct), then early-return
+  // on every subsequent request with _aiLimiter still null, silently
+  // skipping rate limits. That recreates the exact fail-open we're fixing.
   const config = selectRateLimiterConfig(process.env);
+  _initialized = true;
   if (!config.enabled) return;
   const redis = new Redis({ url: config.url, token: config.token });
   _aiLimiter = new Ratelimit({
