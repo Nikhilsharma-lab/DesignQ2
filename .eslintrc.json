@@ -1,6 +1,17 @@
 {
   "extends": ["next/core-web-vitals"],
   "rules": {
+    "no-restricted-imports": [
+      "warn",
+      {
+        "paths": [
+          {
+            "name": "@/db",
+            "message": "Importing @/db bypasses Row Level Security. Prefer withUserDb / withUserSession from @/db/user for user-facing routes. If this file is a legitimate system-level caller (cron, background job, bootstrap flow), add its path to the allowlist in .eslintrc.json overrides. Tracked migration: see Issue #42."
+          }
+        ]
+      }
+    ],
     "no-restricted-syntax": [
       "error",
       {
@@ -26,6 +37,23 @@
       "files": ["components/ui/**/*.tsx"],
       "rules": {
         "no-restricted-syntax": "off"
+      }
+    },
+    {
+      "files": [
+        "app/api/cron/**",
+        "app/views/**",
+        "lib/ai/**",
+        "lib/alerts/**",
+        "lib/digest.ts",
+        "lib/figma/sync.ts",
+        "lib/analytics/**",
+        "lib/onboarding/**",
+        "db/**",
+        "scripts/**"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
       }
     }
   ]

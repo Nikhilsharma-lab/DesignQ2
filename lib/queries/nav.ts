@@ -2,7 +2,13 @@
  * Nav query functions — server-side only.
  *
  * Uses GROUP BY for team stream counts (no N+1).
- * All queries use the system db; RLS is enforced at the Supabase level.
+ *
+ * ⚠️  SECURITY NOTE: this module currently uses the system `db` (service role),
+ * which BYPASSES Row Level Security — it does NOT enforce RLS at the Supabase
+ * level despite being a user-facing query path. Callers must pass the
+ * viewer's identity (userId / orgId) and the queries here must manually
+ * scope by org/team membership. Migration to `withUserDb` is tracked in
+ * Issue #42. Do not assume RLS is doing any work here.
  */
 
 import { eq, and, sql, count, inArray, isNull } from "drizzle-orm";

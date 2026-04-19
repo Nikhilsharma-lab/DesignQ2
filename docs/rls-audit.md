@@ -10,7 +10,7 @@
 
 RLS is already enabled on ~20 tables with ~40 policies defined across migrations `0005_brisk_canary.sql` and `0006_alert_rls_tighten.sql`. Policies use a helper function layer (`current_app_user_id()`, `current_app_org_id()`, etc.) whose GUCs are set by `withUserDb` / `withUserSession` from `db/user.ts`.
 
-47 files already use the RLS-aware helpers. 28 files still import raw `db` from `@/db` (system role, bypasses all RLS). This audit classifies those 28 and recommends a migration path.
+As of April 19, 2026 (PR #44, lint guardrail), **44 files** still import raw `db` from `@/db` (system role, bypasses all RLS) — 16 more than the original 28 counted in this audit, reflecting drift. Of those 44, roughly 10 are legitimate system callers (crons, background AI jobs, published-view public route) and are allowlisted in `.eslintrc.json`. The remaining ~20+ are user-facing pages and actions that should migrate to `withUserDb` / `withUserSession`. A `no-restricted-imports` ESLint rule now warns on any new `@/db` import outside the allowlist. Migration and rule-upgrade (warn → error) tracked in **Issue #42**. Automated inventory script tracked in **Issue #43**.
 
 ---
 
