@@ -47,6 +47,103 @@ jobs:
       - run: npm ci
       - run: npm test
 
+  sql:
+    name: pg-tap SQL Tests
+    runs-on: ubuntu-latest
+
+    # PostgreSQL 16 with pg-tap for SQL-level testing of migrations.
+    # Complete isolation from lane dev and lane app — no secrets needed.
+    # Service container is throwaway; pg-tap install happens per-run.
+    services:
+      postgres:
+        # Pinned to postgres:16 because postgresql-17-pgtap was not
+        # reliably available in apt repos at the time of A1 setup.
+        # Production runs PG17 — see ROADMAP parking lot for the
+        # version-skew tradeoff and trigger to revisit.
+        image: postgres:16
+        env:
+          # NOT a secret — local-only password for the in-job service
+          # container. The container is throwaway between runs and has
+          # no externally-routable network. Do not move to GitHub Secrets.
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      # Override the workflow-level dummy DATABASE_URL (used by build/typecheck
+      # jobs) with the service-container URL. POSTGRES_PASSWORD propagates from
+      # the service block above. Keep both DATABASE_URL and DIRECT_DATABASE_URL
+      # set so drizzle.config.ts and run-sql-tests.mjs (which prefer
+      # DIRECT_DATABASE_URL with DATABASE_URL fallback) both resolve cleanly.
+      DATABASE_URL: postgresql://postgres:test@localhost:5432/postgres
+      DIRECT_DATABASE_URL: postgresql://postgres:test@localhost:5432/postgres
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+
+      # Add the official PostgreSQL apt repo (apt.postgresql.org) to the
+      # service container. Default ubuntu/postgres-image apt repos don't
+      # reliably include postgresql-NN-pgtap for all versions; the PGDG
+      # repo does. This is the canonical PostgreSQL-team-maintained source,
+      # not a third-party dependency.
+      - name: Add PostgreSQL apt repo (PGDG) to service container
+        run: |
+          docker exec ${{ job.services.postgres.id }} bash -c '
+            apt-get update &&
+            apt-get install -y --no-install-recommends curl ca-certificates gnupg lsb-release &&
+            install -d /usr/share/postgresql-common/pgdg &&
+            curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /usr/share/keyrings/postgresql.gpg &&
+            echo "deb [signed-by=/usr/share/keyrings/postgresql.gpg] http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list &&
+            apt-get update
+          '
+
+      # Install pg-tap inside the service container. The postgres:16 image
+      # ships without pg-tap; we add the binary by exec-ing into the running
+      # container (NOT into the runner — runner-side install wouldn't help
+      # the Postgres server inside the container).
+      #
+      # If this install ever starts failing, first check whether
+      # postgresql-16-pgtap is still published at apt.postgresql.org.
+      # Fallback path: compile pg-tap from source via PGXN.
+      # See ROADMAP parking lot for PG version-skew context.
+      - name: Install pg-tap into Postgres service container
+        run: |
+          docker exec ${{ job.services.postgres.id }} apt-get install -y --no-install-recommends postgresql-16-pgtap
+
+      # Install postgresql-client on the runner so we can issue SQL via psql.
+      - name: Install postgresql-client on runner
+        run: sudo apt-get install -y postgresql-client-16
+
+      # Create pg-tap extension. We do this here rather than via the
+      # db/migrations/dev_only_pgtap.sql file because that file is
+      # deliberately unnumbered and excluded from _journal.json — so
+      # drizzle-kit migrate (next step) will skip it. The dev_only file
+      # exists for manual install on lane dev only; CI uses this step.
+      - name: Enable pg-tap extension
+        run: psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS pgtap"
+
+      # Apply Lane migrations 0000-0009 via drizzle-kit. Reads
+      # db/migrations/meta/_journal.json which tracks numbered migrations
+      # only — does NOT include dev_only_pgtap.sql (handled above).
+      - name: Apply Lane migrations
+        run: npx drizzle-kit migrate
+
+      # Run pg-tap test files in test/sql/.
+      # Smoke test only at A1; expands to migration tests 0010-0013 per
+      # docs/user-flows-spec.md §15 Phase B.
+      - run: npm run test:sql
+
   build:
     name: Next Build
     runs-on: ubuntu-latest

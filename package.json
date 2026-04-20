@@ -14,6 +14,7 @@
     "script": "dotenv -e .env.local -o -- npx tsx",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:sql": "dotenv -e .env.local -o -- node scripts/run-sql-tests.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
