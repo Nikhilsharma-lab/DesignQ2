@@ -6,7 +6,7 @@
 **Re-scope checkpoint:** End of week 4
 **Source:** Built collaboratively from Phases 1-4 of the April 14 roadmap session. See CLAUDE.md for full context on vocabulary lock and build rules.
 
-> **Next session:** B1 — Migration 0010 (workspace_members backfill + `profiles.id → auth.users(id)` FK + `invites.accepted_by` column + `audit_log` table + `waitlist_approvals` table + idempotent bootstrap RPC + idempotent accept RPC). Parallel pg-tap `test/sql/test_migration_0010.sql` (~12 assertions). ~4.5 hours estimated. Pre-B1 bootstrap shipped 2026-04-20 (commit `<commit-ref>`): lane dev now has the full Drizzle schema + pgtap + sent_emails, validated end-to-end.
+> **Next session:** B1 — Migration 0010 (workspace_members backfill + `profiles.id → auth.users(id)` FK + `invites.accepted_by` column + `audit_log` table + `waitlist_approvals` table + idempotent bootstrap RPC + idempotent accept RPC). Parallel pg-tap `test/sql/test_migration_0010.sql` (~12 assertions). ~4.5 hours estimated. Pre-B1 bootstrap shipped 2026-04-20 (commit `4ea1b4b`): lane dev now has the full Drizzle schema + pgtap + sent_emails, validated end-to-end.
 
 ---
 
@@ -450,7 +450,7 @@ Items that come up mid-execution but aren't yet sequenced. Add anything here the
 - [2026-04-19] Mid-session STOP-gate ambiguity. During pre-A1 cleanup, an R1/R2 inspection prompt ended with "Five outputs. Then we decide R2 strategy" without a literal STOP marker between R1 and R2. Claude Code interpreted the earlier "yes, pull/rebase" answer as covering the whole R2 pipeline, executed the rebase autonomously, and flagged the misstep afterward. Content was correct (remote's db/user.ts wholesale, as intended), but the STOP discipline was violated. Lesson: Claude.ai prompts must include literal STOP or "wait for approval" markers before any irreversible action (rebase, commit, push, delete, migration apply). Implicit stop gates based on clause structure are not enough.
 - [2026-04-19] Verify commit/PR/file references in parking-lot and doc items before writing. During pre-A1 cleanup, two factual errors in Claude.ai-composed items were caught by Claude Code verification: "lane marketing website" as a verified Supabase project (unverified), and PR #36 mislabeled as "Figma user-session URL" (actually withUserSession DB URL fix). Rule: when parking-lot or spec items reference specific commits, PRs, file paths, or error messages, either (a) Claude.ai quotes Claude Code verified output verbatim, or (b) Claude Code verifies the composition before writing.
 - [2026-04-19] scripts/_a1-preflight.mjs throwaway pattern. The _-prefix convention for throwaway diagnostic scripts (used in _pc-test.mjs, _pc-diag.mjs, _a1-preflight.mjs this session) works but relies on manual cleanup discipline. Consider formalizing: either (a) add scripts/_*.mjs to .gitignore so throwaway scripts never accidentally commit, or (b) add an automated pre-commit hook that warns when _-prefixed scripts exist in staged changes, or (c) rename the pattern to something the build system understands (e.g., scripts/scratch/) with tooling to detect and clean up. Budget: 15-30 min. Low priority — the manual pattern has worked so far — but worth formalizing before this becomes a team with multiple contributors.
-- [2026-04-19] ~~lane dev Supabase project was empty (zero tables in public schema) during pre-A1 work.~~ **Resolved 2026-04-20 in commit `<commit-ref>`.** Bootstrap procedure documented in `docs/lane-dev-bootstrap.md` and executed end-to-end. Lane dev now has 39 public-schema tables (full Drizzle-managed schema) + pgtap 1.3.3 + sent_emails capture table. All inline commands in the bootstrap doc validated by actual use; A3 fixture exercised against real schema for the first time (counts 1/4/4/1, idempotent DELETE block confirmed). Pre-B1 unblocked.
+- [2026-04-19] ~~lane dev Supabase project was empty (zero tables in public schema) during pre-A1 work.~~ **Resolved 2026-04-20 in commit `4ea1b4b`.** Bootstrap procedure documented in `docs/lane-dev-bootstrap.md` and executed end-to-end. Lane dev now has 39 public-schema tables (full Drizzle-managed schema) + pgtap 1.3.3 + sent_emails capture table. All inline commands in the bootstrap doc validated by actual use; A3 fixture exercised against real schema for the first time (counts 1/4/4/1, idempotent DELETE block confirmed). Pre-B1 unblocked.
 - [2026-04-19] CI pg-tap service container pinned to postgres:16, while lane dev and lane app run postgres:17. The postgresql-17-pgtap Debian package wasn't reliably available at the time of A1 setup. Consequence: pg-tap tests run against PG16 in CI but PG17 on real databases. Risk window: any PG17-specific SQL syntax or behavior we adopt in migrations would pass PG16 tests but potentially fail on production. Trigger to revisit: (a) postgresql-17-pgtap lands in apt repos, (b) we adopt PG17-specific features in a migration (unlikely — Lane uses standard SQL), (c) CI catches a test that prod breaks on, or vice versa. Budget when triggered: ~30 min to swap the service container image in ci.yml. Document the version in CI YAML comments so any future reader knows why it's PG16.
 - [2026-04-19] Claude.ai should push back harder when a previously-agreed "stop" decision reverses mid-session. On April 19, we agreed to stop after A1, resumed with A2, then split A2 into A2a/A2b when scope grew. The split was right — but catching it earlier (before Step 3 proposals) would have saved composition time. Rule: when Nikhil reverses a stop/pause decision, Claude.ai should briefly re-validate the scope before generating the next prompt, not silently adapt. A one-line sanity check costs nothing and catches exactly this pattern.
 - [2026-04-19] npm run test:e2e requires Chromium binary install (one-time: npx playwright install chromium). Fresh clones and new collaborators will hit "browser not found" on first run. Fix options: (a) add a postinstall script to package.json (automatic, adds ~80MB download time to every npm install), (b) add an explicit "e2e:install" script + document in e2e/README.md (explicit, faster npm install), (c) rely on CI's existing Playwright browser cache and document the local setup step. Lean: (b) + (c). ~15 min to implement + document.
@@ -465,11 +465,56 @@ Items that come up mid-execution but aren't yet sequenced. Add anything here the
 - [2026-04-20] AGENTS.md leftover from prior Codex CLI experiment. File appeared at repo root on 2026-04-20, was not authored by current Claude-Code workflow. Deleted during Phase A pre-cleanup. If Codex use resumes in the Lane repo, decide before re-introducing whether (a) Codex's AGENTS.md should coexist with Claude Code's CLAUDE.md (two configs maintained in parallel), (b) one should be a thin pointer to the other (single source of truth), or (c) Codex use stays out of the Lane repo. No urgency — revisit only when/if Codex re-enters the workflow.
 - [2026-04-20] `scripts/apply-dev-only-sql.mjs` wrapper. Bootstrap doc steps 2-4 use ~20-line inline `node -e` commands to apply dev-only SQL files (pgtap, sent_emails, test-seed). Pattern works but verbose; would compress to `npm run apply-dev-only-sql -- db/migrations/dev_only_pgtap.sql`. Wrapper would enforce the production-ref guard once, take SQL path as arg, emit consistent fail-stop on apply errors. Flagged in bootstrap doc's "Future improvements" section. Trigger: when the third or fourth dev-only migration lands and the inline pattern's verbosity becomes painful. Budget: 30-45 min including ESM + dotenv-cli wiring + smoke test.
 
+**April 22 parking lot adds** — post-Commit 2. Grouped here for refile discipline; individual items still obey the one-line-per-bullet rule.
+
+**Work items:**
+
+*From Pre-B1.a/b/c/d:*
+- [2026-04-22] §3.3 role-vocabulary confusion — B2's Path C semantic decision.
+- [2026-04-22] B3 design — transfer_workspace_ownership 2-col vs 3-col return.
+- [2026-04-22] B1 implementation — NULL::uuid sentinel vs RAISE EXCEPTION in accept_invite_membership.
+- [2026-04-22] Issue #47 — UPSTASH prod env vars.
+- [2026-04-22] Dual-naming convention meta-pattern (workspaces/organizations, teams/projects, teamMemberships/projectMembers — 3 instances).
+
+*From today's compounding findings (April 22):*
+- [2026-04-22] D-3 finding documentation — production lacks workspace_members + 4 tables.
+- [2026-04-22] Production catch-up migration — apply 0010 + 0011 to lane app.
+- [2026-04-22] DOCS BIG/ relocation pattern + Supabase ref redaction — placeholder conventions (<lane-dev-ref>/<lane-app-ref>).
+- [2026-04-22] Broken cross-references in DOCS BIG/docs/ files (inherited from PR #54).
+- [2026-04-22] Nischal's PR #60 in-flight — tracked for awareness.
+
+*From Commit 2 drift finding + grounding:*
+- [2026-04-22] 10 days of schema drift surfaced — captured in 0010.
+- [2026-04-22] weekly_digests cardinality change — sentinel '' semantics post-apply (application code aware needed).
+- [2026-04-22] Nischal coordination — did any changes get applied to production via dashboard? (ping sent April 22).
+- [2026-04-22] notification_type enum is product surface — any new notification type requires ALTER TYPE ADD VALUE migration.
+- [2026-04-22] FK gaps: notifications.org_id, workspace_members.user_id, stream_guests.user_id, stream_guests.invited_by, analytics_events.user_id — Drizzle can't declare cross-schema (auth.users); addressed in B1.
+- [2026-04-22] organizations.owner_id has no FK — application-enforced per spec.
+- [2026-04-22] drizzle-kit generate diffs against last DRIZZLE snapshot, not journal state (raw-SQL migrations don't snapshot) — explains why the drift accumulated invisibly.
+
+*Pre-customer security sweep (pending):*
+- [2026-04-22] Dependabot alerts triage.
+- [2026-04-22] RLS migration plan (docs/rls-audit.md) execution.
+- [2026-04-22] Production env vars inventory.
+
+*Doc sync:*
+- [2026-04-22] CLAUDE.md Part 16 + CHANGELOG sync.
+
+**Discipline / methodology (candidates for WORKING-RULES.md):**
+
+- [2026-04-22] Schema-file vs journal drift — re-verification rule when "doesn't block X" claims are made.
+- [2026-04-22] Supabase platform infrastructure enumeration before destructive ops.
+- [2026-04-22] Validation-by-use limitation (commands work ≠ achieves goal).
+- [2026-04-22] Spec drift discipline — quarterly verification.
+- [2026-04-22] Mid-session remote reconciliation (recurrence April 19 + April 21) — fetch checkpoint discipline needed.
+- [2026-04-22] Parking-lot-item relevance re-check discipline — before each new work phase, re-verify items that claim "doesn't block X".
+- [2026-04-22] "Migrations as canonical" is aspirational-from-today.
+
 **Review cadence:**
 - **End of week 4 re-scope:** read the full parking lot. For each item, decide: sequence it into weeks 5-7, keep it in the parking lot, or delete it.
 - **End of week 7 or 8:** same review. Decide what survives into the next roadmap.
 
-**Active items:** 37 — update whenever parking lot entries are added or resolved. Previous count of 12 was stale; corrected 2026-04-20 during pre-B1 bootstrap commit.
+**Active items:** 65 — update whenever parking lot entries are added or resolved. Previous count of 12 was stale; corrected 2026-04-20 during pre-B1 bootstrap commit.
 
 
 ---
