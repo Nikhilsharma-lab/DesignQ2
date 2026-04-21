@@ -70,8 +70,8 @@ These rules were developed across the April 14-16, 2026 sessions. They exist bec
 ## Supabase connection strings
 
 Lane uses two Supabase projects for application data:
-- `lane dev` (clbtrqaazyurnnupiasc) for local development
-- `lane app` (dsivjzwalqqpojopcmyb) for production
+- `lane dev` (`<lane-dev-ref>`) for local development
+- `lane app` (`<lane-app-ref>`) for production
 
 Local dev uses two env vars for the `lane dev` project:
 

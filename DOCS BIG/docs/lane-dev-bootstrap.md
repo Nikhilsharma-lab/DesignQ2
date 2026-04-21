@@ -4,6 +4,13 @@ How to populate an empty `lane dev` Supabase project with Lane's full
 schema + dev-only test infrastructure. Used for first-time setup of a
 fresh `lane dev` project and after a schema reset.
 
+> **Placeholders.** This doc uses `<lane-dev-ref>` for the `lane dev`
+> Supabase project ref and `<lane-app-ref>` for the `lane app`
+> (production) project ref. Substitute your actual refs (from
+> `.env.local` or the Supabase dashboard) before running any snippet —
+> the `if (url.includes('<lane-app-ref>'))` guard only triggers after
+> substitution.
+
 > Procedure written against commit `fed633e` (A3 shipped, Phase A
 > complete). **Revised 2026-04-21:** Step 1 uses `drizzle-kit migrate`
 > (was push); new Step 0 (Reset) added. If Lane's schema files
@@ -16,7 +23,7 @@ fresh `lane dev` project and after a schema reset.
 **NOT for production.** This procedure applies dev-only migrations
 (`dev_only_pgtap.sql`, `dev_only_sent_emails.sql`) that must never
 reach production. Every command below is gated on `DIRECT_DATABASE_URL`
-pointing at the `lane dev` project ref (`clbtrqaazyurnnupiasc`).
+pointing at the `lane dev` project ref (`<lane-dev-ref>`).
 
 ## When to use this procedure
 
@@ -26,7 +33,7 @@ pointing at the `lane dev` project ref (`clbtrqaazyurnnupiasc`).
   project
 
 Do NOT use this procedure on production (`lane app`, ref
-`dsivjzwalqqpojopcmyb`). Production schema is applied via raw SQL in the
+`<lane-app-ref>`). Production schema is applied via raw SQL in the
 Supabase dashboard per the existing Lane workflow. This procedure is a
 dev-only pattern.
 
@@ -51,21 +58,21 @@ dev-only tables as "extra" and complicate subsequent migrations.
 ## Pre-flight: verify you're targeting lane dev
 
 Run this check once before any step below. If the ref isn't
-`clbtrqaazyurnnupiasc`, stop — do not proceed.
+`<lane-dev-ref>`, stop — do not proceed.
 
 ```bash
 npx dotenv-cli -e .env.local -o -- node -e "
 const url = process.env.DIRECT_DATABASE_URL;
 const ref = url?.match(/postgres\.(\w+)/)?.[1];
 console.log('project ref:', ref);
-if (ref !== 'clbtrqaazyurnnupiasc') {
+if (ref !== '<lane-dev-ref>') {
   console.error('NOT lane dev — refusing to proceed');
   process.exit(2);
 }
 "
 ```
 
-Expected output: `project ref: clbtrqaazyurnnupiasc` then exit 0.
+Expected output: `project ref: <lane-dev-ref>` then exit 0.
 
 ## Step 0 (only if bootstrapping onto non-empty state) — Reset
 
@@ -82,7 +89,7 @@ DROP fires:
 npx dotenv-cli -e .env.local -o -- node -e "
 import('postgres').then(async ({default: postgres}) => {
   const url = process.env.DIRECT_DATABASE_URL;
-  if (url.includes('dsivjzwalqqpojopcmyb')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
+  if (url.includes('<lane-app-ref>')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
   const sql = postgres(url, { max: 1 });
   const tables = await sql\`SELECT tablename FROM pg_tables WHERE schemaname='public' ORDER BY tablename\`;
   let totalRows = 0;
@@ -116,7 +123,7 @@ Step 0.3).
 npx dotenv-cli -e .env.local -o -- node -e "
 import('postgres').then(async ({default: postgres}) => {
   const url = process.env.DIRECT_DATABASE_URL;
-  if (url.includes('dsivjzwalqqpojopcmyb')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
+  if (url.includes('<lane-app-ref>')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
   const sql = postgres(url, { max: 1, onnotice: () => {} });
 
   // Drop tables (one DROP TABLE per table — see preservation note for why not DROP SCHEMA)
@@ -250,7 +257,7 @@ npx dotenv-cli -e .env.local -o -- node -e "
 import('postgres').then(async ({default: postgres}) => {
   const { readFileSync } = await import('fs');
   const url = process.env.DIRECT_DATABASE_URL;
-  if (url.includes('dsivjzwalqqpojopcmyb')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
+  if (url.includes('<lane-app-ref>')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
   const sql = postgres(url, { max: 1 });
   const text = readFileSync('db/migrations/dev_only_pgtap.sql', 'utf8');
   await sql.unsafe(text);
@@ -275,7 +282,7 @@ npx dotenv-cli -e .env.local -o -- node -e "
 import('postgres').then(async ({default: postgres}) => {
   const { readFileSync } = await import('fs');
   const url = process.env.DIRECT_DATABASE_URL;
-  if (url.includes('dsivjzwalqqpojopcmyb')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
+  if (url.includes('<lane-app-ref>')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
   const sql = postgres(url, { max: 1 });
   const text = readFileSync('db/migrations/dev_only_sent_emails.sql', 'utf8');
   await sql.unsafe(text);
@@ -314,7 +321,7 @@ npx dotenv-cli -e .env.local -o -- node -e "
 import('postgres').then(async ({default: postgres}) => {
   const { readFileSync } = await import('fs');
   const url = process.env.DIRECT_DATABASE_URL;
-  if (url.includes('dsivjzwalqqpojopcmyb')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
+  if (url.includes('<lane-app-ref>')) { console.error('PRODUCTION REF — REFUSING'); process.exit(2); }
   const sql = postgres(url, { max: 1 });
   const text = readFileSync('supabase/test-seed.sql', 'utf8');
   await sql.unsafe(text);
