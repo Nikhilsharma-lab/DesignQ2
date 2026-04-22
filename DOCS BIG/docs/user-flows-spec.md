@@ -153,7 +153,7 @@ DECLARE
   created_org public.organizations;
 BEGIN
   -- Idempotency guard: if profile already exists, return its workspace_id
-  SELECT org_id INTO existing_workspace_id
+  SELECT profiles.org_id INTO existing_workspace_id   -- qualified to disambiguate from OUT param
   FROM public.profiles
   WHERE id = target_user_id;
 
@@ -188,6 +188,18 @@ END;
 $$;
 ```
 
+> **PL/pgSQL qualification note:** Functions declared with
+> `RETURNS TABLE (org_id uuid, ...)` get implicit OUT parameters
+> named for each column. Inside the function body, any bare
+> reference to `org_id` is ambiguous between the OUT parameter
+> and any column named `org_id` in a FROM-clause relation. Postgres
+> rejects the ambiguity at first execution (not at function
+> creation — plpgsql compiles function bodies lazily). The
+> qualifier `profiles.org_id` disambiguates to the column. This
+> applies to any RPC using `RETURNS TABLE` with column-name-matching
+> OUT parameters. When authoring future RPCs with this shape, audit
+> bare column references in function bodies before merging.
+
 All writes happen in a single transaction. The `ON CONFLICT DO NOTHING` on workspace_members handles the rare case where profile exists but workspace_members row is missing (e.g., partial failure in a previous attempt).
 
 **Why idempotency matters at enterprise grade:** network retries, double-clicks, and server restarts are normal. A non-idempotent signup RPC means any of these produces a 500 error the user can't recover from without support intervention. Idempotency makes signup self-healing. This is the standard pattern at Stripe, Supabase Auth, and every enterprise SaaS auth system.
@@ -203,7 +215,8 @@ Key additions to the existing RPC:
 IF invite_row.accepted_at IS NOT NULL THEN
   -- Check if the acceptor matches
   IF EXISTS (SELECT 1 FROM public.profiles
-             WHERE id = target_user_id AND org_id = invite_row.org_id) THEN
+             WHERE profiles.id = target_user_id     -- qualified for consistency
+               AND profiles.org_id = invite_row.org_id) THEN  -- qualified to disambiguate from OUT param
     RETURN QUERY SELECT invite_row.org_id, false;
     RETURN;
   ELSE
@@ -236,6 +249,10 @@ UPDATE public.invites
 SET accepted_at = now(), accepted_by = target_user_id
 WHERE id = invite_row.id;
 ```
+
+> See the PL/pgSQL qualification note in §4.1.1. The bare-column
+> references here (`profiles.org_id` in the EXISTS subquery) are
+> qualified for the same reason.
 
 **Order of checks in migration 0011:** expiry first, then email match, then idempotency (the snippet above). The pre-existing `NOT FOUND` check stays at the very top, before any of these.
 
