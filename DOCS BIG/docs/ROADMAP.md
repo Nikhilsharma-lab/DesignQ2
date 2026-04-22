@@ -496,6 +496,8 @@ Items that come up mid-execution but aren't yet sequenced. Add anything here the
 - [2026-04-22] Dependabot alerts triage.
 - [2026-04-22] RLS migration plan (docs/rls-audit.md) execution.
 - [2026-04-22] Production env vars inventory.
+- [2026-04-22] getActivityLog cross-org data leak — systemDb query with only requestId filter enables cross-org enumeration. Flagged April 12 in TODOs Priority 0; unaddressed 10 days. Elevated to pre-customer security sweep. See TODOs "Fix getActivityLog Org Scoping" for fix approach.
+- [2026-04-22] TODOs.md shipped-section archaeology pattern — sections marked **Status: ✅ SHIPPED** preserve original scope/spec/code-path details below as archaeology; some details are now stale (e.g., Weekly Digest's column names, cron paths). Follows the "stored claims drift" failure mode. Decision needed: delete archived detail vs. rewrite past-tense vs. leave as-is. Separate session.
 
 *Doc sync:*
 - [2026-04-22] CLAUDE.md Part 16 + CHANGELOG sync.
@@ -514,7 +516,7 @@ Items that come up mid-execution but aren't yet sequenced. Add anything here the
 - **End of week 4 re-scope:** read the full parking lot. For each item, decide: sequence it into weeks 5-7, keep it in the parking lot, or delete it.
 - **End of week 7 or 8:** same review. Decide what survives into the next roadmap.
 
-**Active items:** 65 — update whenever parking lot entries are added or resolved. Previous count of 12 was stale; corrected 2026-04-20 during pre-B1 bootstrap commit.
+**Active items:** 67 — update whenever parking lot entries are added or resolved. Previous count of 12 was stale; corrected 2026-04-20 during pre-B1 bootstrap commit.
 
 
 ---
