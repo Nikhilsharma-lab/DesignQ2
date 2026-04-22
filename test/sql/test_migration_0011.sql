@@ -121,7 +121,8 @@ SELECT is(
 -- returns profile_created=true, second returns profile_created=false with
 -- the same org_id, and exactly one workspace_members row exists.
 
-DO $$
+CREATE OR REPLACE FUNCTION test_14_bootstrap_idempotency() RETURNS SETOF TEXT
+LANGUAGE plpgsql AS $$
 DECLARE
   test_uid uuid := gen_random_uuid();
   first_org uuid;
@@ -129,7 +130,6 @@ DECLARE
   first_created boolean;
   second_created boolean;
   wm_count int;
-  tap_line TEXT;
 BEGIN
   INSERT INTO auth.users (id, email, encrypted_password,
                            instance_id, aud, role,
@@ -160,27 +160,28 @@ BEGIN
   FROM public.workspace_members
   WHERE user_id = test_uid;
 
-  tap_line := ok(
+  RETURN NEXT ok(
     first_created = true
     AND second_created = false
     AND first_org = second_org
     AND wm_count = 1,
     'bootstrap_organization_membership is idempotent on repeat call with same args'
   );
-  RAISE NOTICE '%', tap_line;
 END $$;
+
+SELECT * FROM test_14_bootstrap_idempotency();
 
 -- =========================================================================
 -- 15. accept_invite_membership check order: expiry fires before accepted_at idempotency
 -- =========================================================================
-DO $$
+CREATE OR REPLACE FUNCTION test_15_accept_check_order() RETURNS SETOF TEXT
+LANGUAGE plpgsql AS $$
 DECLARE
   test_uid uuid := gen_random_uuid();
   test_org uuid := gen_random_uuid();
   test_invite_id uuid := gen_random_uuid();
   test_token text := 'test-check-order-token-' || gen_random_uuid()::text;
   err_message text;
-  tap_line TEXT;
 BEGIN
   -- Seed org
   INSERT INTO public.organizations (id, name, slug) VALUES
@@ -221,18 +222,20 @@ BEGIN
     err_message := SQLERRM;
   END;
 
-  tap_line := ok(
+  RETURN NEXT ok(
     err_message LIKE '%expired%',
     format('accept_invite check order: expiry raised before accepted_at idempotency (got: %L)', err_message)
   );
-  RAISE NOTICE '%', tap_line;
 END $$;
+
+SELECT * FROM test_15_accept_check_order();
 
 -- =========================================================================
 -- 16. accept_invite_membership idempotency: double-click returns same org
 -- =========================================================================
 
-DO $$
+CREATE OR REPLACE FUNCTION test_16_accept_idempotency() RETURNS SETOF TEXT
+LANGUAGE plpgsql AS $$
 DECLARE
   test_uid uuid := gen_random_uuid();
   test_org uuid := gen_random_uuid();
@@ -243,7 +246,6 @@ DECLARE
   first_created boolean;
   second_created boolean;
   wm_count int;
-  tap_line TEXT;
 BEGIN
   INSERT INTO public.organizations (id, name, slug) VALUES
     (test_org, 'Test Org Idem', 'test-org-idem-' || test_org::text);
@@ -271,15 +273,16 @@ BEGIN
   FROM public.workspace_members
   WHERE user_id = test_uid;
 
-  tap_line := ok(
+  RETURN NEXT ok(
     first_org = second_org
     AND first_created = true
     AND second_created = false
     AND wm_count = 1,
     'accept_invite_membership is idempotent on double-click'
   );
-  RAISE NOTICE '%', tap_line;
 END $$;
+
+SELECT * FROM test_16_accept_idempotency();
 
 -- =========================================================================
 -- 17. accept_invite_membership workspace_members.role = 'member'
@@ -288,14 +291,14 @@ END $$;
 -- invite-accepted signups land as 'member' regardless of invites.role text.
 -- Invite is created with 'admin' text role to prove 'member' is hardcoded.
 
-DO $$
+CREATE OR REPLACE FUNCTION test_17_accept_role_member() RETURNS SETOF TEXT
+LANGUAGE plpgsql AS $$
 DECLARE
   test_uid uuid := gen_random_uuid();
   test_org uuid := gen_random_uuid();
   test_invite_id uuid := gen_random_uuid();
   test_token text := 'test-role-token-' || gen_random_uuid()::text;
   actual_role public.workspace_role;
-  tap_line TEXT;
 BEGIN
   INSERT INTO public.organizations (id, name, slug) VALUES
     (test_org, 'Test Org Role', 'test-org-role-' || test_org::text);
@@ -318,12 +321,13 @@ BEGIN
   FROM public.workspace_members
   WHERE user_id = test_uid AND workspace_id = test_org;
 
-  tap_line := ok(
+  RETURN NEXT ok(
     actual_role = 'member'::public.workspace_role,
     format('invite-accepted workspace_members.role is ''member'' (got: %L)', actual_role)
   );
-  RAISE NOTICE '%', tap_line;
 END $$;
+
+SELECT * FROM test_17_accept_role_member();
 
 -- =========================================================================
 -- 18. Backfill invariant A: every profile has a workspace_members row
@@ -331,14 +335,14 @@ END $$;
 -- Seed 3 profiles in 1 workspace (no corresponding workspace_members),
 -- run the inline backfill SQL (copied from §4.1.3), assert invariant.
 
-DO $$
+CREATE OR REPLACE FUNCTION test_18_backfill_invariant_a() RETURNS SETOF TEXT
+LANGUAGE plpgsql AS $$
 DECLARE
   test_org uuid := gen_random_uuid();
   uid1 uuid := gen_random_uuid();
   uid2 uuid := gen_random_uuid();
   uid3 uuid := gen_random_uuid();
   orphan_count int;
-  tap_line TEXT;
 BEGIN
   INSERT INTO public.organizations (id, name, slug) VALUES
     (test_org, 'Test Org Backfill', 'test-org-backfill-' || test_org::text);
@@ -385,12 +389,13 @@ BEGIN
     ON wm.user_id = p.id AND wm.workspace_id = p.org_id
   WHERE p.org_id = test_org AND wm.user_id IS NULL;
 
-  tap_line := ok(
+  RETURN NEXT ok(
     orphan_count = 0,
     format('backfill invariant A: no profiles without workspace_members (got %s orphans)', orphan_count)
   );
-  RAISE NOTICE '%', tap_line;
 END $$;
+
+SELECT * FROM test_18_backfill_invariant_a();
 
 -- =========================================================================
 -- 19. Backfill invariant B: exactly one owner per workspace (collapse)
@@ -398,7 +403,8 @@ END $$;
 -- Seed 2 'lead' profiles in same org. Backfill creates 2 owners. Collapse
 -- demotes the later-joined one to admin. Assert exactly 1 owner remains.
 
-DO $$
+CREATE OR REPLACE FUNCTION test_19_backfill_invariant_b() RETURNS SETOF TEXT
+LANGUAGE plpgsql AS $$
 DECLARE
   test_org uuid := gen_random_uuid();
   uid_early uuid := gen_random_uuid();
@@ -406,7 +412,6 @@ DECLARE
   owner_count int;
   early_role public.workspace_role;
   late_role public.workspace_role;
-  tap_line TEXT;
 BEGIN
   INSERT INTO public.organizations (id, name, slug) VALUES
     (test_org, 'Test Org Collapse', 'test-org-collapse-' || test_org::text);
@@ -465,15 +470,16 @@ BEGIN
   SELECT role INTO late_role FROM public.workspace_members
   WHERE workspace_id = test_org AND user_id = uid_late;
 
-  tap_line := ok(
+  RETURN NEXT ok(
     owner_count = 1
     AND early_role = 'owner'::public.workspace_role
     AND late_role = 'admin'::public.workspace_role,
     format('backfill invariant B: multi-owner collapse leaves exactly 1 owner (early=%L, late=%L, owners=%s)',
       early_role, late_role, owner_count)
   );
-  RAISE NOTICE '%', tap_line;
 END $$;
+
+SELECT * FROM test_19_backfill_invariant_b();
 
 SELECT * FROM finish();
 ROLLBACK;
