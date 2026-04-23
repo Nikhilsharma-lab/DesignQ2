@@ -133,6 +133,13 @@ jobs:
       - name: Enable pg-tap extension
         run: psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS pgtap"
 
+      # Enable pgcrypto for gen_random_bytes() used in migration 0011's
+      # waitlist_approvals.approval_token default. Supabase enables pgcrypto
+      # by default; the vanilla postgres:16 service container does not.
+      # See #61.
+      - name: Enable pgcrypto extension
+        run: psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS pgcrypto"
+
       # Apply Lane migrations 0000-0009 via drizzle-kit. Reads
       # db/migrations/meta/_journal.json which tracks numbered migrations
       # only — does NOT include dev_only_pgtap.sql (handled above).
