@@ -92,6 +92,13 @@
       "when": 1776859201001,
       "tag": "0012_fix_rpc_org_id_ambiguity",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1776910937969,
+      "tag": "0013_b2_invite_team_scoping",
+      "breakpoints": true
     }
   ]
 }
