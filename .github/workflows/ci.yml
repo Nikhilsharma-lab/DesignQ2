@@ -156,8 +156,12 @@ jobs:
           CREATE SCHEMA IF NOT EXISTS auth;
           CREATE TABLE IF NOT EXISTS auth.users (
             id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-            email text,
-            encrypted_password text,
+            instance_id uuid,
+            aud varchar(255),
+            role varchar(255),
+            email varchar(255),
+            encrypted_password varchar(255),
+            email_confirmed_at timestamptz,
             raw_app_meta_data jsonb,
             raw_user_meta_data jsonb,
             created_at timestamptz DEFAULT now(),
