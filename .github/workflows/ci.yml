@@ -133,7 +133,31 @@ jobs:
       - name: Enable pg-tap extension
         run: psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS pgtap"
 
-      # Apply Lane migrations 0000-0009 via drizzle-kit. Reads
+      # Enable pgcrypto for gen_random_bytes() used in migration 0011's
+      # waitlist_approvals.approval_token default. Supabase enables pgcrypto
+      # by default; the vanilla postgres:16 service container does not.
+      # See #61.
+      - name: Enable pgcrypto extension
+        run: psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS pgcrypto"
+
+      # Stub Supabase's auth schema so migration 0011's cross-schema FKs
+      # (profiles.id, workspace_members.user_id, invites.accepted_by,
+      # audit_log.actor_user_id, waitlist_approvals.approved_by) resolve.
+      # Supabase provisions this schema via GoTrue; vanilla postgres:16
+      # has no concept of it. The stub only needs the id column for FK
+      # resolution — no auth logic runs in CI.
+      # See #61.
+      - name: Stub Supabase auth schema for cross-schema FK resolution
+        run: |
+          psql "$DATABASE_URL" <<'SQL'
+          CREATE SCHEMA IF NOT EXISTS auth;
+          CREATE TABLE IF NOT EXISTS auth.users (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            email text
+          );
+          SQL
+
+      # Apply Lane migrations 0000-0013 via drizzle-kit. Reads
       # db/migrations/meta/_journal.json which tracks numbered migrations
       # only — does NOT include dev_only_pgtap.sql (handled above).
       - name: Apply Lane migrations
