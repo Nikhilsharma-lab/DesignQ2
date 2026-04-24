@@ -140,14 +140,17 @@ jobs:
       - name: Enable pgcrypto extension
         run: psql "$DATABASE_URL" -c "CREATE EXTENSION IF NOT EXISTS pgcrypto"
 
-      # Stub Supabase's auth schema so migration 0011's cross-schema FKs
-      # (profiles.id, workspace_members.user_id, invites.accepted_by,
-      # audit_log.actor_user_id, waitlist_approvals.approved_by) resolve.
-      # Supabase provisions this schema via GoTrue; vanilla postgres:16
-      # has no concept of it. The stub only needs the id column for FK
-      # resolution — no auth logic runs in CI.
+      # Stub Supabase's auth schema, auth.users table, and built-in roles
+      # (authenticated, anon, service_role) so migrations that reference
+      # Supabase-provisioned objects resolve.
+      # Specifically needed by migration 0011:
+      #   - 5 cross-schema FKs to auth.users(id)
+      #   - REVOKE ... FROM authenticated, anon, service_role on audit_log
+      # Supabase provisions all of these via GoTrue + platform setup; vanilla
+      # postgres:16 has none of them. No auth logic runs in CI — stubs exist
+      # purely so DDL parses and FKs resolve.
       # See #61.
-      - name: Stub Supabase auth schema for cross-schema FK resolution
+      - name: Stub Supabase auth schema + roles for CI parity
         run: |
           psql "$DATABASE_URL" <<'SQL'
           CREATE SCHEMA IF NOT EXISTS auth;
@@ -155,6 +158,15 @@ jobs:
             id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             email text
           );
+          DO $$ BEGIN
+            CREATE ROLE authenticated NOLOGIN;
+          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          DO $$ BEGIN
+            CREATE ROLE anon NOLOGIN;
+          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+          DO $$ BEGIN
+            CREATE ROLE service_role NOLOGIN;
+          EXCEPTION WHEN duplicate_object THEN NULL; END $$;
           SQL
 
       # Apply Lane migrations 0000-0013 via drizzle-kit. Reads
