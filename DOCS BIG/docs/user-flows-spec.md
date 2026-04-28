@@ -951,7 +951,7 @@ A member visits `/settings/profile` → "Leave workspace" → confirms.
 `workspace_members` — DELETE the caller's row
 `project_members` — DELETE all rows where `user_id = caller`
 `profiles` — **KEEP.** Deleting the profile would orphan historical Requests, comments, decision log entries, etc. Instead, mark the profile as "departed":
-  - Add `profiles.left_at timestamptz` column (new, add in migration 0014)
+  - Add `profiles.left_at timestamptz` column (new, add in migration 0015)
   - Set `left_at = now()`
   - All UI surfaces should show a departed user's name with a subtle "(no longer on team)" marker
 
