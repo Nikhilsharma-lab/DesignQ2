@@ -237,6 +237,60 @@ Database → Extensions, Database → Cron) before irreversible ops.
   "Success signals are not proof of effect" under **Verify before
   acting** above.
 
+### Function-only migration scaffold pattern
+
+`drizzle-kit generate` diffs the schema files against the last
+Drizzle snapshot to produce migrations. When a migration's only
+change is a SQL function (CREATE / CREATE OR REPLACE / DROP
+FUNCTION), drizzle-kit produces no output — schema columns are
+unchanged, so the diff is empty. Output looks like:
+
+  No schema changes, nothing to migrate 😴
+
+This is silent and produces no files. The migration must be
+hand-scaffolded in three artifacts, in this order:
+
+1. `db/migrations/NNNN_<tag>.sql` — the migration body. Hand-written.
+2. `db/migrations/meta/NNNN_snapshot.json` — copy of the previous
+   snapshot (byte-identical content because schema didn't change),
+   but with two metadata fields regenerated:
+   - `id` — fresh UUIDv4
+   - `prevId` — equal to the previous snapshot's `id` (chain integrity)
+3. `db/migrations/meta/_journal.json` — append a new entry with:
+   - `idx` — incremented from previous max
+   - `version` — same as previous (typically "7")
+   - `when` — current epoch millis from `Date.now()`. Verify
+     `when > MAX(when)` across all existing entries (see
+     "After drizzle-kit generate" rule above).
+   - `tag` — matches the SQL filename without extension
+   - `breakpoints` — typically `true`
+
+Reusing the previous snapshot's `id` and `prevId` verbatim creates
+a latent chain collision that surfaces at the next real
+`drizzle-kit generate` (the diff engine sees two snapshots with the
+same id and produces incoherent output).
+
+Any structurally-named UUID will do for the new `id` (e.g., output
+of `uuidgen` or a JS `crypto.randomUUID()`); the value just needs
+to be unique across all snapshot files in the chain.
+
+Verify post-scaffold:
+- `npx drizzle-kit migrate` applies the new migration (don't trust
+  the exit code; check the new row count in
+  `drizzle.__drizzle_migrations`).
+- Body verification: query `pg_get_functiondef` for the function
+  and grep for expected content (function name, signature, body
+  fragments).
+
+Observed in: 0012 fix-up (commit 1724920, B1 RPC ambiguity —
+caught reactively after `drizzle-kit generate` produced no file)
+and 0014 (commit ad8ff09, B3 transfer_workspace_ownership —
+proactive scaffold based on the 0012 lesson).
+
+Rule established 2026-04-23 (B3 session) after the second
+occurrence; codified ahead of B4 to prevent the next reactive
+catch.
+
 ## Claude.ai ↔ Claude Code loop
 
 Lane development uses two Claude surfaces in a disciplined loop:

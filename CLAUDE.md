@@ -2,7 +2,7 @@
 
 **Status:** Pre-launch, live GTM
 **Current Sprint:** Week 7.5 User Flow Foundation — test harnesses + DB migrations 0011-0014 (see `docs/ROADMAP.md`)
-**Last Updated:** April 23, 2026 — B2 session commits 2936339 + affabd9 + 186ca28 (migration 0013 shipped). Part 16 reflects git main post-B2. WORKING-RULES adds column-name verification rule this session.
+**Last Updated:** April 23, 2026 — B3 session commits ad8ff09 (migration 0014 scaffold) + 5cc94d4 (pg-tap test) on top of pre-B3 spec patch 58db6b7. Part 16 reflects git main post-B3. WORKING-RULES adds function-only migration scaffold pattern this session.
 
 > Business context, pricing, GTM, and founder details are in CLAUDE.local.md (gitignored).
 > For a chronological record of what shipped and when, see CHANGELOG.md.
@@ -672,7 +672,7 @@ backfill invariants).
 
 ---
 
-## Part 16: WHAT'S BUILT (As of April 22, 2026)
+## Part 16: WHAT'S BUILT (As of April 23, 2026)
 
 - [x] Next.js 14 scaffolded, Vercel deployed
 - [x] Supabase auth + org scoping
@@ -706,6 +706,7 @@ backfill invariants).
 - [x] drizzle-kit silent-skip fix + docs cascade renumber — B1-B4 migrations shifted 0010-0013 → 0011-0014 (April 22)
 - [x] Migration 0011 (B1) — workspace_members foundation: populated from profiles via backfill with multi-owner collapse; audit_log table (append-only, REVOKE UPDATE/DELETE enforcement); waitlist_approvals table with approval_source CHECK; 5 cross-schema FKs to auth.users (profiles.id, workspace_members.user_id, invites.accepted_by, audit_log.actor_user_id, waitlist_approvals.approved_by); idempotent bootstrap_organization_membership and accept_invite_membership RPCs; spec §4.1.1/§4.1.2 check-order fix in accept. Migration 0012 fix-up for PL/pgSQL column-vs-OUT-parameter ambiguity surfaced at first RPC execution; resolved with `profiles.org_id` qualification at 2 sites. 19 pg-tap assertions in test/sql/test_migration_0011.sql, all passing on lane dev (April 22, refactored to RETURNS SETOF TEXT pattern on April 22 in ccdf703).
 - [x] Migration 0013 (B2) — invite team scoping: invites.team_id + invites.team_role columns; unique pending partial index on (email, org_id) WHERE accepted_at IS NULL; accept_invite_membership extended with Path C (populate project_members.team_role on team-scoped invites, using SQL column project_id); audit_log event_data Pattern (ii) — includes team_id + team_role keys only on team-scoped accepts. 15 pg-tap assertions in test/sql/test_migration_0013.sql, all passing on lane dev (April 23).
+- [x] Migration 0014 (B3) — `transfer_workspace_ownership(target_workspace_id uuid, new_owner_user_id uuid, demote_current_owner_to text DEFAULT 'admin') RETURNS TABLE (success boolean, message text)`: SECURITY DEFINER RPC for atomic ownership transfer. Validation gates in order: gate 0 (demote target ∈ admin/member/guest, added during composition; spec was silent — excludes 'owner' no-op trap), gate 1 (current owner exists), gate 2 (caller is current owner via auth.uid()), gate 3 (no self-transfer), gate 4 (new owner is workspace member). On success: atomic role swap on workspace_members (current owner demoted, new owner promoted) + organizations.owner_id mirror update (invariant #4 per §4.4) + audit_log INSERT with event_type='ownership.transferred' and Pattern (ii) flat snake_case event_data {from_user_id, to_user_id, demoted_to}. Function-only migration — drizzle-kit silently no-ops; required manual 3-artifact scaffold (SQL file + meta/0014_snapshot.json copied from 0013 with fresh UUID id and prevId pointing at 0013's id + meta/_journal.json idx=14 entry with current wall-clock when). 17 pg-tap assertions in test/sql/test_migration_0014.sql using auth.uid() simulation via `set_config('request.jwt.claim.sub', uuid::text, true)`, all passing on lane dev (April 23). Pre-work: spec patches in 58db6b7 fixed 14 sites including fatal `owner_user_id` → `owner_id` at §4.3 line 435.
 
 ---
 ### Known drift and deferred work (resolve in follow-up sessions)
@@ -803,7 +804,7 @@ If you find yourself updating this table, you're probably doing it wrong — upd
 
 ---
 
-**Last updated: April 22, 2026 — commit 663401c. Part 16 reflects git main; CHANGELOG + WORKING-RULES refile pending in this sync sweep.**
+**Last updated: April 23, 2026 — B3 session shipped migration 0014 + pg-tap (commits ad8ff09 + 5cc94d4 on top of pre-B3 spec patch 58db6b7). Part 16 reflects git main post-B3.**
 
 ## Testing
 
